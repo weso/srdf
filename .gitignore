@@ -10,8 +10,9 @@ project/boot/
 project/plugins/project/
 
 # Scala-IDE specific
+.metals
+.bloop
 .scala_dependencies
-
 .settings
 .settings/*
 .project
