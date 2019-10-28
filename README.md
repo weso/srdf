@@ -9,7 +9,6 @@ It is possible to use this library to validate RDF models from any of those RDF 
 
 This interface is being used by SHACLEX.
 
-[![CircleCI](https://circleci.com/gh/weso/srdf.svg?style=svg)](https://circleci.com/gh/weso/srdf)
 [![Build Status](https://travis-ci.org/weso/srdf.svg?branch=master)](https://travis-ci.org/weso/srdf)
 
 ## Installation and compilation

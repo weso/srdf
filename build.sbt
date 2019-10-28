@@ -1,7 +1,7 @@
 // Dependency versions
 lazy val catsVersion           = "2.0.0"
 lazy val circeVersion          = "0.12.0-RC3"
-lazy val jenaVersion           = "3.13.0"
+lazy val jenaVersion           = "3.13.1"
 lazy val logbackVersion        = "1.2.3"
 lazy val loggingVersion        = "3.9.2"
 lazy val rdf4jVersion          = "3.0.0"
@@ -69,9 +69,9 @@ lazy val srdf = project
       circeParser,
       scalaLogging
     )
-  )
-
-lazy val srdfJena = project
+    )
+    
+  lazy val srdfJena = project
   .in(file("modules/srdfJena"))
   .dependsOn(srdf, utils)
   .settings(commonSettings, publishSettings)

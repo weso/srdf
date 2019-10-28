@@ -393,6 +393,10 @@ case class RDFAsJenaModel(model: Model,
     Right(this)
 
   override def rdfReaderName: String = s"ApacheJena"
+
+  def addModel(model: Model): RDFAsJenaModel =
+    this.copy(model = this.model.add(model))
+
 }
 
 

@@ -1,19 +1,18 @@
 package es.weso.rdf.rdf4j
 
 import java.io._
-
 import es.weso.rdf._
 import es.weso.rdf.path.SHACLPath
 import es.weso.rdf.triples.RDFTriple
 import io.circe.Json
-import org.eclipse.rdf4j.model.{IRI => IRI_RDF4j, BNode => _, Literal => _, _}
+import org.eclipse.rdf4j.model.{ IRI => IRI_RDF4j, BNode => _, Literal => _, _}
 import es.weso.rdf.nodes.{IRI, _}
 import org.eclipse.rdf4j.model.util.{ModelBuilder, Models}
 import org.eclipse.rdf4j.rio.RDFFormat._
 import org.eclipse.rdf4j.rio.{RDFFormat, Rio}
 import org.apache.commons.io.input.CharSequenceInputStream
 import scala.util._
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import RDF4jMapper._
 import es.weso.utils.EitherUtils
 
@@ -285,6 +284,7 @@ case class RDFAsRDF4jModel(model: Model,
     Right(this)
 
   override def rdfReaderName: String = s"RDF4j"
+
 }
 
 

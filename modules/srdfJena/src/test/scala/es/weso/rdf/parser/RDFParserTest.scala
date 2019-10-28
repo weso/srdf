@@ -18,7 +18,7 @@ class RDFParserTest extends FunSpec with Matchers with RDFParser with EitherValu
           p: IRI = IRI("http://example.org/p")
           obj <- iriFromPredicate(p)(n, rdf)
         } yield (obj)
-        try1.right.value should be(IRI("http://example.org/T"))
+        try1.fold(e => fail(s"Error: $e"), v => v should be(IRI("http://example.org/T")))
       }
       it("iriFromPredicate fails when more than one matches") {
         val cs =
@@ -62,7 +62,7 @@ class RDFParserTest extends FunSpec with Matchers with RDFParser with EitherValu
           n: RDFNode = IRI("http://example.org/x")
           obj <- rdfType(n, rdf)
         } yield (obj)
-        try1.right.value should be(IRI("http://example.org/T"))
+        try1.fold(e => fail(s"Error: $e"), v => v should be(IRI("http://example.org/T")))
       }
       it("rdfType fails when more than one type") {
         val cs =
@@ -108,7 +108,9 @@ class RDFParserTest extends FunSpec with Matchers with RDFParser with EitherValu
             nodeLs <- objectFromPredicate(p)(n, rdf)
             ls <- rdfList(nodeLs, rdf)
           } yield (ls)
-          try1.right.value should be(List(IntegerLiteral(1,"1"), IntegerLiteral(2,"2"), IntegerLiteral(3,"3")))
+          try1.fold(e => fail(s"Error: $e"), 
+             v => v should be(List(IntegerLiteral(1,"1"), IntegerLiteral(2,"2"), IntegerLiteral(3,"3")))
+             )
         }
 
         it("rdfList empty") {
@@ -121,7 +123,43 @@ class RDFParserTest extends FunSpec with Matchers with RDFParser with EitherValu
             nodeLs <- objectFromPredicate(p)(n, rdf)
             ls <- rdfList(nodeLs, rdf)
           } yield (ls)
-          try1.right.value should be(List())
+          try1.fold(e => fail(s"Error: $e"), v => v should be(List()))
+        }
+        it("rdfList with rdf:first and rdf:rest") {
+          val cs = """|prefix : <http://example.org/>
+                  |prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                  |:x :p :e1 .
+                  |:e1 rdf:first 1; rdf:rest :e2 .
+                  |:e2 rdf:first 2; rdf:rest rdf:nil .
+                  |""".stripMargin
+          val try1 = for {
+            rdf <- RDFAsJenaModel.fromChars(cs, "TURTLE")
+            n: RDFNode = IRI("http://example.org/x")
+            p = IRI("http://example.org/p")
+            nodeLs <- objectFromPredicate(p)(n, rdf)
+            ls <- rdfList(nodeLs, rdf)
+          } yield (ls)
+          try1.fold(e => fail(s"Error: ${e}"), 
+             value => value should be(List(IntegerLiteral(1,"1"), IntegerLiteral(2,"2")))
+          )
+        }
+        it("rdfList with infinite loop") {
+          val cs = """|prefix : <http://example.org/>
+                  |prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                  |:x :p :e1 .
+                  |:e1 rdf:first 1; rdf:rest :e2 .
+                  |:e2 rdf:first 2; rdf:rest :e1 .
+                  |""".stripMargin
+          val try1 = for {
+            rdf <- RDFAsJenaModel.fromChars(cs, "TURTLE")
+            n: RDFNode = IRI("http://example.org/x")
+            p = IRI("http://example.org/p")
+            nodeLs <- objectFromPredicate(p)(n, rdf)
+            ls <- rdfList(nodeLs, rdf)
+          } yield (ls)
+          try1.fold(e => fail(s"Error: ${e}"), 
+             value => value should be(List(IntegerLiteral(1,"1"), IntegerLiteral(2,"2")))
+          )
         }
 
       }
@@ -136,7 +174,7 @@ class RDFParserTest extends FunSpec with Matchers with RDFParser with EitherValu
           p = IRI("http://example.org/p")
           ls <- rdfListForPredicate(p)(n, rdf)
         } yield (ls)
-        try1.right.value should be(List(IntegerLiteral(1,"1"), IntegerLiteral(2,"2"), IntegerLiteral(3,"3")))
+        try1.fold(e => fail(s"Error: $e"), v => v should be(List(IntegerLiteral(1,"1"), IntegerLiteral(2,"2"), IntegerLiteral(3,"3"))))
       }
     }
     describe("integerLiteralForPredicate") {
@@ -149,7 +187,7 @@ class RDFParserTest extends FunSpec with Matchers with RDFParser with EitherValu
           p = IRI("http://example.org/p")
           n <- integerLiteralForPredicate(p)(n, rdf)
         } yield (n)
-        try1.right.value should be(1)
+        try1.fold(e => fail(s"Error: $e"), v => v should be(1))
       }
     }
 
