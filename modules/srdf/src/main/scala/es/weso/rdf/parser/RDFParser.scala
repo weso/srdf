@@ -454,10 +454,10 @@ trait RDFParser {
 
   def literalFromPredicate(p: IRI): RDFParser[Literal] = for {
     o <- objectFromPredicate(p)
-    r <- asLiteral(o)
+    r <- withNode(o,asLiteral)
   } yield r
 
-  def asLiteral(n: RDFNode): RDFParser[Literal] = for { 
+  def asLiteral: RDFParser[Literal] = for { 
     n <- getNode 
     v <- n match {
       case l: Literal => parseOk(l)
@@ -466,7 +466,7 @@ trait RDFParser {
     } yield v
 
   def asLiterals(ls: List[RDFNode]): RDFParser[List[Literal]] = 
-    ls.map(asLiteral(_)).sequence
+    ls.map(withNode(_, asLiteral)).sequence
 
   def literalsFromPredicate(p: IRI): RDFParser[List[Literal]] = for {
     os <- objectsFromPredicate(p)

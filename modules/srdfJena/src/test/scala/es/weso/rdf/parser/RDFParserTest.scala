@@ -353,5 +353,19 @@ class RDFParserTest extends FunSpec with Matchers with RDFParser with EitherValu
         }
       }
     } 
+    describe("literalsFromPredicate") {
+      it("literals from predicate") {
+        val cs = """|prefix : <http://example.org/>
+                   |:x :p 3 .""".stripMargin
+        val try1 = for {
+          rdf <- RDFAsJenaModel.fromChars(cs, "TURTLE")
+          n: RDFNode = IRI("http://example.org/x")
+          p: IRI = IRI("http://example.org/p")
+          obj <- literalsFromPredicate(p).value.run(Config(n,rdf))
+        } yield (obj)
+        try1.fold(e => fail(s"Error: $e"), 
+             v => v should be(List(IntegerLiteral(3,"3"))))
+      }
+    }
   }
 }
