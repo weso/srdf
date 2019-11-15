@@ -367,5 +367,34 @@ class RDFParserTest extends FunSpec with Matchers with RDFParser with EitherValu
              v => v should be(List(IntegerLiteral(3,"3"))))
       }
     }
+
+    describe("firstOf") {
+      it("firstOf with inheritance") {
+        val cs = """|prefix : <http://example.org/>
+                   |:x :p 3 .""".stripMargin
+        val p: IRI = IRI("http://example.org/p")
+        val n: RDFNode = IRI("http://example.org/x")
+        trait Base
+        case class I(n: Int) extends Base
+        case class S(n: String) extends Base
+        def i(): RDFParser[Base] = for {
+         obj <- objectFromPredicate(p)
+         n <- withNode(obj,integer)   
+        } yield I(n)
+        def s(): RDFParser[Base] = for {
+          obj <- objectFromPredicate(p)
+          n <- withNode(obj,string)   
+         } yield S(n)
+        def fo(): RDFParser[Base] =
+         firstOf(i,s) 
+ 
+        val try1 = for {
+          rdf <- RDFAsJenaModel.fromChars(cs, "TURTLE")
+          obj <- fo().value.run(Config(n,rdf))
+        } yield (obj)
+        try1.fold(e => fail(s"Error: $e"), 
+             v => v should be(I(3)))
+      }
+    }
   }
 }

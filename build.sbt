@@ -1,3 +1,5 @@
+lazy val utilsVersion         = "0.1.50"
+
 // Dependency versions
 lazy val catsVersion           = "2.0.0"
 lazy val circeVersion          = "0.12.0-RC3"
@@ -18,6 +20,9 @@ lazy val simulacrumVersion    = "1.0.0"
 lazy val scalaMacrosVersion   = "2.1.1"
 
 // Dependency modules
+
+lazy val utils             = "es.weso"                    % "utils_2.13"          % utilsVersion
+
 lazy val catsCore          = "org.typelevel"              %% "cats-core"           % catsVersion
 lazy val catsKernel        = "org.typelevel"              %% "cats-kernel"         % catsVersion
 lazy val catsMacros        = "org.typelevel"              %% "cats-macros"         % catsVersion
@@ -41,8 +46,8 @@ lazy val srdfMain = project
   .in(file("."))
   .enablePlugins(ScalaUnidocPlugin, SbtNativePackager, WindowsPlugin, JavaAppPackaging, LauncherJarPlugin)
   .settings(commonSettings, packagingSettings, publishSettings, ghPagesSettings, wixSettings)
-  .aggregate(srdfJena, srdf4j, srdf,utils)
-  .dependsOn(srdfJena, srdf4j, srdf,utils)
+  .aggregate(srdfJena, srdf4j, srdf)
+  .dependsOn(srdfJena, srdf4j, srdf)
   .settings(
     unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(noDocProjects: _*),
     libraryDependencies ++= Seq(
@@ -73,7 +78,7 @@ lazy val srdf = project
     
   lazy val srdfJena = project
   .in(file("modules/srdfJena"))
-  .dependsOn(srdf, utils)
+  .dependsOn(srdf)
   .settings(commonSettings, publishSettings)
   .settings(
     libraryDependencies ++= Seq(
@@ -81,6 +86,7 @@ lazy val srdf = project
       scalaLogging,
       jenaFuseki % Test,
       typesafeConfig % Test,
+      utils,
       jenaArq,
       catsCore,
       catsKernel,
@@ -90,24 +96,14 @@ lazy val srdf = project
 
 lazy val srdf4j = project
   .in(file("modules/srdf4j"))
-  .dependsOn(srdf,utils)
+  .dependsOn(srdf)
   .settings(commonSettings, publishSettings)
   .settings(
     libraryDependencies ++= Seq(
       logbackClassic % Test,
       scalaLogging,
+      utils,
       rdf4j_runtime,
-      catsCore,
-      catsKernel,
-      catsMacros
-    )
-  )
-
-lazy val utils = project
-  .in(file("modules/utils"))
-  .settings(commonSettings, publishSettings)
-  .settings(
-    libraryDependencies ++= Seq(
       catsCore,
       catsKernel,
       catsMacros
@@ -153,7 +149,7 @@ lazy val wixSettings = Seq(
 )
 
 lazy val compilationSettings = Seq(
-  scalaVersion := "2.13.0",
+  scalaVersion := "2.13.1",
   // format: off
   scalacOptions ++= Seq(
     "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
