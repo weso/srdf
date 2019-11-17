@@ -1,4 +1,8 @@
-lazy val utilsVersion         = "0.1.50"
+lazy val scala212 = "2.12.10"
+lazy val scala213 = "2.13.1"
+lazy val supportedScalaVersions = List(scala212, scala213)
+
+lazy val utilsVersion         = "0.1.53"
 
 // Dependency versions
 lazy val catsVersion           = "2.0.0"
@@ -21,7 +25,7 @@ lazy val scalaMacrosVersion   = "2.1.1"
 
 // Dependency modules
 
-lazy val utils             = "es.weso"                    % "utils_2.13"          % utilsVersion
+lazy val utils             = "es.weso"                    %% "utils"              % utilsVersion
 
 lazy val catsCore          = "org.typelevel"              %% "cats-core"           % catsVersion
 lazy val catsKernel        = "org.typelevel"              %% "cats-kernel"         % catsVersion
@@ -57,7 +61,9 @@ lazy val srdfMain = project
     ),
     cancelable in Global      := true,
     fork                      := true,
-    parallelExecution in Test := false,
+//    parallelExecution in Test := false,
+    crossScalaVersions := Nil,
+    publish / skip := true,
     ThisBuild / turbo := true
   )
 
@@ -65,6 +71,7 @@ lazy val srdf = project
   .in(file("modules/srdf"))
   .settings(commonSettings, publishSettings)
   .settings(
+    crossScalaVersions := supportedScalaVersions,
     libraryDependencies ++= Seq(
       catsCore,
       catsKernel,
@@ -81,6 +88,7 @@ lazy val srdf = project
   .dependsOn(srdf)
   .settings(commonSettings, publishSettings)
   .settings(
+    crossScalaVersions := supportedScalaVersions,
     libraryDependencies ++= Seq(
       logbackClassic % Test,
       scalaLogging,
@@ -99,6 +107,7 @@ lazy val srdf4j = project
   .dependsOn(srdf)
   .settings(commonSettings, publishSettings)
   .settings(
+    crossScalaVersions := supportedScalaVersions,
     libraryDependencies ++= Seq(
       logbackClassic % Test,
       scalaLogging,
@@ -149,7 +158,7 @@ lazy val wixSettings = Seq(
 )
 
 lazy val compilationSettings = Seq(
-  scalaVersion := "2.13.1",
+  scalaVersion := scala213,
   // format: off
   scalacOptions ++= Seq(
     "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
@@ -162,7 +171,6 @@ lazy val compilationSettings = Seq(
     "-Yrangepos",
     "-Ywarn-dead-code",                  // Warn when dead code is identified.
     "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
-    "-Ymacro-annotations"
   )
   // format: on
 )

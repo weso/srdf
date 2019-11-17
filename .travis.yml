@@ -1,11 +1,16 @@
 language: scala
 scala:
    - 2.13.0
+   - 2.12.10
+
+script:
+  - sbt clean coverage test coverageReport
 
 cache:
   directories:
     - $HOME/.ivy2/cache
-    - $HOME/.sbt
+    - $HOME/.sbt/boot
+    - $HOME/.coursier
 
 before_cache:
   # Cleanup the cached directories to avoid unnecessary cache updates
@@ -16,3 +21,6 @@ before_cache:
 jdk:
   - oraclejdk9
   - openjdk11
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)  
