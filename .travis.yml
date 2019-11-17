@@ -7,6 +7,9 @@ script:
 #  - sbt clean coverage test coverageReport
   - sbt clean test
 
+install:
+  - pip install --user codecov
+
 cache:
   directories:
     - $HOME/.ivy2/cache

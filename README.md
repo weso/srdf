@@ -10,6 +10,9 @@ It is possible to use this library to validate RDF models from any of those RDF 
 This interface is being used by SHACLEX.
 
 [![Build Status](https://travis-ci.org/weso/srdf.svg?branch=master)](https://travis-ci.org/weso/srdf)
+[![codecov](https://codecov.io/gh/weso/srdf/branch/master/graph/badge.svg)](https://codecov.io/gh/weso/srdf)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/67e1af0627934936b1b58796069d2a55)](https://www.codacy.com/gh/weso/srdf?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=weso/srdf&amp;utm_campaign=Badge_Grade)
+
 
 ## Installation and compilation
 
