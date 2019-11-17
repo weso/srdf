@@ -288,7 +288,7 @@ case class Endpoint(endpointIRI: IRI)
         val result = qExec.execSelect()
 
         val prologue = qExec.getQuery.getPrologue
-        val prefixMap: Map[String,String] = prologue.getPrefixMapping.getNsPrefixMap.asScala.toMap
+        // val prefixMap: Map[String,String] = prologue.getPrefixMapping.getNsPrefixMap.asScala.toMap
 
         // TODO: Add prefixes and base to JSON result
 //        val prefixes = PrefixMap(prefixMap.map { case (k,v) => (Prefix(k), IRI(v)) })

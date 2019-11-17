@@ -1,12 +1,11 @@
 package es.weso.rdf
-
 import es.weso.rdf.triples._
 import es.weso.rdf.nodes._
 import es.weso.rdf.PREFIXES._
 import es.weso.rdf.path.SHACLPath
 import io.circe.Json
-import cats._
-import cats.data._
+// import cats._
+// import cats.data._
 import cats.implicits._
 
 /**

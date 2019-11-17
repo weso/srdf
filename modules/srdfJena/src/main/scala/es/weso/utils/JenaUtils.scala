@@ -4,8 +4,7 @@ import org.apache.jena.rdf.model.{Literal, Model, ModelFactory, Property, RDFNod
 import org.apache.jena.sparql.syntax.ElementPathBlock
 import org.apache.jena.riot.system.IRIResolver
 import java.io.ByteArrayInputStream
-
-import org.apache.jena.query.{Query, QueryExecutionFactory, QueryFactory, QuerySolution, ResultSet}
+import org.apache.jena.query.{Query, QueryExecutionFactory, QueryFactory, ResultSet}
 import java.io.StringWriter
 import java.net.URI
 import java.net.URL
