@@ -2,7 +2,8 @@ package es.weso.rdf.jena
 import es.weso.rdf.nodes._
 import es.weso.rdf.nodes.RDFNode
 import es.weso.rdf.triples.RDFTriple
-import scala.jdk.CollectionConverters._
+import es.weso.utils.internal.CollectionCompat
+import es.weso.utils.internal.CollectionCompat.CollectionConverters._
 import scala.util.Try
 import es.weso.rdf._
 import org.apache.jena.rdf.model.{Model, Property, Resource, Statement, RDFNode => JenaRDFNode}
@@ -289,7 +290,8 @@ case class RDFAsJenaModel(model: Model,
         val ls: List[Map[String, RDFNode]] = result.asScala.toList.map(qs => {
           val qsm = new QuerySolutionMap()
           qsm.addAll(qs)
-          qsm.asMap.asScala.view.mapValues(node => jenaNode2RDFNodeUnsafe(node)).toMap
+          CollectionCompat.mapValues(qsm.asMap.asScala.view.toMap)(node => jenaNode2RDFNodeUnsafe(node))
+//          qsm.asMap.asScala.view.mapValues(node => jenaNode2RDFNodeUnsafe(node)).toMap
         })
         ls
       }

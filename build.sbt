@@ -2,7 +2,7 @@ lazy val scala212 = "2.12.10"
 lazy val scala213 = "2.13.1"
 lazy val supportedScalaVersions = List(scala212, scala213)
 
-lazy val utilsVersion         = "0.1.54"
+lazy val utilsVersion         = "0.1.55"
 
 // Dependency versions
 lazy val catsVersion           = "2.0.0"
@@ -26,6 +26,7 @@ lazy val scalaMacrosVersion   = "2.1.1"
 // Dependency modules
 
 lazy val utils             = "es.weso"                    %% "utils"              % utilsVersion
+lazy val sutils            = "es.weso"                    %% "sutils"             % utilsVersion
 
 lazy val catsCore          = "org.typelevel"              %% "cats-core"           % catsVersion
 lazy val catsKernel        = "org.typelevel"              %% "cats-kernel"         % catsVersion
@@ -51,7 +52,6 @@ lazy val srdfMain = project
   .enablePlugins(ScalaUnidocPlugin, SbtNativePackager, WindowsPlugin, JavaAppPackaging, LauncherJarPlugin)
   .settings(commonSettings, packagingSettings, publishSettings, ghPagesSettings, wixSettings)
   .aggregate(srdfJena, srdf4j, srdf)
-  .dependsOn(srdfJena, srdf4j, srdf)
   .settings(
     unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(noDocProjects: _*),
     libraryDependencies ++= Seq(
@@ -94,6 +94,7 @@ lazy val srdf = project
       scalaLogging,
       jenaFuseki % Test,
       typesafeConfig % Test,
+      sutils,
       utils,
       jenaArq,
       catsCore,
@@ -111,6 +112,7 @@ lazy val srdf4j = project
     libraryDependencies ++= Seq(
       logbackClassic % Test,
       scalaLogging,
+      sutils,
       utils,
       rdf4j_runtime,
       catsCore,

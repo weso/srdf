@@ -12,7 +12,9 @@ import org.eclipse.rdf4j.rio.RDFFormat._
 import org.eclipse.rdf4j.rio.{RDFFormat, Rio}
 import org.apache.commons.io.input.CharSequenceInputStream
 import scala.util._
-import scala.jdk.CollectionConverters._
+// import scala.jdk.CollectionConverters._
+import es.weso.utils.internal.CollectionCompat
+import es.weso.utils.internal.CollectionCompat.CollectionConverters._
 import RDF4jMapper._
 import es.weso.utils.EitherUtils
 

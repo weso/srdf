@@ -6,7 +6,8 @@ import org.apache.jena.query._
 import es.weso.rdf.nodes._
 import es.weso.rdf.nodes.RDFNode
 import es.weso.rdf.triples.RDFTriple
-import scala.jdk.CollectionConverters._
+import es.weso.utils.internal.CollectionCompat
+import es.weso.utils.internal.CollectionCompat.CollectionConverters._
 import scala.util.{Either, Left, Right, Try}
 import org.apache.jena.rdf.model.Property
 import org.apache.jena.rdf.model.Statement
@@ -18,8 +19,6 @@ import es.weso.rdf.path.SHACLPath
 import io.circe.Json
 import io.circe.parser.parse
 import org.apache.jena.rdf.model.{RDFNode => JenaRDFNode}
-import cats._
-import cats.data._
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import es.weso.rdf.jena.JenaMapper._
@@ -269,7 +268,8 @@ case class Endpoint(endpointIRI: IRI)
           val ls: List[Map[String, RDFNode]] = result.asScala.toList.map(qs => {
             val qsm = new QuerySolutionMap()
             qsm.addAll(qs)
-            qsm.asMap.asScala.view.mapValues(node => jenaNode2RDFNodeUnsafe(node)).toMap
+            CollectionCompat.mapValues(qsm.asMap.asScala.view.toMap)(node => jenaNode2RDFNodeUnsafe(node))
+//            qsm.asMap.asScala.view.mapValues(node => jenaNode2RDFNodeUnsafe(node)).toMap
           })
           ls
         }
@@ -291,8 +291,8 @@ case class Endpoint(endpointIRI: IRI)
         val prefixMap: Map[String,String] = prologue.getPrefixMapping.getNsPrefixMap.asScala.toMap
 
         // TODO: Add prefixes and base to JSON result
-        val prefixes = PrefixMap(prefixMap.map { case (k,v) => (Prefix(k), IRI(v)) })
-        val base = prologue.getBaseURI()
+//        val prefixes = PrefixMap(prefixMap.map { case (k,v) => (Prefix(k), IRI(v)) })
+//        val base = prologue.getBaseURI()
         val outputStream = new ByteArrayOutputStream()
         ResultSetFormatter.outputAsJSON(outputStream, result)
         val jsonStr = new String(outputStream.toByteArray())
