@@ -4,8 +4,8 @@ This module represents a generic and simple RDF interface.
 The ShEx/SHACL library uses only methods provided by this interface so it can be used by different libraries.
 
 It defines 3 traits: 
-- [RDFReader](https://github.com/labra/shaclex/blob/master/modules/srdf/src/main/scala/es/weso/rdf/RDFReader.scala) declares methods to read data from an RDF model
-- [RDFBuilder](https://github.com/labra/shaclex/blob/master/modules/srdf/src/main/scala/es/weso/rdf/RDFBuilder.scala) contains methods to build RDF models. Generate an empty model, add or remove triples.
+- [RDFReader](https://github.com/weso/srdf/blob/master/modules/srdf/src/main/scala/es/weso/rdf/RDFReader.scala) declares methods to read data from an RDF model
+- [RDFBuilder](https://github.com/weso/srdf/blob/master/modules/srdf/src/main/scala/es/weso/rdf/RDFBuilder.scala) contains methods to build RDF models. Generate an empty model, add or remove triples.
 - [RDFReasoner](https://github.com/labra/shaclex/blob/master/modules/srdf/src/main/scala/es/weso/rdf/RDFReasoner.scala) extends an RDFReader with the possibility of extending the model with the triples inferred by some inference engine.
 
 It also defines the main components of RDF which are:
