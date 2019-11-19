@@ -1,16 +1,16 @@
 language: scala
 scala:
-   - 2.13.1
+   - 2.13.0
    - 2.12.10
 
 script:
-  - sbt clean coverage test 
-  - if [[ "$TRAVIS_SCALA_VERSION" != 2.13.* ]];
-    then
-      sbt ++$TRAVIS_SCALA_VERSION docs/makeMicrosite;
-      sbt ++$TRAVIS_SCALA_VERSION coverageReport && codecov;
-    else 
-      echo "Skipping code coverage reporting and docs on 2.13";
+  - sbt clean coverage test coverageReport 
+#  - if [[ "$TRAVIS_SCALA_VERSION" != 2.13.* ]];
+#    then
+#      sbt ++$TRAVIS_SCALA_VERSION docs/makeMicrosite;
+#      sbt ++$TRAVIS_SCALA_VERSION coverageReport && codecov;
+#    else 
+#      echo "Skipping code coverage reporting and docs on 2.13";
  
 
 install:
@@ -32,5 +32,5 @@ jdk:
   - oraclejdk9
   - openjdk11
 
-#after_success:
-#  - bash <(curl -s https://codecov.io/bash)  
+after_success:
+  - bash <(curl -s https://codecov.io/bash)  
