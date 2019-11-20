@@ -7,10 +7,10 @@ import io.circe.Json
 // import cats._
 // import cats.data._
 import cats.implicits._
+import cats.effect._
 
 /**
- * RDFReader can get read RDF data from several sources
- * At this moment, it can parse RDF from <code>CharSequence</code>
+ * RDFReader can read RDF data from several sources like an in-memory model or a SPARQL endpoint
  */
 trait RDFReader {
 

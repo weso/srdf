@@ -1,5 +1,5 @@
 lazy val scala212 = "2.12.10"
-lazy val scala213 = "2.13.0"
+lazy val scala213 = "2.13.1"
 lazy val supportedScalaVersions = List(scala212, scala213)
 
 lazy val utilsVersion         = "0.1.56"
@@ -30,6 +30,7 @@ lazy val utils             = "es.weso"                    %% "utils"            
 lazy val catsCore          = "org.typelevel"              %% "cats-core"           % catsVersion
 lazy val catsKernel        = "org.typelevel"              %% "cats-kernel"         % catsVersion
 lazy val catsMacros        = "org.typelevel"              %% "cats-macros"         % catsVersion
+lazy val catsEffect        = "org.typelevel"              %% "cats-effect"         % catsVersion
 lazy val circeCore         = "io.circe"                   %% "circe-core"          % circeVersion
 lazy val circeGeneric      = "io.circe"                   %% "circe-generic"       % circeVersion
 lazy val circeParser       = "io.circe"                   %% "circe-parser"        % circeVersion
@@ -60,7 +61,7 @@ lazy val srdfMain = project
     ),
     cancelable in Global      := true,
     fork                      := true,
-//    parallelExecution in Test := false,
+    parallelExecution in Test := false,
     crossScalaVersions := Nil,
     publish / skip := true,
     ThisBuild / turbo := true
@@ -75,6 +76,7 @@ lazy val srdf = project
       catsCore,
       catsKernel,
       catsMacros,
+      catsEffect,
       circeCore,
       circeGeneric,
       circeParser,
@@ -97,7 +99,8 @@ lazy val srdf = project
       jenaArq,
       catsCore,
       catsKernel,
-      catsMacros
+      catsMacros,
+      catsEffect
     )
   )
 
@@ -114,7 +117,8 @@ lazy val srdf4j = project
       rdf4j_runtime,
       catsCore,
       catsKernel,
-      catsMacros
+      catsMacros,
+      catsEffect
     )
   )
 

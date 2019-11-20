@@ -5,13 +5,13 @@ scala:
 
 script:
   - sbt clean coverage test coverageReport 
-#  - if [[ "$TRAVIS_SCALA_VERSION" != 2.13.* ]];
-#    then
+  - if [[ "$TRAVIS_SCALA_VERSION" != 2.13.* ]];
+    then
 #      sbt ++$TRAVIS_SCALA_VERSION docs/makeMicrosite;
-#      sbt ++$TRAVIS_SCALA_VERSION coverageReport && codecov;
-#    else 
-#      echo "Skipping code coverage reporting and docs on 2.13";
- 
+      sbt ++$TRAVIS_SCALA_VERSION coverageReport && codecov;
+    else 
+      echo "Skipping code coverage reporting and docs on 2.13";
+    fi  
 
 install:
   - pip install --user codecov
