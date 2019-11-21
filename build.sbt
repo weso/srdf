@@ -46,6 +46,12 @@ lazy val scalaTest         = "org.scalatest"              %% "scalatest"        
 lazy val scalatags         = "com.lihaoyi"                %% "scalatags"           % scalatagsVersion
 lazy val typesafeConfig    = "com.typesafe"               % "config"               % typesafeConfigVersion
 
+def priorTo2_13(scalaVersion: String): Boolean =
+  CrossVersion.partialVersion(scalaVersion) match {
+    case Some((2, minor)) if minor < 13 => true
+    case _                              => false
+  }
+
 
 lazy val srdfMain = project
   .in(file("."))
@@ -188,8 +194,10 @@ lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
     Resolver.bintrayRepo("labra", "maven"),
     Resolver.bintrayRepo("weso", "weso-releases"),
     Resolver.sonatypeRepo("snapshots")
-  )
-)
+  ), 
+  coverageHighlighting := true, 
+  coverageEnabled := priorTo2_13(scalaVersion.value)
+ )
 
 lazy val publishSettings = Seq(
   maintainer      := "Jose Emilio Labra Gayo <labra@uniovi.es>",

@@ -60,24 +60,24 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     }.fold(e => Left(s"Exception: ${e.getMessage}\nBase:$base, format: $format\n$cs"), Right(_))
 
   def fromStringIO(cs: CharSequence, format: String, base: Option[IRI] = None): IO[Either[String, Rdf]] =
-    IO { 
+    IO {
       Try {
-      val m               = ModelFactory.createDefaultModel
-      val str_reader      = new StringReader(cs.toString)
-      val baseURI         = base.getOrElse(IRI(""))
-      val g: Graph        = m.getGraph
-      val dest: StreamRDF = StreamRDFLib.graph(g)
-      val ctx: Context    = null
-      RDFParser.create
-        .source(str_reader)
-        .base(baseURI.str)
-        .labelToNode(LabelToNode.createUseLabelEncoded())
-        .lang(shortnameToLang(format))
-        .context(ctx)
-        .parse(dest)
-      RDFAsJenaModel(m, base)
-    }.fold(e => Left(s"Exception: ${e.getMessage}\nBase:$base, format: $format\n$cs"), Right(_))
-  }
+        val m               = ModelFactory.createDefaultModel
+        val str_reader      = new StringReader(cs.toString)
+        val baseURI         = base.getOrElse(IRI(""))
+        val g: Graph        = m.getGraph
+        val dest: StreamRDF = StreamRDFLib.graph(g)
+        val ctx: Context    = null
+        RDFParser.create
+          .source(str_reader)
+          .base(baseURI.str)
+          .labelToNode(LabelToNode.createUseLabelEncoded())
+          .lang(shortnameToLang(format))
+          .context(ctx)
+          .parse(dest)
+        RDFAsJenaModel(m, base)
+      }.fold(e => Left(s"Exception: ${e.getMessage}\nBase:$base, format: $format\n$cs"), Right(_))
+    }
 
   private def getRDFFormat(formatName: String): Either[String, String] = {
     val supportedFormats: List[String] =
@@ -508,6 +508,17 @@ object RDFAsJenaModel {
 
   def availableFormats: List[String] = {
     RDFLanguages.getRegisteredLanguages().asScala.map(_.getName).toList.distinct
+  }
+
+  def emptyIO: IO[RDFAsJenaModel] = {
+    IO { RDFAsJenaModel(ModelFactory.createDefaultModel) }
+  }
+
+  def fromIRIIO(iri: IRI): IO[Either[String, RDFAsJenaModel]] =
+    IO { fromIRI(iri) }
+
+  def fromStringIO(str: String, format: String, base: Option[IRI] = None): IO[Either[String, RDFAsJenaModel]] = IO {
+    fromString(str, format, base)
   }
 
 }
