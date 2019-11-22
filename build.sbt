@@ -2,7 +2,7 @@ lazy val scala212 = "2.12.10"
 lazy val scala213 = "2.13.1"
 lazy val supportedScalaVersions = List(scala212, scala213)
 
-lazy val utilsVersion         = "0.1.57"
+lazy val utilsVersion         = "0.1.59"
 
 // Dependency versions
 lazy val catsVersion           = "2.0.0"
@@ -195,8 +195,7 @@ lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
     Resolver.bintrayRepo("weso", "weso-releases"),
     Resolver.sonatypeRepo("snapshots")
   ), 
-  coverageHighlighting := priorTo2_13(scalaVersion.value), 
-  coverageEnabled := priorTo2_13(scalaVersion.value)
+  coverageHighlighting := priorTo2_13(scalaVersion.value)
  )
 
 lazy val publishSettings = Seq(
