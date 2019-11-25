@@ -130,4 +130,7 @@ case class Compound(members: List[RDFReader])
   override def rdfReaderName: String = s"Compound"
 
   override def sourceIRI: Option[IRI] = None
+
+  override def triplesWithPredicateObjectIO(p: IRI, o: RDFNode): ESIO[Set[RDFTriple]] = err("Not implemented triplesWithPredicateObjectIO")
+
 }

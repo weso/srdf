@@ -287,6 +287,8 @@ case class RDFAsRDF4jModel(model: Model,
 
   override def rdfReaderName: String = s"RDF4j"
 
+  override def triplesWithPredicateObjectIO(p: IRI, o: RDFNode): ESIO[Set[RDFTriple]] = err("Not implemented triplesWithPredicateObjectIO")
+
 }
 
 

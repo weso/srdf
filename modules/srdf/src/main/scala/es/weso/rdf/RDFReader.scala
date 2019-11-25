@@ -7,6 +7,7 @@ import io.circe.Json
 // import cats._
 // import cats.data._
 import cats.implicits._
+import cats.data.EitherT
 import cats.effect._
 
 /**
@@ -15,9 +16,12 @@ import cats.effect._
 trait RDFReader {
 
   type Rdf <: RDFReader
-  type ES[A] = Either[String,A]  // This is only needed to keep IntelliJ happy
+  type ES[A] = Either[String, A]  // This is only needed to keep IntelliJ happy
+  type ESIO[A] = EitherT[IO, String, A]
   val id: String
+  def fromES[A](e: Either[String,A]): ESIO[A] = EitherT.fromEither(e)
 
+  def err[A](msg: String): ESIO[A] = EitherT.leftT[IO,A](msg)
 
   def availableParseFormats: List[String]
 
@@ -99,6 +103,8 @@ trait RDFReader {
    * @param o object
    */
   def triplesWithPredicateObject(p: IRI, o: RDFNode): Either[String, Set[RDFTriple]]
+
+  def triplesWithPredicateObjectIO(p: IRI, o: RDFNode): ESIO[Set[RDFTriple]]
 
   /**
    * Set of RDFTriples that relate two nodes by a SHACL path
@@ -220,6 +226,11 @@ trait RDFReader {
   def subjectsWithType(t: RDFNode): Either[String, Set[RDFNode]] = {
     triplesWithPredicateObject(`rdf:type`, t).map(_.map(_.subj))
   }
+
+  def subjectsWithTypeIO(t: RDFNode): ESIO[Set[RDFNode]] = {
+    triplesWithPredicateObjectIO(`rdf:type`, t).map(_.map(_.subj))
+  }
+
 
   def subjectsWithProperty(pred: IRI): Either[String, Set[RDFNode]] = {
     triplesWithPredicate(pred).map(_.map(_.subj))

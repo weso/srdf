@@ -26,6 +26,7 @@ import org.apache.jena.riot.system.{StreamRDF, StreamRDFLib}
 import org.apache.jena.sparql.util.Context
 import es.weso.utils.EitherUtils._
 import cats.effect._
+import cats.data.EitherT
 
 case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Option[IRI] = None)
     extends RDFReader
@@ -421,6 +422,9 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
   def addModel(model: Model): RDFAsJenaModel =
     this.copy(model = this.model.add(model))
 
+  override def triplesWithPredicateObjectIO(p: IRI, o: RDFNode): ESIO[Set[RDFTriple]] = 
+    fromES(triplesWithPredicateObject(p,o))
+
 }
 
 object RDFAsJenaModel {
@@ -514,11 +518,10 @@ object RDFAsJenaModel {
     IO { RDFAsJenaModel(ModelFactory.createDefaultModel) }
   }
 
-  def fromIRIIO(iri: IRI): IO[Either[String, RDFAsJenaModel]] =
-    IO { fromIRI(iri) }
+  def fromIRIIO(iri: IRI): EitherT[IO, String, RDFAsJenaModel] =
+    EitherT(IO(fromIRI(iri)))
 
-  def fromStringIO(str: String, format: String, base: Option[IRI] = None): IO[Either[String, RDFAsJenaModel]] = IO {
-    fromString(str, format, base)
-  }
+  def fromStringIO(str: String, format: String, base: Option[IRI] = None): EitherT[IO, String, RDFAsJenaModel] = 
+    EitherT(IO(fromString(str, format, base)))
 
 }

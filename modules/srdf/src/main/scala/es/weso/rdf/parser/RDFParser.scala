@@ -5,15 +5,11 @@ import scala.util._
 import es.weso.rdf._
 import es.weso.rdf.PREFIXES._
 import es.weso.rdf.triples.RDFTriple
-import cats._
 import cats.data._
 import cats.implicits._
+import cats.effect._
 
-/**
- * Exceptions raised by the RDFParser
- * case class RDFParserException(msg: String)
- * extends Exception(s"RDFParserException: " + msg)
- */
+private[weso] case class Config(node: RDFNode,rdf: RDFReader) 
 
 /**
  * Obtains data from an RDFReader
@@ -31,26 +27,46 @@ trait RDFParser {
    */
   type RDFParser[A] = EitherT[R, Err, A] 
 
-  case class Config(node: RDFNode,rdf: RDFReader) 
+
   type Err = String
 
-  type R[A] = ReaderT[Id,Config,A]
+  type R[A] = ReaderT[IO,Config,A]
 
   def lift[A](r: R[A]): RDFParser[A] = EitherT.liftF(r)
 
-  def getRDF: RDFParser[RDFReader] = {
-    lift(ReaderT.ask[Id,Config].map(_.rdf))
+  def liftIO[A](io: IO[A]): RDFParser[A] = {
+    lift(ReaderT.liftF(io))
   }
 
+  def getRDF: RDFParser[RDFReader] = {
+    lift(ReaderT.ask[IO,Config].map(_.rdf))
+  }
+
+  def info(msg: String): RDFParser[Unit] = {
+    lift(ReaderT.liftF(IO(println(msg))))
+  }
+
+
   def getNode: RDFParser[RDFNode] = {
-    lift(ReaderT.ask[Id,Config].map(_.node))
+    lift(ReaderT.ask[IO,Config].map(_.node))
   }
 
   def fromEither[A](e: Either[Err,A]): RDFParser[A] = 
     EitherT.fromEither[R](e)
 
+  def fromEitherT[A](e: EitherT[IO,Err,A]): RDFParser[A] = for {
+    either <- liftIO(e.value)
+    v <- either.fold(err => parseFail(err), v => ok(v))
+  } yield v
+
   def withNode[A](n: RDFNode, parser: RDFParser[A]): RDFParser[A] = {
     def localEnv(cfg: Config): Config = cfg.copy(node = n)
+    val f: R[Either[Err,A]] = ReaderT.local(localEnv)(parser.value)
+    EitherT(f)
+  }
+
+  def withRdf[A](rdf: RDFReader, parser: RDFParser[A]): RDFParser[A] = {
+    def localEnv(cfg: Config): Config = cfg.copy(rdf = rdf)
     val f: R[Either[Err,A]] = ReaderT.local(localEnv)(parser.value)
     EitherT(f)
   }
@@ -695,5 +711,9 @@ trait RDFParser {
     iris <- irisFromPredicate(p)
   } yield iris.map(maker(_))
 
+
+  def parse[A](parser: RDFParser[A], node: RDFNode, rdf: RDFReader): IO[Either[Err,A]] = {
+    parser.value.run(Config(node,rdf))
+  }
 
 }

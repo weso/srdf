@@ -164,4 +164,5 @@ case class RDFFromWeb() extends RDFReader {
 
   override def rdfReaderName: String = s"RDFFromWeb"
 
+  override def triplesWithPredicateObjectIO(p: IRI, o: RDFNode): ESIO[Set[RDFTriple]] = err("Not implemented triplesWithPredicateObjectIO")
 }

@@ -20,6 +20,7 @@ import io.circe.Json
 import io.circe.parser.parse
 import org.apache.jena.rdf.model.{RDFNode => JenaRDFNode}
 import cats.implicits._
+import cats.data.EitherT
 import com.typesafe.scalalogging.LazyLogging
 import es.weso.rdf.jena.JenaMapper._
 import es.weso.utils.EitherUtils
@@ -339,6 +340,8 @@ case class Endpoint(endpointIRI: IRI)
     Left(s"Unimplemented isIsomorphicWith between endpoints")
 
   override def rdfReaderName: String = s"Endpoint($endpoint)"
+
+  override def triplesWithPredicateObjectIO(p: IRI, o: RDFNode): ESIO[Set[RDFTriple]] = err("Not implemented triplesWithPredicateObjectIO")
 
 }
 
