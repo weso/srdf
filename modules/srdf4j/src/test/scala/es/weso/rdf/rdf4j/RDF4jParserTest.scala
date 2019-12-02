@@ -15,7 +15,7 @@ class RDF4jParserTest extends FunSpec with Matchers with EitherValues with Optio
           |:x :p :y .
           |:y a 1 .
         """.stripMargin
-      val mayberdf = RDFAsRDF4jModel.fromChars(str,"Turtle",None)
+      val mayberdf = RDFAsRDF4jModel.fromChars(str,"Turtle",None).value.unsafeRunSync
       mayberdf match {
         case Left(str) => fail(s"Error parsing: $str")
         case Right(rdf) => rdf.getNumberOfStatements().right.value should be(2)
@@ -30,7 +30,7 @@ class RDF4jParserTest extends FunSpec with Matchers with EitherValues with Optio
           |:x :p :y .
           |:y a 1 .
         """.stripMargin
-      val mayberdf = RDFAsRDF4jModel.fromChars(str,"Turtle",None)
+      val mayberdf = RDFAsRDF4jModel.fromChars(str,"Turtle",None).value.unsafeRunSync
       mayberdf match {
         case Left(str) => fail(s"Error parsing: $str")
         case Right(rdf) => {
@@ -46,7 +46,7 @@ class RDF4jParserTest extends FunSpec with Matchers with EitherValues with Optio
           |:x :p :y .
           |:y a 1 .
         """.stripMargin
-      val mayberdf = RDFAsRDF4jModel.fromChars(str,"Turtle",None)
+      val mayberdf = RDFAsRDF4jModel.fromChars(str,"Turtle",None).value.unsafeRunSync
       mayberdf match {
         case Left(str) => fail(s"Error parsing: $str")
         case Right(rdf) => {
@@ -63,7 +63,7 @@ class RDF4jParserTest extends FunSpec with Matchers with EitherValues with Optio
           |:x :p :y .
           |:y a 1 .
         """.stripMargin
-      val mayberdf = RDFAsRDF4jModel.fromChars(str,"Turtle",None)
+      val mayberdf = RDFAsRDF4jModel.fromChars(str,"Turtle",None).value.unsafeRunSync
       mayberdf match {
         case Left(str) => fail(s"Error parsing: $str")
         case Right(rdf) => {

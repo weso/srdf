@@ -521,7 +521,16 @@ object RDFAsJenaModel {
   def fromIRIIO(iri: IRI): EitherT[IO, String, RDFAsJenaModel] =
     EitherT(IO(fromIRI(iri)))
 
+  def fromURIIO(uri: String, format: String = "TURTLE", base: Option[IRI] = None): EitherT[IO, String, RDFAsJenaModel] = {
+    EitherT(IO(fromURI(uri,format,base)))
+  }
+
+
   def fromStringIO(str: String, format: String, base: Option[IRI] = None): EitherT[IO, String, RDFAsJenaModel] = 
     EitherT(IO(fromString(str, format, base)))
+
+  def fromFileIO(file: File, format: String, base: Option[IRI] = None): EitherT[IO, String, RDFAsJenaModel] = 
+    EitherT(IO(fromFile(file, format, base)))
+
 
 }
