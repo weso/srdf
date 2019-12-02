@@ -5,6 +5,8 @@ import es.weso.rdf.jena.RDFAsJenaModel
 import es.weso.rdf.nodes.IRI
 // import es.weso.shapeMaps.ShapeMap
 import es.weso.utils.FileUtils
+import cats.data.EitherT
+import cats.effect.IO
 import org.scalatest._
 
 import scala.util.{Either, Left, Right, Try}
@@ -67,8 +69,9 @@ trait ValidateManifest extends FunSpec with Matchers with TryValues with OptionV
     case _ => fail(s"Unsupported entry type: ${e.entryType}")
   }
 
-  def getContents(name: String, folder: String, value: Option[IRI]): Either[String,String] = value match {
-    case None => Left(s"No value for $name")
+  def getContents(name: String, folder: String, value: Option[IRI]): EitherT[IO, String, String] = 
+  value match {
+    case None => EitherT.leftT[IO,String](s"No value for $name")
     case Some(iri) => FileUtils.getContents(folder + "/" + iri.str).map(_.toString)
   }
 

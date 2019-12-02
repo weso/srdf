@@ -2,7 +2,7 @@ lazy val scala212 = "2.12.10"
 lazy val scala213 = "2.13.1"
 lazy val supportedScalaVersions = List(scala212, scala213)
 
-lazy val utilsVersion         = "0.1.60"
+lazy val utilsVersion         = "0.1.61"
 
 // Dependency versions
 lazy val catsVersion           = "2.0.0"

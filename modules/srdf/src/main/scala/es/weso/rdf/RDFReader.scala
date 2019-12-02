@@ -17,8 +17,10 @@ trait RDFReader {
 
   type Rdf <: RDFReader
   type ES[A] = Either[String, A]  // This is only needed to keep IntelliJ happy
+
   type ESIO[A] = EitherT[IO, String, A]
   val id: String
+
   def fromES[A](e: Either[String,A]): ESIO[A] = EitherT.fromEither(e)
 
   def err[A](msg: String): ESIO[A] = EitherT.leftT[IO,A](msg)

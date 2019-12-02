@@ -5,7 +5,6 @@ import es.weso.rdf._
 import es.weso.rdf.jena.RDFAsJenaModel
 import es.weso.rdf.nodes._
 import es.weso.rdf.parser.RDFParser
-import es.weso.utils.FileUtilsIO._
 import es.weso.utils.FileUtils._
 import ManifestPrefixes._
 import cats.data._
@@ -357,8 +356,8 @@ object RDF2Manifest extends LazyLogging {
     val noIri : Option[IRI] = None
     val n : RDFNode = IRI("http://internal.base/")
     for {
-      cs  <- getContentsIO(fileName)
-      rdf <- getRDF(cs, format, base)
+      cs  <- getContents(fileName)
+      rdf <- getRDF(cs.toString, format, base)
       iriBase <- base match {
         case None      => { 
           val s: EitherT[IO, String,Option[IRI]] = EitherT.pure(noIri) 
