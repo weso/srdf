@@ -2,7 +2,7 @@ lazy val scala212 = "2.12.10"
 lazy val scala213 = "2.13.1"
 lazy val supportedScalaVersions = List(scala212, scala213)
 
-lazy val utilsVersion         = "0.1.61"
+lazy val utilsVersion         = "0.1.63"
 
 // Dependency versions
 lazy val catsVersion           = "2.0.0"
@@ -169,12 +169,14 @@ lazy val wixSettings = Seq(
 lazy val compilationSettings = Seq(
   scalaVersion := scala213,
   // format: off
+  javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   scalacOptions ++= Seq(
     "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
     "-encoding", "utf-8",                // Specify character encoding used by source files.
     "-explaintypes",                     // Explain type errors in more detail.
     "-feature",                          // Emit warning and location for usages of features that should be imported explicitly.  "-encoding", "UTF-8",
     "-language:_",
+    "-target:jvm-1.8",
     "-unchecked",                        // Enable additional warnings where generated code depends on assumptions.
     "-Xlint",
     "-Yrangepos",
