@@ -9,8 +9,10 @@ import org.scalatest._
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
 import RDF4jUtils._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class RDF4jUtilsTest extends FunSpec with Matchers with EitherValues with OptionValues {
+class RDF4jUtilsTest extends AnyFunSpec with Matchers with EitherValues with OptionValues {
 
   describe(s"subjectsFromPath") {
     it(s"Should check happy path") {

@@ -5,8 +5,10 @@ import es.weso.rdf.nodes.IRI
 import es.weso.rdf.path.PredicatePath
 import org.apache.jena.sparql.path.{P_Link, P_OneOrMoreN}
 import org.scalatest._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class JenaUtilsTest extends FunSpec with Matchers with EitherValues {
+class JenaUtilsTest extends AnyFunSpec with Matchers with EitherValues {
 
   describe("hasClass") {
     it("check hasClass") {

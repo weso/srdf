@@ -3,8 +3,10 @@ package es.weso.rdf.parser
 import es.weso.rdf.jena.RDFAsJenaModel
 import es.weso.rdf.nodes.{BNode, IRI}
 import org.scalatest._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class RDFParserBNodesTest extends FunSpec with Matchers with RDFParser with EitherValues {
+class RDFParserBNodesTest extends AnyFunSpec with Matchers with RDFParser with EitherValues {
 
   describe("RDFParser for BNodes") {
 

@@ -4,9 +4,11 @@ import java.nio.file.Paths
 
 import com.typesafe.config.{Config, ConfigFactory}
 import es.weso.rdf.nodes._
-import org.scalatest.{EitherValues, FunSpec, Matchers}
+import org.scalatest.EitherValues
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class ImportsTest extends FunSpec with JenaBased with Matchers with EitherValues {
+class ImportsTest extends AnyFunSpec with JenaBased with Matchers with EitherValues {
 
   val conf: Config = ConfigFactory.load()
   val rdfFolderStr = conf.getString("rdfFolder")

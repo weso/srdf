@@ -5,8 +5,10 @@ import es.weso.rdf.nodes.{BNode, IRI}
 import es.weso.rdf.triples.RDFTriple
 import org.scalatest._
 import es.weso.utils.NormalizeBNodes._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class NormalizeBNodesTest extends FunSpec with Matchers with EitherValues {
+class NormalizeBNodesTest extends AnyFunSpec with Matchers with EitherValues {
   describe(s"Parse RDF with blank nodes") {
     it(s"Should show RDF") {
       val str =

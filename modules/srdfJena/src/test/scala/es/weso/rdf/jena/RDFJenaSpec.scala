@@ -1,14 +1,16 @@
 package es.weso.rdf.jena
 
-import org.scalatest.{EitherValues, FunSpec, Matchers}
+import org.scalatest.EitherValues
 import es.weso.rdf.triples.RDFTriple
 import es.weso.rdf.nodes._
 import org.apache.jena.rdf.model.ModelFactory
 import es.weso.rdf._
 import es.weso.rdf.PREFIXES._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
 class RDFJenaSpec
-  extends FunSpec with JenaBased with Matchers with EitherValues {
+  extends AnyFunSpec with JenaBased with Matchers with EitherValues {
   describe("Adding triples") {
     it("should be able to add a single triple with IRIs") {
       val emptyModel = ModelFactory.createDefaultModel
