@@ -4,7 +4,7 @@ import org.apache.jena.rdf.model.ModelFactory
 import java.io.ByteArrayInputStream
 import org.apache.jena.rdf.model.Model
 import java.io.InputStream
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 
 trait JenaBased extends Matchers {
 

@@ -1,14 +1,14 @@
-package es.weso.rdftriple.jenaMapper
-import org.scalatest.FunSpec
-import org.apache.jena.rdf.model.ModelFactory
-import org.scalatest.Matchers
+package es.weso.rdftriple.jenaMapper
+import org.apache.jena.rdf.model.ModelFactory
 import es.weso.rdf.nodes._
 import es.weso.rdf.jena.JenaMapper._
 import es.weso.rdf.jena._
 import es.weso.rdf.triples.RDFTriple
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
 class JenaMapperTest
-  extends FunSpec
+  extends AnyFunSpec
   with JenaBased
   with Matchers {
 
