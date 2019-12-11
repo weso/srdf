@@ -169,22 +169,14 @@ trait RDFParser {
     objectsFromPredicate(`rdf:type`)
 
   def io2r[A](x: IO[A]): R[A] = ReaderT.liftF[IO,Config,A](x)
+
+  def fromIO[A](x: IO[A]): RDFParser[A] = EitherT.liftF(io2r(x))
+
   def stream2list[A](st: Stream[IO,A]): IO[Vector[A]] = st.compile.toVector
   // def ioVector[A](vs: IO[Vector[A]]): 
   
-  def fromRDFReadStream[A](r: EitherT[IO, Throwable, Stream[IO,A]]): RDFParser[Vector[A]] = {
-    val x: IO[Either[Throwable,Stream[IO,A]]] = r.value
-    val xx: IO[Either[Throwable, Vector[A]]] = for {
-      e <- x 
-      either <- x.map(_.map(stream2list(_)))
-      // r <- either.fold(t => IO.pure(t), vs => vs.sequence)
-    } yield either
-    val xxx: R[Either[Throwable, Seq[A]]] = io2r(xx)
-    val result: EitherT[R,Throwable,Seq[A]] = for {
-      e <- EitherT.liftF(xxx)
-      v <- EitherT.fromEither[R](e)
-    } yield v
-    result
+  def fromRDFStream[A](r: Stream[IO,A]): RDFParser[Vector[A]] = {
+    fromIO(r.compile.toVector)
   }
 
   /**
@@ -198,7 +190,7 @@ trait RDFParser {
    for {
     rdf <- getRDF
     n <- getNode 
-    ts <- fromRDFReadStream(rdf.triplesWithSubjectPredicate(n,p))
+    ts <- fromRDFStream(rdf.triplesWithSubjectPredicate(n,p))
     r <- ts.size match {
       case 0 => parseFail("objectFromPredicate: Not found triples with subject " + n + " and predicate " + p)
       case 1 => parseOk(ts.head.obj)
@@ -216,7 +208,7 @@ trait RDFParser {
    for {
     rdf <- getRDF
     n <- getNode
-    triples <- fromRDFReadStream(rdf.triplesWithSubjectPredicate(n, p))
+    triples <- fromRDFStream(rdf.triplesWithSubjectPredicate(n, p))
     r <- parseOk(objectsFromTriples(triples.toSet))
    } yield r
   
@@ -279,7 +271,7 @@ trait RDFParser {
     for {
       n <- getNode
       rdf <- getRDF
-      ts <- fromRDFReadStream(rdf.triplesWithSubjectPredicate(n, p))
+      ts <- fromRDFStream(rdf.triplesWithSubjectPredicate(n, p))
       r <- ts.size match {
         case 0 => parseFail("integerLiteralFromPredicate: Not found triples with subject " + n + " and predicate " + p)
         case 1 => getIntegerLiteral(ts.head)
@@ -291,7 +283,7 @@ trait RDFParser {
    for {
     rdf <- getRDF
     n <- getNode
-    ts <- fromRDFReadStream(rdf.triplesWithSubjectPredicate(n, p))
+    ts <- fromRDFStream(rdf.triplesWithSubjectPredicate(n, p))
     // val zero : Either[String,List[Int]] = Right(List())
     r <- fromEither {
       def cmb(ls: Either[Throwable, List[Int]], node: RDFNode): Either[Throwable, List[Int]] =

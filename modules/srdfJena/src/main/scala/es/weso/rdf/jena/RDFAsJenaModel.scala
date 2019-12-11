@@ -42,7 +42,7 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
   def availableParseFormats: List[String]     = RDFAsJenaModel.availableFormats
   def availableSerializeFormats: List[String] = RDFAsJenaModel.availableFormats
 
-  override def fromString(cs: CharSequence, format: String, base: Option[IRI] = None): Either[String, Rdf] =
+  override def fromString(cs: CharSequence, format: String, base: Option[IRI] = None): RDFRead[Rdf] =
     Try {
       val m               = ModelFactory.createDefaultModel
       val str_reader      = new StringReader(cs.toString)
@@ -397,7 +397,7 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     }
   }
 
-  override def merge(other: RDFReader): Either[String, Rdf] = other match {
+  /*override def merge(other: RDFReader): Either[String, Rdf] = other match {
     case jenaRdf: RDFAsJenaModel =>
       Right(RDFAsJenaModel(this.model.add(jenaRdf.normalizeBNodes.model)))
     case _ => {
@@ -412,19 +412,19 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
         rdf <- ts.foldLeft(zero)(cmb)
       } yield rdf
     }
-  }
+  }*/
 
-  override def asRDFBuilder: Either[String, RDFBuilder] =
-    Right(this)
+  override def asRDFBuilder: RDFRead[RDFBuilder] =
+    ??? // Right(this)
 
   override def rdfReaderName: String = s"ApacheJena"
 
   def addModel(model: Model): RDFAsJenaModel =
     this.copy(model = this.model.add(model))
 
-  override def triplesWithPredicateObjectIO(p: IRI, o: RDFNode): ESIO[Set[RDFTriple]] = 
-    fromES(triplesWithPredicateObject(p,o))
-
+  override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] = ???
+  
+  override def merge(other: RDFReader): Either[String,RDFAsJenaModel] = ???
 }
 
 object RDFAsJenaModel {
@@ -532,5 +532,5 @@ object RDFAsJenaModel {
   def fromFileIO(file: File, format: String, base: Option[IRI] = None): EitherT[IO, String, RDFAsJenaModel] = 
     EitherT(IO(fromFile(file, format, base)))
 
-
+  
 }

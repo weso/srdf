@@ -341,8 +341,6 @@ case class Endpoint(endpointIRI: IRI)
 
   override def rdfReaderName: String = s"Endpoint($endpoint)"
 
-  override def triplesWithPredicateObjectIO(p: IRI, o: RDFNode): ESIO[Set[RDFTriple]] = err("Not implemented triplesWithPredicateObjectIO")
-
 }
 
 object Endpoint {
