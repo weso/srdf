@@ -58,9 +58,9 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
         .context(ctx)
         .parse(dest)
       RDFAsJenaModel(m, base)
-    }.fold(e => Left(s"Exception: ${e.getMessage}\nBase:$base, format: $format\n$cs"), Right(_))
+    }.fold(e => err(s"Exception: ${e.getMessage}\nBase:$base, format: $format\n$cs"), ok(_))
 
-  def fromStringIO(cs: CharSequence, format: String, base: Option[IRI] = None): IO[Either[String, Rdf]] =
+/*  def fromStringIO(cs: CharSequence, format: String, base: Option[IRI] = None): IO[Either[String, Rdf]] =
     IO {
       Try {
         val m               = ModelFactory.createDefaultModel
@@ -78,7 +78,7 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
           .parse(dest)
         RDFAsJenaModel(m, base)
       }.fold(e => Left(s"Exception: ${e.getMessage}\nBase:$base, format: $format\n$cs"), Right(_))
-    }
+    } */
 
   private def getRDFFormat(formatName: String): Either[String, String] = {
     val supportedFormats: List[String] =
@@ -89,16 +89,21 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     }
   }
 
-  override def serialize(formatName: String, base: Option[IRI]): Either[String, String] =
+  override def serialize(formatName: String, base: Option[IRI]): RDFRead[String] = 
+  Try { 
     for {
       format <- getRDFFormat(formatName)
-      str <- Try {
+      str = {
         val out              = new ByteArrayOutputStream()
         val relativizedModel = JenaUtils.relativizeModel(model, base.map(_.uri))
         relativizedModel.write(out, format)
         out.toString
-      }.fold(e => Left(s"Error serializing RDF to format $formatName: $e"), Right(_))
+      }
     } yield str
+  }.fold(e => err(s"Error serializing RDF to format $formatName: $e"), 
+  _.fold(e => err(s"Format $formatName not found: $e"), 
+  ok(_))
+  )
 
   // TODO: this implementation only returns subjects
   override def iris(): Either[String, Set[IRI]] = {
@@ -180,21 +185,21 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     EitherUtils.sequence(ls.toList.map(st => statement2triple(st))).map(_.toSet)
   }
 
-  override def triplesWithPredicate(node: IRI): Either[String, Set[RDFTriple]] =
+  override def triplesWithPredicate(node: IRI): RDFStream[RDFTriple] =
     for {
       pred <- rdfNode2Property(node, model, base)
       ss   <- triplesPredicate(pred, model)
       ts   <- toRDFTriples(ss)
     } yield ts
 
-  override def triplesWithObject(node: RDFNode): Either[String, Set[RDFTriple]] =
+  override def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] =
     for {
       r  <- rdfNode2Resource(node, model, base)
       ss <- triplesObject(r, model)
       ts <- toRDFTriples(ss)
     } yield ts
 
-  override def triplesWithPredicateObject(p: IRI, o: RDFNode): Either[String, Set[RDFTriple]] =
+  override def triplesWithPredicateObject(p: IRI, o: RDFNode): RDFStream[RDFTriple] =
     for {
       pred <- rdfNode2Property(p, model, base)
       obj  <- rdfNode2Resource(o, model, base)
@@ -273,7 +278,7 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     IRI(model.expandPrefix(str))
   } */
 
-  override def empty: Rdf = {
+  override def empty: RDFRead[Rdf] = {
     RDFAsJenaModel.empty
   }
 
@@ -360,15 +365,15 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     case _ => Left(s"Cannot compare RDFAsJenaModel with reader of different type: ${other.getClass.toString}")
   }
 
-  def normalizeBNodes: Rdf = {
+  /* def normalizeBNodes: Rdf = {
     NormalizeBNodes.normalizeBNodes(this, this.empty)
-  }
+  } */
 
   /**
     * Apply owl:imports closure to an RDF source
     * @return new RDFReader
     */
-  override def extendImports(): Either[String, Rdf] =
+  override def extendImports(): RDFBuild[Rdf] =
     for {
       imports <- getImports
       newRdf  <- extendImports(this, imports, List(IRI("")))
@@ -376,15 +381,15 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
 
   private lazy val owlImports = IRI("http://www.w3.org/2002/07/owl#imports")
 
-  private def getImports: Either[String, List[IRI]] =
+  private def getImports: RDFBuild[List[IRI]] =
     for {
       ts <- triplesWithPredicate(owlImports)
       os <- sequence(ts.map(_.obj.toIRI).toList)
     } yield os
 
-  private def extendImports(rdf: Rdf, imports: List[IRI], visited: List[IRI]): Either[String, Rdf] = {
+  private def extendImports(rdf: Rdf, imports: List[IRI], visited: List[IRI]): RDFBuild[Rdf] = {
     imports match {
-      case Nil => Right(rdf)
+      case Nil => ok(rdf)
       case iri :: rest =>
         if (visited contains iri)
           extendImports(rdf, rest, visited)
@@ -396,6 +401,19 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
           } yield restRdf
     }
   }
+
+
+  override def asRDFBuilder: RDFRead[RDFBuilder] =
+    err(s"Not implemented asRDFBuilder") // Right(this)
+
+  override def rdfReaderName: String = s"ApacheJena"
+
+  def addModel(model: Model): RDFAsJenaModel =
+    this.copy(model = this.model.add(model))
+
+  override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] = err(s"Not implemented yet hasPredicateWithSubject")
+  
+  override def merge(other: RDFReader): RDFBuild[RDFAsJenaModel] = err(s"Not implemented yet merge")
 
   /*override def merge(other: RDFReader): Either[String, Rdf] = other match {
     case jenaRdf: RDFAsJenaModel =>
@@ -414,30 +432,19 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     }
   }*/
 
-  override def asRDFBuilder: RDFRead[RDFBuilder] =
-    ??? // Right(this)
-
-  override def rdfReaderName: String = s"ApacheJena"
-
-  def addModel(model: Model): RDFAsJenaModel =
-    this.copy(model = this.model.add(model))
-
-  override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] = ???
-  
-  override def merge(other: RDFReader): Either[String,RDFAsJenaModel] = ???
 }
 
 object RDFAsJenaModel {
 
-  def apply(): RDFAsJenaModel = {
+/*  def apply(): RDFAsJenaModel = {
     RDFAsJenaModel.empty
+  } */
+
+  def empty: IO[RDFAsJenaModel] = {
+    IO(RDFAsJenaModel(ModelFactory.createDefaultModel))
   }
 
-  def empty: RDFAsJenaModel = {
-    RDFAsJenaModel(ModelFactory.createDefaultModel)
-  }
-
-  def fromIRI(iri: IRI): Either[String, RDFAsJenaModel] = {
+  def fromIRI(iri: IRI): IO[RDFAsJenaModel] = {
     Try {
       // We delegate RDF management to Jena (content-negotiation and so...)
       // RDFDataMgr.loadModel(iri.str)
@@ -448,12 +455,10 @@ object RDFAsJenaModel {
       val ctx: Context    = null
       RDFParser.create.source(iri.str).labelToNode(LabelToNode.createUseLabelEncoded()).context(ctx).parse(dest)
       m
-    }.toEither
-      .leftMap(e => s"Exception reading RDF from ${iri.show}: ${e.getMessage}")
-      .map(model => RDFAsJenaModel(model))
+    }.fold(e => IO.raiseError(e), model => IO(RDFAsJenaModel(model)))
   }
 
-  def fromURI(uri: String, format: String = "TURTLE", base: Option[IRI] = None): Either[String, RDFAsJenaModel] = {
+  def fromURI(uri: String, format: String = "TURTLE", base: Option[IRI] = None): IO[RDFAsJenaModel] = {
     val baseURI = base.getOrElse(IRI(FileUtils.currentFolderURL))
     Try {
       val m = ModelFactory.createDefaultModel()
@@ -470,10 +475,10 @@ object RDFAsJenaModel {
         .parse(dest)
       // RDFAsJenaModel(JenaUtils.relativizeModel(m), Some(IRI(uri)))
       RDFAsJenaModel(m, base, Some(IRI(uri)))
-    }.fold(e => Left(s"Exception accessing uri $uri: ${e.getMessage}"), (Right(_)))
+    }.fold(e => IO.raiseError(e), IO(_))
   }
 
-  def fromFile(file: File, format: String, base: Option[IRI] = None): Either[String, RDFAsJenaModel] = {
+  def fromFile(file: File, format: String, base: Option[IRI] = None): IO[RDFAsJenaModel] = {
     val baseURI = base.getOrElse(IRI(""))
     Try {
       val m               = ModelFactory.createDefaultModel()
@@ -492,16 +497,18 @@ object RDFAsJenaModel {
 
       // RDFAsJenaModel(JenaUtils.relativizeModel(m), Some(IRI(file.toURI)))
       RDFAsJenaModel(m, base, Some(IRI(file.toURI)))
-    }.fold(e => Left(s"Exception parsing RDF from file ${file.getName}: ${e.getMessage}"), Right(_))
+    }.fold(e => IO.raiseError(e), IO(_))
   }
 
-  def fromString(str: String, format: String, base: Option[IRI] = None): Either[String, RDFAsJenaModel] = {
+  def fromString(str: String, format: String, base: Option[IRI] = None): IO[RDFAsJenaModel] = {
     fromChars(str, format, base)
   }
 
-  def fromChars(cs: CharSequence, format: String, base: Option[IRI] = None): Either[String, RDFAsJenaModel] = {
-    RDFAsJenaModel.empty.fromString(cs, format, base)
-  }
+  def fromChars(cs: CharSequence, format: String, base: Option[IRI] = None
+  ): IO[RDFAsJenaModel] = for {
+    empty <- RDFAsJenaModel.empty
+    newRdf <- empty.fromString(cs, format, base)
+  } yield newRdf
 
   def extractModel(rdf: RDFAsJenaModel): Model = {
     rdf match {
@@ -514,23 +521,4 @@ object RDFAsJenaModel {
     RDFLanguages.getRegisteredLanguages().asScala.map(_.getName).toList.distinct
   }
 
-  def emptyIO: IO[RDFAsJenaModel] = {
-    IO { RDFAsJenaModel(ModelFactory.createDefaultModel) }
-  }
-
-  def fromIRIIO(iri: IRI): EitherT[IO, String, RDFAsJenaModel] =
-    EitherT(IO(fromIRI(iri)))
-
-  def fromURIIO(uri: String, format: String = "TURTLE", base: Option[IRI] = None): EitherT[IO, String, RDFAsJenaModel] = {
-    EitherT(IO(fromURI(uri,format,base)))
-  }
-
-
-  def fromStringIO(str: String, format: String, base: Option[IRI] = None): EitherT[IO, String, RDFAsJenaModel] = 
-    EitherT(IO(fromString(str, format, base)))
-
-  def fromFileIO(file: File, format: String, base: Option[IRI] = None): EitherT[IO, String, RDFAsJenaModel] = 
-    EitherT(IO(fromFile(file, format, base)))
-
-  
 }

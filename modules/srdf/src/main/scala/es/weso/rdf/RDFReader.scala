@@ -26,6 +26,8 @@ trait RDFReader {
   def err[A](msg: String): RDFRead[A] = 
       IO.raiseError(RDFException.fromString(msg))
 
+  def ok[A](x: A): RDFRead[A] = IO(x)
+
   def errStream[A](msg: String): RDFStream[A] =
       Stream.raiseError[IO](RDFException.fromString(msg))
       
