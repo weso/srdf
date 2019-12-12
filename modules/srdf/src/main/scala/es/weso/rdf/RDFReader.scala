@@ -20,19 +20,6 @@ trait RDFReader {
 
   val id: String
 
-  def fromES[A](e: Either[String,A]): RDFRead[A] = 
-     IO.fromEither(e.leftMap(RDFException.fromString(_)))
-
-  def err[A](msg: String): RDFRead[A] = 
-      IO.raiseError(RDFException.fromString(msg))
-
-  def ok[A](x: A): RDFRead[A] = IO(x)
-
-  def errStream[A](msg: String): RDFStream[A] =
-      Stream.raiseError[IO](RDFException.fromString(msg))
-      
-  def streamFromLazyList[A](ls: LazyList[A]): Stream[IO,A] = Stream.emits(ls)
-
   def availableParseFormats: List[String]
 
   def availableSerializeFormats: List[String]
