@@ -13,13 +13,9 @@ import java.net.URI
 import java.net.URL
 import java.io.InputStream
 import java.io.FileOutputStream
-
 import org.apache.jena.atlas.AtlasException
 import org.apache.jena.riot.RiotException
-
-// import scala.collection.JavaConverters._
 import es.weso.utils.internal.CollectionCompat.CollectionConverters._
-
 import org.apache.jena.reasoner.ReasonerRegistry
 import org.apache.jena.sparql.core.{TriplePath, Var}
 import org.apache.jena.sparql.path.Path
@@ -27,8 +23,6 @@ import org.apache.jena.util.{FileUtils => FileJenaUtils}
 
 import scala.annotation.tailrec
 import scala.util.Try
-import cats.syntax.either._
-// import org.apache.jena.shared.PrefixMapping
 
 object JenaUtils {
 

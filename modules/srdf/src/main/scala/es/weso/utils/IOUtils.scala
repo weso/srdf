@@ -30,4 +30,10 @@ object IOUtils {
 
  def sequence[A](vs: List[IO[A]]): IO[List[A]] = vs.sequence
   
+ // The following code is inspired by: 
+ // https://stackoverflow.com/questions/49751533/how-to-convert-a-streamio-lista-to-streamio-a
+ def streamFromIOs[A](vs: IO[List[A]]): Stream[IO,A] = { 
+     Stream.eval(vs).flatMap(x => Stream(x: _*))
+ } 
+
 }

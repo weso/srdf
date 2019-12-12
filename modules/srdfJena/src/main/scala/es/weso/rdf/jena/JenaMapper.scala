@@ -60,21 +60,21 @@ object JenaMapper {
                        base: Option[IRI]
                       ): IO[Property] = {
     n match {
-      case i: IRI => IO(m.getProperty(resolve(i,base)))
+      case i: IRI => ok(m.getProperty(resolve(i,base)))
       case _ => err("rdfNode2Property: unexpected node " + n)
     }
   }
 
   def rdfNode2Resource(n: RDFNode,
                        m: JenaModel,
-                       base: Option[IRI]): Either[String, JenaResource] = {
+                       base: Option[IRI]): IO[JenaResource] = {
     n match {
-      case i: IRI => Right(m.getResource(resolve(i,base)))
+      case i: IRI => ok(m.getResource(resolve(i,base)))
       case BNode(id) => {
         // Creates the BNode if it doesn't exist
-        Right(m.createResource(new AnonId(id)))
+        ok(m.createResource(new AnonId(id)))
       }
-      case _ => Left(s"rdfNode2Resource: $n is not a resource")
+      case _ => err(s"rdfNode2Resource: $n is not a resource")
     }
   }
 
@@ -197,43 +197,43 @@ object JenaMapper {
     m.createProperty(resolve(pred,base))
   }
 
-  def triplesSubject(resource: JenaResource, model: JenaModel): Either[String, Set[Statement]] =
+  def triplesSubject(resource: JenaResource, model: JenaModel): IO[Set[Statement]] =
   Try {
     model.listStatements(resource, null, null).toSet.asScala.toSet
-  }.fold(e => Left(s"triplesSubject: Error obtaining statements from $resource"), Right(_))
+  }.fold(e => err(s"triplesSubject: Error obtaining statements from $resource"), ok(_))
 
   def triplesSubjectPredicate(resource: JenaResource,
                               pred: IRI,
                               model: JenaModel,
                               base: Option[IRI]
-                             ): Either[String, Set[Statement]] = Try {
+                             ): IO[Set[Statement]] = Try {
     model.listStatements(resource, createProperty(model,pred,base), null).toSet.asScala.toSet
-  }.fold(e => Left(s"triplesSubjectPredicate: Error obtaining triples from $resource"), Right(_))
+  }.fold(e => err(s"triplesSubjectPredicate: Error obtaining triples from $resource"), ok(_))
 
   def triplesPredicateObject(pred: IRI,
                              resource: JenaResource,
                              model: JenaModel,
                              base: Option[IRI]
-                            ): Set[Statement] = {
-    model.listStatements(null, createProperty(model,pred,base), resource).toSet.asScala.toSet
+                            ): IO[Set[Statement]] = {
+    IO(model.listStatements(null, createProperty(model,pred,base), resource).toSet.asScala.toSet)
   }
 
-  def triplesPredicate(pred: Property, model: JenaModel): Either[String, Set[Statement]] =
+  def triplesPredicate(pred: Property, model: JenaModel): IO[Set[Statement]] =
   Try {
     model.listStatements(null, pred, null).toSet.asScala.toSet
-  }.fold(e => Left(e.getMessage), Right(_))
+  }.fold(e => err(e.getMessage), ok(_))
 
-  def triplesObject(obj: JenaResource, model: JenaModel): Either[String, Set[Statement]] =
+  def triplesObject(obj: JenaResource, model: JenaModel): IO[Set[Statement]] =
   Try {
     model.listStatements(null, null, obj).toSet.asScala.toSet
-  }.fold(e => Left(e.getMessage), Right(_))
+  }.fold(e => err(e.getMessage), ok(_))
 
   def triplesPredicateObject(property: Property,
                              obj: JenaResource,
                              model: JenaModel
-                            ): Either[String,Set[Statement]] = Try {
+                            ): IO[Set[Statement]] = Try {
     model.listStatements(null, property, obj).toSet.asScala.toSet
-  }.fold(e => Left(e.getMessage), Right(_))
+  }.fold(e => err(e.getMessage), ok(_))
 
   // TODO: Return Either[String,Path]
   def path2JenaPath(path: SHACLPath, model: JenaModel, base: Option[IRI]): IO[Path] = {

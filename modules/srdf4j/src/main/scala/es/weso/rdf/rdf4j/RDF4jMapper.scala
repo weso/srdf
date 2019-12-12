@@ -8,6 +8,8 @@ import org.eclipse.rdf4j.model.impl.{SimpleValueFactory, BooleanLiteral => Boole
 import es.weso.utils.EitherUtils
 import org.eclipse.rdf4j.model.util.ModelBuilder
 import org.eclipse.rdf4j.model.vocabulary.XMLSchema
+import cats.effect._
+import cats.implicits._
 
 import scala.util.{Failure, Success, Try}
 
@@ -58,7 +60,7 @@ object RDF4jMapper {
     valueFactory.createIRI(iri.str)
   }
 
-  def rdfNode2Resource(r: RDFNode): Either[String, Resource] = {
+  def rdfNode2Resource(r: RDFNode): IO[Resource] = {
     r match {
       case iri: IRI => Right(valueFactory.createIRI(iri.str))
       case bnode: BNode => Right(valueFactory.createBNode(bnode.id))

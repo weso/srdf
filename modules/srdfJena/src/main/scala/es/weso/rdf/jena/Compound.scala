@@ -9,7 +9,8 @@ import cats.effect._
 import org.slf4j._
 import scala.util._
 import cats.implicits._
-import fs2.Stream
+// import fs2.Stream
+import es.weso.utils.IOUtils._
 
 
 case class Compound(members: List[RDFReader])
@@ -39,13 +40,6 @@ case class Compound(members: List[RDFReader])
 
   override def serialize(format: String, base: Option[IRI]): RDFRead[String] = {
     err(s"Endpoint cannot be serialized to $format")
-  }
-
-
-  private def cmbSeq[A, B, C](ls: List[A],
-                           f: A => Either[String,Seq[C]]): Either[String,Seq[C]] = {
-    val vs = ls.map(f(_))
-    vs.sequence.map(_.toSeq).map(_.flatten)
   }
 
   override def iris(): RDFStream[IRI] =

@@ -20,10 +20,11 @@ import io.circe.Json
 import io.circe.parser.parse
 import org.apache.jena.rdf.model.{RDFNode => JenaRDFNode}
 import cats.implicits._
-import cats.data.EitherT
 import com.typesafe.scalalogging.LazyLogging
 import es.weso.rdf.jena.JenaMapper._
 import es.weso.utils.EitherUtils
+import es.weso.utils.IOUtils._
+import cats.effect._
 
 case class Endpoint(endpointIRI: IRI)
   extends RDFReader
@@ -46,40 +47,40 @@ case class Endpoint(endpointIRI: IRI)
 
   override def fromString(cs: CharSequence,
                           format: String,
-                          base: Option[IRI]): Either[String, Endpoint] = {
-    throw new Exception("Cannot parse into an endpoint. endpoint = " + endpoint)
+                          base: Option[IRI]): IO[Endpoint] = {
+    err("Cannot parse into an endpoint. endpoint = " + endpoint)
   }
 
-  override def serialize(format: String, base: Option[IRI]): Either[String,String] = {
-    Left(s"Endpoint with url $endpoint. Cannot be serialized to $format")
+  override def serialize(format: String, base: Option[IRI]): IO[String] = {
+    err(s"Endpoint with url $endpoint. Cannot be serialized to $format")
   }
 
-  override def iris(): Either[String,Set[IRI]] = Try {
+  override def iris(): RDFStream[IRI] = Try {
     val resultSet = QueryExecutionFactory.sparqlService(endpoint, findIRIs).execSelect()
     val s: Set[IRI] = resultSet.asScala.map(qs => IRI(qs.get("x").asResource.getURI)).toSet
-    s
-  }.fold(e => Left(s"iris exception: ${e.getMessage}"), Right(_))
+    IO(s.toList)
+  }.fold(e => errStream(s"iris exception: ${e.getMessage}"), streamFromIOs(_))
 
-  override def subjects(): Either[String,Set[RDFNode]] = Try {
+  override def subjects(): RDFStream[RDFNode] = Try {
     // TODO: The following code only returns resource IRIs (no BNodes)
     val resultSet = QueryExecutionFactory.sparqlService(endpoint, findIRIs).execSelect()
     val s: Set[RDFNode] = resultSet.asScala.map(qs => IRI(qs.get("x").asResource.getURI)).toSet
-    s
-  }.fold(e => Left(s"subjects exception: ${e.getMessage}"), Right(_))
+    IO(s.toList)
+  }.fold(e => errStream(s"subjects exception: ${e.getMessage}"), streamFromIOs(_))
 
-  override def predicates(): Either[String, Set[IRI]] = Try {
+  override def predicates(): RDFStream[Set[IRI]] = Try {
     val resultSet = QueryExecutionFactory.sparqlService(endpoint, findPredicates).execSelect()
     val s: Set[IRI] = resultSet.asScala.map(qs => IRI(qs.get("p").asResource.getURI)).toSet
-    s
-  }.fold(e => Left(s"predicates exception: ${e.getMessage}"), Right(_))
+    IO(s.toList)
+  }.fold(e => errStream(s"predicates exception: ${e.getMessage}"), streamFromIOs(_))
 
-  override def iriObjects(): Either[String,Set[IRI]] = Try {
+  override def iriObjects(): RDFStream[Set[IRI]] = Try {
     val resultSet = QueryExecutionFactory.sparqlService(endpoint, findIRIs).execSelect()
     val s: Set[IRI] = resultSet.asScala.map(qs => IRI(qs.get("y").asResource.getURI)).toSet
-    s
-  }.fold(e => Left(s"iriObjects exception: ${e.getMessage}"), Right(_))
+    IO(s.toList)
+  }.fold(e => errStream(s"iriObjects exception: ${e.getMessage}"), streamFromIOs(_))
 
-  override def getSHACLInstances(c: RDFNode): Either[String,Seq[RDFNode]] = {
+  override def getSHACLInstances(c: RDFNode): RDFStream[RDFNode] = {
     c match {
       case iri: IRI => try {
         val resultSet = QueryExecutionFactory.sparqlService(endpoint, queryShaclInstances(iri)).execSelect()
@@ -99,15 +100,15 @@ case class Endpoint(endpointIRI: IRI)
     }
   }
 
-  override def hasSHACLClass(n: RDFNode, c: RDFNode): Either[String, Boolean] = (n,c) match {
+  override def hasSHACLClass(n: RDFNode, c: RDFNode): RDFRead[Boolean] = (n,c) match {
     case (iriN: IRI, iriC: IRI) => {
       val b = QueryExecutionFactory.sparqlService(endpoint, queryHasShaclClass(iriN,iriC)).execAsk()
-      Right(b)
+      ok(b)
    }
-    case _ => Right(false)
+    case _ => ok(false)
   }
 
-  override def nodesWithPath(path: SHACLPath): Either[String, Set[(RDFNode, RDFNode)]] = {
+  override def nodesWithPath(path: SHACLPath): RDFStream[(RDFNode, RDFNode)] = {
     val resultSet = QueryExecutionFactory.sparqlService(endpoint, queryPath(path)).execSelect()
     val rs = resultSet.asScala.map(qs => get2Vars(qs,"x","y")).toList
     val r = EitherUtils.sequence(rs)
@@ -115,7 +116,7 @@ case class Endpoint(endpointIRI: IRI)
   }
 
 
-  override def subjectsWithPath(path: SHACLPath, obj: RDFNode): Either[String, Set[RDFNode]] = obj match {
+  override def subjectsWithPath(path: SHACLPath, obj: RDFNode): RDFStream[RDFNode] = obj match {
     case iri: IRI => Try {
       val resultSet = QueryExecutionFactory.sparqlService(endpoint, querySubjectsWithPath(iri,path)).execSelect()
       val rs = resultSet.asScala.map(qs => getVar(qs,"x")).toList
@@ -125,28 +126,28 @@ case class Endpoint(endpointIRI: IRI)
     case _ => Left(s"subjectsWithPath not implemented for non IRI nodes. Node: $obj, path: $path")
   }
 
-  override def objectsWithPath(subj: RDFNode, path: SHACLPath): Either[String,Set[RDFNode]] = subj match {
+  override def objectsWithPath(subj: RDFNode, path: SHACLPath): RDFStream[RDFNode] = subj match {
     case iri: IRI => Try {
       val resultSet = QueryExecutionFactory.sparqlService(endpoint, queryObjectsWithPath(iri,path)).execSelect()
       val rs = resultSet.asScala.map(qs => getVar(qs,"x")).toList
       val r = EitherUtils.sequence(rs)
       r.map(_.toSet)
-    }.fold(e => Left(s"objectsWithPath($subj,$path): exception: $e"), identity)
-    case _ => Left(s"objectsWithPath not implemented for non IRI nodes. Node: $subj, path: $path")
+    }.fold(e => errStream(s"objectsWithPath($subj,$path): exception: $e"), identity)
+    case _ => errStream(s"objectsWithPath not implemented for non IRI nodes. Node: $subj, path: $path")
   }
 
-  override def checkDatatype(node: RDFNode, datatype: IRI): Either[String,Boolean] =
+  override def checkDatatype(node: RDFNode, datatype: IRI): RDFRead[Boolean] =
     JenaMapper.wellTypedDatatype(node, datatype)
 
 
-  override def rdfTriples(): Either[String,Set[RDFTriple]] = Try {
+  override def rdfTriples(): RDFStream[RDFTriple] = Try {
     val model = QueryExecutionFactory.sparqlService(endpoint, queryTriples).execConstruct()
-    model2triples(model)
-  }.fold(e => Left(s"Exception obtaining rdfTriples of endpoint: $endpoint: $e"), Right(_))
+    IO(model2triples(model).toList)
+  }.fold(e => errStream(s"Exception obtaining rdfTriples of endpoint: $endpoint: $e"), streamFromIOs(_))
 
   override def triplesWithSubjectPredicate(node: RDFNode,
                                            p: IRI
-                                          ): Either[String, Set[RDFTriple]] = node match {
+                                          ): RDFStream[RDFTriple] = node match {
     case subj: IRI => Try {
       println(s"##<<< triplesWithSubjectPredicate($node, $p)")
       val query = queryTriplesWithSubjectPredicate(subj,p)
@@ -164,7 +165,7 @@ case class Endpoint(endpointIRI: IRI)
   }
 
 
-  def triplesWithSubject(node: RDFNode): Either[String,Set[RDFTriple]] = node match {
+  def triplesWithSubject(node: RDFNode): RDFStream[RDFTriple] = node match {
     case subj: IRI => Try {
       println(s"## triplesWithSubject($node)")
       val model = QueryExecutionFactory.sparqlService(endpoint, queryTriplesWithSubject(subj)).execConstruct()
@@ -176,12 +177,12 @@ case class Endpoint(endpointIRI: IRI)
     case _ => Right(Set()) // Left("triplesWithSubject: node " + node + " must be a IRI")
   }
 
-  def triplesWithPredicate(p: IRI): Either[String,Set[RDFTriple]] = {
+  def triplesWithPredicate(p: IRI): RDFStream[RDFTriple] = {
     val model = QueryExecutionFactory.sparqlService(endpoint, queryTriplesWithPredicate(p)).execConstruct()
     Right(model2triples(model))
   }
 
-  def triplesWithObject(node: RDFNode): Either[String,Set[RDFTriple]] = node match {
+  def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] = node match {
     case obj: IRI => {
       val model = QueryExecutionFactory.sparqlService(endpoint, queryTriplesWithObject(obj)).execConstruct()
       Right(model2triples(model))
@@ -189,7 +190,7 @@ case class Endpoint(endpointIRI: IRI)
     case _ => Left("triplesWithObject: node " + node + " must be a IRI")
   }
 
-  def triplesWithPredicateObject(p: IRI, o: RDFNode): Either[String, Set[RDFTriple]] =
+  def triplesWithPredicateObject(p: IRI, o: RDFNode): RDFStream[RDFTriple] =
     o match {
     case iri: IRI => {
       val model = QueryExecutionFactory.sparqlService(endpoint, queryTriplesWithPredicateObject(p, iri)).execConstruct()
@@ -344,7 +345,7 @@ case class Endpoint(endpointIRI: IRI)
 }
 
 object Endpoint {
-  def fromString(str: String): Either[String,Endpoint] = {
+  def fromString(str: String): IO[Endpoint] = {
     IRI.fromString(str).map(Endpoint(_))
   }
 }

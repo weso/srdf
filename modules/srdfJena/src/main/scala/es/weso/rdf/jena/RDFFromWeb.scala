@@ -19,7 +19,8 @@ import io.circe.Json
 import org.apache.jena.rdf.model.{RDFNode => JenaRDFNode}
 import cats.effect.IO
 import fs2.Stream
-import es.weso.utils.internal.CollectionCompat.CollectionConverters
+// import es.weso.utils.internal.CollectionCompat.CollectionConverters
+import es.weso.utils.IOUtils._
 
 
 case class RDFFromWeb() extends RDFReader {
@@ -163,7 +164,6 @@ case class RDFFromWeb() extends RDFReader {
   override def getNumberOfStatements(): RDFRead[Int] = err(s"Unimplemented number of statements of endpoint")
 
   override def isIsomorphicWith(other: RDFReader) = err(s"Unimplemented isomorphic test in RDFFromWeb")
-
 
   override def sourceIRI = None
 
