@@ -7,7 +7,6 @@ import es.weso.rdf.triples.RDFTriple
 import io.circe.Json
 import cats.effect._
 import org.slf4j._
-import scala.util._
 import cats.implicits._
 // import fs2.Stream
 import es.weso.utils.IOUtils._
@@ -75,7 +74,7 @@ case class Compound(members: List[RDFReader])
   override def objectsWithPath(subj: RDFNode, path: SHACLPath): RDFStream[RDFNode] =
     mkSeq(members, (e:RDFReader) => e.objectsWithPath(subj,path))
 
-  override def checkDatatype(node: RDFNode, datatype: IRI): Either[String,Boolean] =
+  override def checkDatatype(node: RDFNode, datatype: IRI): RDFRead[Boolean] =
     JenaMapper.wellTypedDatatype(node, datatype)
 
   override def rdfTriples(): RDFStream[RDFTriple] =
@@ -96,10 +95,10 @@ case class Compound(members: List[RDFReader])
     mkSeq(members, (e:RDFReader) => e.triplesWithPredicateObject(p,o))
   }
 
-  override def applyInference(inference: String): RDFRead[Rdf] = {
+  override def applyInference(inference: String): Either[String,Rdf] = {
     inference.toUpperCase match {
-      case "NONE" => IO.pure(this)
-      case other => err(s"Unsupported inference $other for compound model")
+      case "NONE" => Right(this)
+      case other => Left(s"Unsupported inference $other for compound model")
     }
   }
 

@@ -12,7 +12,6 @@ object IOException {
 
 object IOUtils {
 
-
  def fromES[A](e: Either[String,A]): IO[A] = 
     IO.fromEither(e.leftMap(IOException.fromString(_)))
 

@@ -7,7 +7,7 @@ import org.apache.jena.datatypes.BaseDatatype
 import org.apache.jena.datatypes.xsd.XSDDatatype
 import es.weso.rdf.triples.RDFTriple
 
-import scala.collection.JavaConverters._
+import es.weso.utils.internal.CollectionCompat.CollectionConverters._
 import com.typesafe.scalalogging._
 import es.weso.rdf.path._
 import es.weso.utils.EitherUtils
@@ -76,6 +76,20 @@ object JenaMapper {
       }
       case _ => err(s"rdfNode2Resource: $n is not a resource")
     }
+  }
+
+  def model2triples(model: JenaModel): IO[List[RDFTriple]] = {
+    model.listStatements.asScala.map(st => statement2triple(st)).toList.sequence
+  }
+
+  def statement2triple(st: Statement): IO[RDFTriple] =
+    for {
+      subj <- jenaNode2RDFNode(st.getSubject)
+      obj  <- jenaNode2RDFNode(st.getObject)
+    } yield RDFTriple(subj, property2iri(st.getPredicate), obj)
+
+  def property2iri(p: Property): IRI = {
+      IRI(p.getURI)
   }
 
   def rdfNode2JenaNode(n: RDFNode, m: JenaModel, base: Option[IRI]): JenaRDFNode =
@@ -266,19 +280,14 @@ object JenaMapper {
     }
   }
 
-  def wellTypedDatatype(node: RDFNode, expectedDatatype: IRI): Either[String, Boolean] = {
+  def wellTypedDatatype(node: RDFNode, expectedDatatype: IRI): IO[Boolean] = {
     node match {
       case l: es.weso.rdf.nodes.Literal => Try {
           val jenaLiteral = emptyModel.createTypedLiteral(l.getLexicalForm, l.dataType.str)
           jenaLiteral.getValue // if it is ill-typed it raises an exception
           jenaLiteral.getDatatypeURI
-        } match {
-          case Success(iri) => {
-            Right(iri == expectedDatatype.str)
-          }
-          case Failure(e) => Left(e.getMessage)
-      }
-      case _ => Right(false)
+        }.fold(IO.raiseError(_), iri => ok(iri == expectedDatatype.str)) 
+      case _ => ok(false)
     }
   }
 

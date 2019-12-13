@@ -8,13 +8,13 @@ import org.eclipse.rdf4j.sail.memory.MemoryStore
 import cats.implicits._
 import RDF4jMapper._
 import es.weso.rdf.PREFIXES._
-
+import cats.effect.IO
 import scala.collection.mutable.ListBuffer
 
 
 object RDF4jUtils {
 
-  def subjectsWithPath(obj: RDFNode, path: SHACLPath, model: Model): Seq[RDFNode] = {
+  def subjectsWithPath(obj: RDFNode, path: SHACLPath, model: Model): IO[Seq[RDFNode]] = IO {
     // Build the following query:
     // SELECT ?sub { ?sub ?path ?obj }
     val repo = new SailRepository(new MemoryStore)
@@ -61,7 +61,7 @@ object RDF4jUtils {
     rs.toList
   }
 
-  def getSHACLInstances(cls: RDFNode, model: Model): Seq[RDFNode] = {
+  def getSHACLInstances(cls: RDFNode, model: Model): IO[Seq[RDFNode]] = IO {
     // Build the following query:
     // SELECT ?x { ?x rdf:type/rdfs:subClassOf* ?x }
     val repo = new SailRepository(new MemoryStore)

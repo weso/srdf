@@ -5,11 +5,11 @@ import es.weso.rdf.triples._
 import scala.collection.JavaConverters._
 import org.eclipse.rdf4j.model.{BNode => BNode_RDF4j, IRI => IRI_RDF4j, Literal => Literal_RDF4j, _}
 import org.eclipse.rdf4j.model.impl.{SimpleValueFactory, BooleanLiteral => BooleanLiteral_RDF4j, DecimalLiteral => DecimalLiteral_RDF4j, IntegerLiteral => IntegerLiteral_RDF4j}
-import es.weso.utils.EitherUtils
 import org.eclipse.rdf4j.model.util.ModelBuilder
 import org.eclipse.rdf4j.model.vocabulary.XMLSchema
-import cats.effect._
+import cats.effect.IO
 import cats.implicits._
+import es.weso.utils.IOUtils._
 
 import scala.util.{Failure, Success, Try}
 
@@ -62,9 +62,9 @@ object RDF4jMapper {
 
   def rdfNode2Resource(r: RDFNode): IO[Resource] = {
     r match {
-      case iri: IRI => Right(valueFactory.createIRI(iri.str))
-      case bnode: BNode => Right(valueFactory.createBNode(bnode.id))
-      case _ => Left(s"Cannot convert rdfNode: $r to Resource")
+      case iri: IRI => ok(valueFactory.createIRI(iri.str))
+      case bnode: BNode => ok(valueFactory.createBNode(bnode.id))
+      case _ => err(s"Cannot convert rdfNode: $r to Resource")
     }
   }
 
@@ -104,15 +104,15 @@ object RDF4jMapper {
 
   type ES[A] = Either[String,A]
 
-  private[rdf4j] def rdfTriples2Model(triples: Set[RDFTriple]): Either[String, Model] = for {
-    ss <- EitherUtils.sequence(triples.map(rdfTriple2Statement(_)).toList)
+  private[rdf4j] def rdfTriples2Model(triples: Set[RDFTriple]): IO[Model] = for {
+    ss <- triples.map(rdfTriple2Statement(_)).toList.sequence
   } yield {
     val builder: ModelBuilder = new ModelBuilder
     ss.foreach(s => builder.add(s.getSubject, s.getPredicate, s.getObject))
     builder.build
   }
 
-  private[rdf4j] def rdfTriple2Statement(triple: RDFTriple): Either[String, Statement] = {
+  private[rdf4j] def rdfTriple2Statement(triple: RDFTriple): IO[Statement] = {
     val pred = iri2Property(triple.pred)
     val obj = rdfNode2Value(triple.obj)
     for {
@@ -121,7 +121,7 @@ object RDF4jMapper {
   }
 
   // TODO: Check rules of datatype
-  private[rdf4j] def wellTypedDatatype(node: RDFNode, expectedDatatype: IRI): Either[String,Boolean] = node match {
+  private[rdf4j] def wellTypedDatatype(node: RDFNode, expectedDatatype: IRI): IO[Boolean] = node match {
     case l: Literal => Try {
       val datatypeIRI = valueFactory.createIRI(l.dataType.str)
       val rdf4jLiteral = valueFactory.createLiteral(l.getLexicalForm, datatypeIRI)
@@ -129,12 +129,12 @@ object RDF4jMapper {
       rdf4jLiteral.getDatatype
     } match {
       case Success(iri) => {
-        Right(iri.stringValue == expectedDatatype.str)
+        ok(iri.stringValue == expectedDatatype.str)
       }
-      case Failure(e) => Left(e.getMessage)
+      case Failure(e) => err(e.getMessage)
     }
     // case DatatypeLiteral(_,dt) => Right(dt == expectedDatatype)
-    case _ => Right(false)
+    case _ => ok(false)
   }
 
 }

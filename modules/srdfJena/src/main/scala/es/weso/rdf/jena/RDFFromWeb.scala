@@ -5,10 +5,10 @@ import es.weso.rdf.nodes._
 import es.weso.rdf.nodes.RDFNode
 import es.weso.rdf.triples.RDFTriple
 
-import scala.collection.JavaConverters._
-import org.apache.jena.rdf.model.Property
-import org.apache.jena.rdf.model.Statement
-import org.apache.jena.rdf.model.Model
+// import scala.collection.JavaConverters._
+// import org.apache.jena.rdf.model.Property
+// import org.apache.jena.rdf.model.Statement
+// import org.apache.jena.rdf.model.Model
 import org.slf4j._
 import org.apache.jena.riot.RDFDataMgr
 import org.apache.jena.rdf.model.ModelFactory
@@ -16,12 +16,12 @@ import es.weso.rdf._
 import es.weso.rdf.jena.SPARQLQueries._
 import es.weso.rdf.path.SHACLPath
 import io.circe.Json
-import org.apache.jena.rdf.model.{RDFNode => JenaRDFNode}
+// import org.apache.jena.rdf.model.{RDFNode => JenaRDFNode}
 import cats.effect.IO
-import fs2.Stream
+// import fs2.Stream
 // import es.weso.utils.internal.CollectionCompat.CollectionConverters
 import es.weso.utils.IOUtils._
-
+import JenaMapper._
 
 case class RDFFromWeb() extends RDFReader {
   type Rdf = RDFFromWeb
@@ -58,7 +58,7 @@ case class RDFFromWeb() extends RDFReader {
       val model = QueryExecutionFactory.create(queryTriplesWithSubject(subj), derefModel).execConstruct()
       val triples = model2triples(model)
       log.debug("triples with subject " + subj + " =\n" + triples)
-      triples
+      streamFromIOs(triples)
     }
     case _ => errStream("triplesWithSubject: node " + node + " must be a IRI")
   }
@@ -67,7 +67,7 @@ case class RDFFromWeb() extends RDFReader {
     val derefModel = ModelFactory.createDefaultModel
     RDFDataMgr.read(derefModel, p.str)
     val model = QueryExecutionFactory.create(queryTriplesWithPredicate(p), derefModel).execConstruct()
-    model2triples(model)
+    streamFromIOs(model2triples(model))
   }
 
   override def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] =
@@ -76,7 +76,7 @@ case class RDFFromWeb() extends RDFReader {
       val derefModel = ModelFactory.createDefaultModel
       RDFDataMgr.read(derefModel, obj.str)
       val model = QueryExecutionFactory.create(queryTriplesWithObject(obj), derefModel).execConstruct()
-      model2triples(model)
+      streamFromIOs(model2triples(model))
     }
     case _ =>
       errStream("triplesWithObject: node " + node + " must be a IRI")
@@ -88,7 +88,7 @@ case class RDFFromWeb() extends RDFReader {
       val derefModel = ModelFactory.createDefaultModel
       RDFDataMgr.read(derefModel, obj.str)
       val model = QueryExecutionFactory.create(queryTriplesWithPredicateObject(p, obj), derefModel).execConstruct()
-      model2triples(model)
+      streamFromIOs(model2triples(model))
     }
      case _ => errStream("triplesWithObject: node " + node + " must be a IRI")
   }
@@ -117,46 +117,7 @@ case class RDFFromWeb() extends RDFReader {
   }
 
   override def checkDatatype(node: RDFNode, datatype: IRI): RDFRead[Boolean] =
-    fromES(JenaMapper.wellTypedDatatype(node, datatype))
-
-
-  def model2triples(model: Model): RDFStream[RDFTriple] = {
-    Stream.emits(model.listStatements.asScala.map(st => statement2triple(st)).toList)
-  }
-
-  
-
-  def statement2triple(st: Statement): RDFTriple = {
-    RDFTriple(
-      jena2rdfnode(st.getSubject),
-      property2iri(st.getPredicate),
-      jena2rdfnode(st.getObject))
-  }
-
-  def property2iri(p: Property): IRI = {
-    IRI(p.getURI)
-  }
-
-  def jena2rdfnode(r: JenaRDFNode): RDFNode = {
-    if (r.isAnon) {
-      BNode(r.asNode.getBlankNodeId.getLabelString)
-    } else if (r.isURIResource) {
-      IRI(r.asResource.getURI())
-    } else if (r.isLiteral) {
-      val lit = r.asLiteral
-      if (lit.getDatatypeURI() == null) {
-        StringLiteral(lit.getString())
-      } else
-        IRI(lit.getDatatypeURI()) match {
-          case RDFNode.IntegerDatatypeIRI => IntegerLiteral(lit.getInt)
-          case RDFNode.BooleanDatatypeIRI => BooleanLiteral(lit.getBoolean)
-          case RDFNode.DoubleDatatypeIRI => DoubleLiteral(lit.getDouble())
-          case RDFNode.LangStringDatatypeIRI => LangLiteral(lit.getLexicalForm, Lang(lit.getLanguage))
-          case _ => DatatypeLiteral(lit.getLexicalForm, IRI(lit.getDatatypeURI))
-        }
-    } else
-      throw new Exception("Unknown type of resource")
-  }
+    JenaMapper.wellTypedDatatype(node, datatype)
 
   override def querySelect(queryStr: String): RDFRead[List[Map[String,RDFNode]]] = err(s"Unimplemented query on RDFFromWeb")
   override def queryAsJson(queryStr: String): RDFRead[Json] = err(s"Unimplemented query on RDFFromWeb")

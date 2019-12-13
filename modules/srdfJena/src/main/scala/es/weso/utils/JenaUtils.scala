@@ -20,8 +20,7 @@ import org.apache.jena.reasoner.ReasonerRegistry
 import org.apache.jena.sparql.core.{TriplePath, Var}
 import org.apache.jena.sparql.path.Path
 import org.apache.jena.util.{FileUtils => FileJenaUtils}
-
-import scala.annotation.tailrec
+// import scala.annotation.tailrec
 import scala.util.Try
 
 object JenaUtils {
@@ -259,7 +258,8 @@ object JenaUtils {
       s
     }.fold(e => err(s"getDirectSubClasses: ${e.getMessage}"), ok(_))
 
-  @tailrec
+  // TODO: Could we rewrite it to be tailrec?
+  // @tailrec
   private def getAllSubClassesAux(cls: List[RDFNode], model: Model, visited: Set[RDFNode]): IO[Set[RDFNode]] = {
     cls match {
       case Nil => ok(visited)
@@ -275,7 +275,8 @@ object JenaUtils {
     }
   }
 
-  @tailrec
+  // Could we rewrite it to be tailrec ?
+  // @tailrec
   private def extendWithSuperClassesAux(
       types: List[RDFNode],
       model: Model,
