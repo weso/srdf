@@ -448,18 +448,18 @@ object JenaUtils {
     }
   }
 
-  def inference(rdf: Model, inference: String): Either[String, Model] = {
+  def inference(rdf: Model, inference: String): IO[Model] = {
     inference match {
       case "RDFS" => {
         val inf = ModelFactory.createRDFSModel(rdf)
-        Right(inf)
+        ok(inf)
       }
       case "OWL" => {
         val reasoner = ReasonerRegistry.getOWLReasoner();
         val inf      = ModelFactory.createInfModel(reasoner, rdf)
-        Right(inf)
+        ok(inf)
       }
-      case _ => Left(s"Unsupported inference $inference")
+      case _ => err(s"Unsupported inference $inference")
     }
   }
 

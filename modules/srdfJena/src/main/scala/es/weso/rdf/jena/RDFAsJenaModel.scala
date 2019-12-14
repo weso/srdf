@@ -285,12 +285,12 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
   private val RDFS = "RDFS"
   private val OWL  = "OWL"
 
-  override def applyInference(inference: String): Either[String, Rdf] = {
+  override def applyInference(inference: String): IO[Rdf] = {
     inference.toUpperCase match {
-      case `NONE` => Right(this)
+      case `NONE` => ok(this)
       case `RDFS` => JenaUtils.inference(model, RDFS).map(RDFAsJenaModel(_))
       case `OWL`  => JenaUtils.inference(model, OWL).map(RDFAsJenaModel(_))
-      case other  => Left(s"Unsupported inference $other")
+      case other  => err(s"Unsupported inference $other")
     }
   }
 
@@ -406,7 +406,7 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     this.copy(model = this.model.add(model))
 
   override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] =
-    err(s"Not implemented yet hasPredicateWithSubject")
+    triplesWithSubjectPredicate(n,p).compile.toList.map(!_.isEmpty)
 
   override def merge(other: RDFReader): RDFBuild[RDFAsJenaModel] = err(s"Not implemented yet merge")
 

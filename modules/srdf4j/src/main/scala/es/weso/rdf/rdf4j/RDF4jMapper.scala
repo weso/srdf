@@ -44,11 +44,11 @@ object RDF4jMapper {
     }
   }
 
-  def statement2RDFTriple(s: Statement): RDFTriple = {
-    RDFTriple(resource2RDFNode(s.getSubject), iri2iri(s.getPredicate), value2RDFNode(s.getObject))
-  }
+  def statement2RDFTriple(s: Statement): IO[RDFTriple] = for {
+    rdfNode <- resource2RDFNode(s.getSubject)
+  } yield RDFTriple(rdfNode, iri2iri(s.getPredicate), value2RDFNode(s.getObject))
 
-  def resource2RDFNode(r: Resource): RDFNode = {
+  def resource2RDFNode(r: Resource): IO[RDFNode] = IO {
     r match {
       case iri: IRI_RDF4j => iri2iri(iri)
       case bnode: BNode_RDF4j => bnode2Bnode(bnode)
@@ -82,27 +82,25 @@ object RDF4jMapper {
 
  def newBNode(): BNode_RDF4j = valueFactory.createBNode()
 
- def statements2RDFTriples(statements: Set[Statement]): Set[RDFTriple] = {
-    statements.map(statement2RDFTriple(_))
+ def statements2RDFTriples(statements: Set[Statement]): IO[List[RDFTriple]] = {
+    statements.toList.map(statement2RDFTriple(_)).sequence
   }
 
-  private[rdf4j] def triplesSubject(resource: Resource, model: Model): Set[Statement] = {
+  private[rdf4j] def triplesSubject(resource: Resource, model: Model): IO[Set[Statement]] = IO {
     model.filter(resource, null, null).asScala.toSet
   }
 
-  private[rdf4j] def triplesPredicate(iri: IRI_RDF4j, model: Model): Set[Statement] = {
+  private[rdf4j] def triplesPredicate(iri: IRI_RDF4j, model: Model): IO[Set[Statement]] = IO {
     model.filter(null, iri, null).asScala.toSet
   }
 
-  private[rdf4j] def triplesObject(value: Value, model: Model): Set[Statement] = {
+  private[rdf4j] def triplesObject(value: Value, model: Model): IO[Set[Statement]] = IO {
     model.filter(null, null, value).asScala.toSet
   }
 
-  private[rdf4j] def triplesPredicateObject(iri: IRI_RDF4j, obj: Value, model: Model): Set[Statement] = {
+  private[rdf4j] def triplesPredicateObject(iri: IRI_RDF4j, obj: Value, model: Model): IO[Set[Statement]] = IO {
     model.filter(null, iri, obj).asScala.toSet
   }
-
-  type ES[A] = Either[String,A]
 
   private[rdf4j] def rdfTriples2Model(triples: Set[RDFTriple]): IO[Model] = for {
     ss <- triples.map(rdfTriple2Statement(_)).toList.sequence

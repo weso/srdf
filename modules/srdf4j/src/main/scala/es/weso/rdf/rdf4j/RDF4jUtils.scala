@@ -18,7 +18,7 @@ object RDF4jUtils {
     // Build the following query:
     // SELECT ?sub { ?sub ?path ?obj }
     val repo = new SailRepository(new MemoryStore)
-    repo.initialize
+    // repo.initialize
     val con = repo.getConnection
     con.add(model)
     val queryStr =
@@ -38,11 +38,11 @@ object RDF4jUtils {
   }
 
 
-  def objectsWithPath(subj: RDFNode, path: SHACLPath, model: Model): Seq[RDFNode] = {
+  def objectsWithPath(subj: RDFNode, path: SHACLPath, model: Model): IO[Seq[RDFNode]] = IO {
     // Build the following query:
     // SELECT ?obj { ?n ?path ?obj }
     val repo = new SailRepository(new MemoryStore)
-    repo.initialize
+    // repo.initialize
     val con = repo.getConnection
     con.add(model)
     val queryStr =
@@ -65,7 +65,7 @@ object RDF4jUtils {
     // Build the following query:
     // SELECT ?x { ?x rdf:type/rdfs:subClassOf* ?x }
     val repo = new SailRepository(new MemoryStore)
-    repo.initialize
+    // repo.initialize
     val con = repo.getConnection
     con.add(model)
     val path: SHACLPath = SequencePath(Seq(PredicatePath(`rdf:type`), ZeroOrMorePath(PredicatePath(`rdfs:subClassOf`))))

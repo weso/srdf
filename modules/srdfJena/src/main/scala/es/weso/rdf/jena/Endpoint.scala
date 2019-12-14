@@ -8,7 +8,7 @@ import es.weso.rdf.nodes.RDFNode
 import es.weso.rdf.triples.RDFTriple
 //import es.weso.utils.internal.CollectionCompat
 import es.weso.utils.internal.CollectionCompat.CollectionConverters._
-import scala.util.{Either, Left, Right, Try}
+import scala.util._
 //import org.apache.jena.rdf.model.Property
 //import org.apache.jena.rdf.model.Statement
 //import org.apache.jena.rdf.model.Model
@@ -201,10 +201,10 @@ case class Endpoint(endpointIRI: IRI)
     v2 <- getVar(qs,y)
   } yield (v1,v2)
 
-  override def applyInference(inference: String): Either[String, Rdf] = {
+  override def applyInference(inference: String): RDFRead[Rdf] = {
     inference.toUpperCase match {
-      case "NONE" => Right(this)
-      case other => Left(s"Unsupported inference $other for endpoint $endpoint")
+      case "NONE" => ok(this)
+      case other => err(s"Unsupported inference $other for endpoint $endpoint")
     }
   }
 

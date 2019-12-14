@@ -16,8 +16,8 @@ import scala.util._
 // import es.weso.utils.internal.CollectionCompat
 import es.weso.utils.internal.CollectionCompat.CollectionConverters._
 import RDF4jMapper._
-import es.weso.utils.EitherUtils
 import cats.effect.IO
+import cats._
 import cats.implicits._
 import fs2.Stream
 import es.weso.utils.IOUtils._
@@ -34,8 +34,8 @@ case class RDFAsRDF4jModel(model: Model, sourceIRI: Option[IRI] = None)
   override def availableParseFormats: List[String]     = RDFAsRDF4jModel.availableFormats
   override def availableSerializeFormats: List[String] = RDFAsRDF4jModel.availableFormats
 
-  override def fromString(cs: CharSequence, format: String, base: Option[IRI] = None): Either[String, Rdf] = {
-    // val builder = new ModelBuilder()
+  override def fromString(cs: CharSequence, format: String, base: Option[IRI] = None): IO[Rdf] = 
+  fromES {
     val baseURI = base.map(_.str).getOrElse("")
     for {
       format <- getRDFFormat(format)
@@ -55,8 +55,12 @@ case class RDFAsRDF4jModel(model: Model, sourceIRI: Option[IRI] = None)
     }
   }
 
-  override def serialize(formatName: String, base: Option[IRI]): Either[String, String] =
-    for {
+  override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] = 
+   triplesWithSubjectPredicate(n,p).compile.toList.map(!_.isEmpty)
+
+
+  override def serialize(formatName: String, base: Option[IRI]): IO[String] =
+    fromES(for {
       format <- getRDFFormat(formatName)
       str <- Try {
         val out: StringWriter = new StringWriter()
@@ -64,7 +68,7 @@ case class RDFAsRDF4jModel(model: Model, sourceIRI: Option[IRI] = None)
         Rio.write(model, out, format)
         out.toString
       }.fold(e => Left(s"Error serializing RDF to format $formatName: $e"), Right(_))
-    } yield str
+    } yield str)
 
   /*  private def extend_rdfs: Rdf = {
     this
@@ -80,34 +84,33 @@ case class RDFAsRDF4jModel(model: Model, sourceIRI: Option[IRI] = None)
     Stream.emits(ls)
   }
 
-  override def subjects(): RDFStream[RDFNode] = {
-    val resources: Set[Resource] = model.subjects().asScala.toSet
-    val ls = resources.map(r => resource2RDFNode(r)).toList
-    Stream.emits(ls)
-  }
+  override def subjects(): RDFStream[RDFNode] = streamFromIOs(for {
+    resources <- IO(model.subjects().asScala.toSet)
+    nodes <- resources.toList.map(r => resource2RDFNode(r)).sequence
+  } yield nodes)
 
   override def rdfTriples(): RDFStream[RDFTriple] = {
-    model.asScala.toSet.map(statement2RDFTriple(_))
+    streamFromIOs(model.asScala.toSet.map(statement2RDFTriple(_)).toList.sequence)
   }
 
   override def triplesWithSubject(node: RDFNode): RDFStream[RDFTriple] =
-    for {
+    streamFromIOs(for {
       resource <- rdfNode2Resource(node)
-    } yield {
-      val statements: Set[Statement] = triplesSubject(resource, model)
-      statements2RDFTriples(statements)
-    }
+      statements <- triplesSubject(resource, model)
+      triples <- statements2RDFTriples(statements)
+    } yield triples
+    )
 
   /**
     * return the SHACL instances of a node `cls`
     * A node `node` is a shacl instance of `cls` if `node rdf:type/rdfs:subClassOf* cls`
     */
   override def getSHACLInstances(c: RDFNode): RDFStream[RDFNode] = {
-    IO(RDF4jUtils.getSHACLInstances(c, model))
+    streamFromIOs(RDF4jUtils.getSHACLInstances(c, model).map(_.toList))
   }
 
   override def hasSHACLClass(n: RDFNode, c: RDFNode): RDFRead[Boolean] = {
-    ok(RDF4jUtils.getSHACLInstances(c, model) contains (n))
+    RDF4jUtils.getSHACLInstances(c, model).map(_ contains (n))
   }
 
   override def nodesWithPath(path: SHACLPath): RDFStream[(RDFNode, RDFNode)] = {
@@ -120,37 +123,49 @@ case class RDFAsRDF4jModel(model: Model, sourceIRI: Option[IRI] = None)
   }
 
   override def objectsWithPath(subj: RDFNode, path: SHACLPath): RDFStream[RDFNode] = {
-    Right(RDF4jUtils.objectsWithPath(subj, path, model).toSet)
+    streamFromIOs(RDF4jUtils.objectsWithPath(subj, path, model).map(_.toList))
   }
 
   override def subjectsWithPath(path: SHACLPath, obj: RDFNode): RDFStream[RDFNode] = {
-    Right(RDF4jUtils.subjectsWithPath(obj, path, model).toSet)
+    streamFromIOs(RDF4jUtils.subjectsWithPath(obj, path, model).map(_.toList))
   }
 
   override def triplesWithPredicate(iri: IRI): RDFStream[RDFTriple] = {
     val pred = iri2Property(iri)
-    Right(statements2RDFTriples(triplesPredicate(pred, model)))
+    streamFromIOs(for {
+      statements <- triplesPredicate(pred, model)
+      triples <- statements2RDFTriples(statements)
+    } yield triples)
   }
 
-  override def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] = {
-    val obj = rdfNode2Resource(node).toOption
-    // val empty: Set[RDFTriple] = Set()
-    Right(obj.fold(emptySet) { o =>
-      {
-        statements2RDFTriples(triplesObject(o, model))
-      }
-    })
-  }
+  override def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] = streamFromIOs(
+   for {
+    either <- MonadError[IO,Throwable].attempt(rdfNode2Resource(node))
+    ts <- either.fold(_ => emptyTriples, 
+     resource => for { 
+       triples <- triplesObject(resource,model)
+       statements <- statements2RDFTriples(triples)
+      } yield statements
+    )
+   } yield ts
+  )
 
-  private lazy val emptySet: Set[RDFTriple] = Set()
+  private lazy val emptyTriples: IO[List[RDFTriple]] = IO(List())
 
-  override def triplesWithPredicateObject(p: IRI, o: RDFNode): RDFStream[RDFTriple] = {
-    val prop     = iri2Property(p)
-    val maybeObj = rdfNode2Resource(o).toOption
-    Right(maybeObj.fold(emptySet) { obj =>
-      statements2RDFTriples(triplesPredicateObject(prop, obj, model))
-    })
-  }
+  override def triplesWithPredicateObject(p: IRI, o: RDFNode): RDFStream[RDFTriple] = streamFromIOs( 
+   for {
+    either <- MonadError[IO,Throwable].attempt(rdfNode2Resource(o))
+    ts <- either.fold(_ => emptyTriples, 
+     resource => { 
+     val v: IO[List[RDFTriple]] = for {
+      triples <- triplesPredicateObject(iri2Property(p), resource, model)
+      statements <- statements2RDFTriples(triples)
+     } yield statements 
+     v
+    }
+    )
+   } yield ts
+   )
 
   override def getPrefixMap: PrefixMap = {
     PrefixMap {
@@ -232,24 +247,24 @@ case class RDFAsRDF4jModel(model: Model, sourceIRI: Option[IRI] = None)
   override def getNumberOfStatements(): IO[Int] =
     ok(model.size)
 
-  def isIsomorphicWith(other: RDFReader): Either[String, Boolean] = other match {
-    case o: RDFAsRDF4jModel => Right(Models.isomorphic(model, o.model))
-    case _                  => Left(s"Cannot compare RDFAsJenaModel with reader of different type: ${other.getClass.toString}")
+  def isIsomorphicWith(other: RDFReader): IO[Boolean] = other match {
+    case o: RDFAsRDF4jModel => ok(Models.isomorphic(model, o.model))
+    case _                  => err(s"Cannot compare RDFAsJenaModel with reader of different type: ${other.getClass.toString}")
   }
 
   override def merge(other: RDFReader): IO[Rdf] = other match {
     // TODO: optimize merge using RDF4j merge...
     // case rdf4j: RDFAsRDF4jModel =>
     case _ => {
-      val zero: Either[String, Rdf] = Right(this)
-      def cmb(next: Either[String, Rdf], x: RDFTriple): Either[String, Rdf] =
+      val zero: IO[Rdf] = ok(this)
+      def cmb(next: IO[Rdf], x: RDFTriple): IO[Rdf] =
         for {
           rdf1 <- next
           rdf2 <- rdf1.addTriple(x)
         } yield rdf2
 
       for {
-        ts  <- other.rdfTriples()
+        ts  <- other.rdfTriples.compile.toList
         rdf <- ts.foldLeft(zero)(cmb)
       } yield rdf
     }
@@ -265,13 +280,13 @@ case class RDFAsRDF4jModel(model: Model, sourceIRI: Option[IRI] = None)
 
   private def getImports: IO[List[IRI]] =
     for {
-      ts <- triplesWithPredicate(owlImports)
-      is <- EitherUtils.sequence(ts.map(_.obj).map(_.toIRI).toList)
+      ts <- triplesWithPredicate(owlImports).compile.toList
+      is <- fromES(ts.map(_.obj).map(_.toIRI).toList.sequence)
     } yield is
 
   private def extendImports(rdf: Rdf, imports: List[IRI], visited: List[IRI]): IO[Rdf] = {
     imports match {
-      case Nil => Right(rdf)
+      case Nil => ok(rdf)
       case iri :: rest =>
         if (visited contains iri)
           extendImports(rdf, rest, visited)
@@ -285,7 +300,7 @@ case class RDFAsRDF4jModel(model: Model, sourceIRI: Option[IRI] = None)
   }
 
   override def asRDFBuilder: IO[RDFBuilder] =
-    Right(this)
+    ok(this)
 
   override def rdfReaderName: String = s"RDF4j"
 
@@ -308,7 +323,7 @@ object RDFAsRDF4jModel {
   def fromChars(cs: CharSequence, format: String, base: Option[IRI] = None): IO[RDFAsRDF4jModel] =
     for {
       rdfEmpty <- empty
-      rdf      <- IO(rdfEmpty.fromString(cs, format, base))
+      rdf      <- rdfEmpty.fromString(cs, format, base)
     } yield rdf
 
   def availableFormats: List[String] = {

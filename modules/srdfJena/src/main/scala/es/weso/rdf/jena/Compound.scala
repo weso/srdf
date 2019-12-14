@@ -95,10 +95,10 @@ case class Compound(members: List[RDFReader])
     mkSeq(members, (e:RDFReader) => e.triplesWithPredicateObject(p,o))
   }
 
-  override def applyInference(inference: String): Either[String,Rdf] = {
+  override def applyInference(inference: String): RDFRead[Rdf] = {
     inference.toUpperCase match {
-      case "NONE" => Right(this)
-      case other => Left(s"Unsupported inference $other for compound model")
+      case "NONE" => ok(this)
+      case other => err(s"Unsupported inference $other for compound model")
     }
   }
 
