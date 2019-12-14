@@ -4,6 +4,9 @@ import es.weso.rdf.jena.RDFAsJenaModel
 import es.weso.rdf.nodes.IRI
 import es.weso.rdf.triples.RDFTriple
 import org.scalatest._
+import cats._
+import cats.effect._
+import es.weso.utils.IOUtils._
 
 class RelativeURIsTest extends FunSpec with Matchers {
   describe("Relative URIs") {
@@ -12,15 +15,17 @@ class RelativeURIsTest extends FunSpec with Matchers {
       val base = Some(IRI("internal://base/"))
       val r = for {
         rdf <- RDFAsJenaModel.fromChars(str, "TURTLE", base)
-        x <- IRI.fromString("x", base)
-        p <- IRI.fromString("p",base)
-        y <- IRI.fromString("y",base)
-        ts <- rdf.triplesWithSubject(x)
+        x <- fromES(IRI.fromString("x", base))
+        p <- fromES(IRI.fromString("p",base))
+        y <- fromES(IRI.fromString("y",base))
+        ts <- rdf.triplesWithSubject(x).compile.toList
         serialized <- rdf.serialize("TURTLE",base)
       } yield {
         (ts,rdf,serialized,x,p,y)
       }
-      r.fold(e => fail(s"Error: $e"),
+      val pairs = MonadError[IO,Throwable].attempt(r).unsafeRunSync 
+      
+      pairs.fold(e => fail(s"Error: $e"),
         pair => {
           val (ts,rdf,str,x,p,y) = pair
           println(str)

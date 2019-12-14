@@ -7,6 +7,8 @@ import io.circe.Json
 import cats.implicits._
 import cats.effect._
 import fs2.Stream
+import es.weso.utils.internal.CollectionCompat._
+
 
 /**
  * RDFReader can read RDF data from several sources like an in-memory model or a SPARQL endpoint

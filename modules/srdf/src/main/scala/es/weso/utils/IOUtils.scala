@@ -2,6 +2,7 @@ package es.weso.utils
 import cats.effect._
 import cats.implicits._
 import fs2.Stream
+import es.weso.utils.internal.CollectionCompat._
 
 case class IOException(msg: String, exc: Option[Throwable]) extends Exception
 

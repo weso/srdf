@@ -89,6 +89,7 @@ lazy val srdf = project
       circeGeneric,
       circeParser,
       fs2Core,
+      utils,
       scalaLogging
     )
     )
