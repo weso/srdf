@@ -1,4 +1,5 @@
 package es.weso.utils
+import cats._
 import cats.effect._
 import cats.implicits._
 import fs2.Stream
@@ -29,6 +30,9 @@ object IOUtils {
  def fromIO[A](x: IO[A]): Stream[IO,A] = Stream.eval(x)
 
  def sequence[A](vs: List[IO[A]]): IO[List[A]] = vs.sequence
+
+ def io2ES[A](v: IO[A]):Either[String,A] = 
+   MonadError[IO,Throwable].attempt(v).unsafeRunSync().leftMap(_.getMessage())
   
  // The following code is inspired by: 
  // https://stackoverflow.com/questions/49751533/how-to-convert-a-streamio-lista-to-streamio-a

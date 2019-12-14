@@ -34,5 +34,7 @@ trait RDFBuilder extends RDFReader {
 
   def extendImports(): RDFBuild[Rdf]
 
+  def normalizeBNodes(): RDFBuild[Rdf]
+
 }
 

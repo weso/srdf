@@ -360,9 +360,10 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     case _ => err(s"Cannot compare RDFAsJenaModel with reader of different type: ${other.getClass.toString}")
   }
 
-  /* def normalizeBNodes: Rdf = {
-    NormalizeBNodes.normalizeBNodes(this, this.empty)
-  } */
+  def normalizeBNodes: IO[Rdf] = IO(this) /* for {
+    e <- RDFAsJenaModel.empty
+    normalize <- NormalizeBNodes.normalizeBNodes(this, e)
+  } yield normalize */
 
   /**
     * Apply owl:imports closure to an RDF source
@@ -408,24 +409,27 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
   override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] =
     triplesWithSubjectPredicate(n,p).compile.toList.map(!_.isEmpty)
 
-  override def merge(other: RDFReader): RDFBuild[RDFAsJenaModel] = err(s"Not implemented yet merge")
-
-  /*override def merge(other: RDFReader): Either[String, Rdf] = other match {
-    case jenaRdf: RDFAsJenaModel =>
-      Right(RDFAsJenaModel(this.model.add(jenaRdf.normalizeBNodes.model)))
+  override def merge(other: RDFReader): RDFBuild[RDFAsJenaModel] = 
+   other match {
+    case jenaRdf: RDFAsJenaModel => /*for {
+      normalized <- jenaRdf.normalizeBNodes
+      result = RDFAsJenaModel(this.model.add(normalized.model))
+    } yield result*/
+    IO(RDFAsJenaModel(this.model.union(jenaRdf.model)))
     case _ => {
-      val zero: Either[String, Rdf] = Right(this)
-      def cmb(next: Either[String, Rdf], x: RDFTriple): Either[String, Rdf] =
+      val zero: IO[Rdf] = ok(this)
+      def cmb(next: IO[Rdf], x: RDFTriple): IO[Rdf] =
         for {
           rdf1 <- next
           rdf2 <- rdf1.addTriple(x)
         } yield rdf2
+   
       for {
-        ts  <- other.rdfTriples
+        ts  <- other.rdfTriples.compile.toList
         rdf <- ts.foldLeft(zero)(cmb)
       } yield rdf
     }
-  }*/
+  }
 
 }
 
@@ -439,8 +443,8 @@ object RDFAsJenaModel {
     IO(RDFAsJenaModel(ModelFactory.createDefaultModel))
   }
 
-  def fromIRI(iri: IRI): IO[RDFAsJenaModel] = {
-    Try {
+  def fromIRI(iri: IRI): IO[RDFAsJenaModel] = 
+    IO {
       // We delegate RDF management to Jena (content-negotiation and so...)
       // RDFDataMgr.loadModel(iri.str)
       val m = ModelFactory.createDefaultModel()
@@ -449,9 +453,8 @@ object RDFAsJenaModel {
       val dest: StreamRDF = StreamRDFLib.graph(g)
       val ctx: Context    = null
       RDFParser.create.source(iri.str).labelToNode(LabelToNode.createUseLabelEncoded()).context(ctx).parse(dest)
-      m
-    }.fold(e => IO.raiseError(e), model => IO(RDFAsJenaModel(model)))
-  }
+      RDFAsJenaModel(m)
+    }
 
   def fromURI(uri: String, format: String = "TURTLE", base: Option[IRI] = None): IO[RDFAsJenaModel] = {
     val baseURI = base.getOrElse(IRI(FileUtils.currentFolderURL))

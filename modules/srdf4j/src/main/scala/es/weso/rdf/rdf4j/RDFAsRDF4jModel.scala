@@ -304,6 +304,9 @@ case class RDFAsRDF4jModel(model: Model, sourceIRI: Option[IRI] = None)
 
   override def rdfReaderName: String = s"RDF4j"
 
+  // TODO: This method is not implemented yet
+  override def normalizeBNodes(): IO[RDFAsRDF4jModel] =
+    IO(this)
 
 }
 
@@ -334,5 +337,6 @@ object RDFAsRDF4jModel {
   def fromIRI(iri: IRI): IO[RDFAsRDF4jModel] = {
     err(s"Not implemented get RDF4j from IRI: $iri")
   }
+
 
 }
