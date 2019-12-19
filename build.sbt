@@ -5,7 +5,7 @@ lazy val supportedScalaVersions = List(scala212, scala213)
 lazy val utilsVersion         = "0.1.63"
 
 // Dependency versions
-lazy val catsVersion           = "2.0.0"
+lazy val catsVersion           = "2.1.0"
 lazy val circeVersion          = "0.12.0-RC3"
 lazy val jenaVersion           = "3.13.1"
 lazy val logbackVersion        = "1.2.3"
