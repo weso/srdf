@@ -10,8 +10,10 @@ import cats.effect.IO
 import org.scalatest._
 
 import scala.util.{Either, Left, Right, Try}
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-trait ValidateManifest extends FunSpec with Matchers with TryValues with OptionValues {
+trait ValidateManifest extends AnyFunSpec with Matchers with TryValues with OptionValues {
 
   def parseManifest(name: String,folder: String, parentFolder: String): Unit = {
     it(s"Should parse manifestTest $folder/$name") {

@@ -2,8 +2,10 @@ package es.weso.rdf
 
 import org.scalatest._
 import es.weso.rdf.nodes._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class PrefixesTest extends FunSpec with Matchers with TryValues {
+class PrefixesTest extends AnyFunSpec with Matchers with TryValues {
 
   describe("PrefixesTest") {
     it("can get xsd prefix") {

@@ -3,9 +3,11 @@ package es.weso.rdf.jena
 import es.weso.rdf.nodes._
 import es.weso.rdf.path._
 import org.scalatest._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
 class SPARQLQueriesTest
-  extends FunSpec
+  extends AnyFunSpec
   with JenaBased
   with Matchers {
 

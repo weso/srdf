@@ -1,13 +1,15 @@
 package es.weso.rdf.jena
 
 import es.weso.rdf.nodes.{IRI, IntegerLiteral, RDFNode}
-import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
+import org.scalatest.BeforeAndAfter
 import org.apache.jena.fuseki.main.FusekiServer
 import org.apache.jena.query._
 import org.apache.jena.system.Txn
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
 class EndpointTest
-  extends FunSpec
+  extends AnyFunSpec
   with JenaBased
   with Matchers with BeforeAndAfter {
 

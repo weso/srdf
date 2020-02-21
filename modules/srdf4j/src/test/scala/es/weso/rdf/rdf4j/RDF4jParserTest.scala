@@ -5,8 +5,10 @@ import es.weso.rdf.nodes._
 import org.scalatest._
 
 import scala.util._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class RDF4jParserTest extends FunSpec with Matchers with EitherValues with OptionValues {
+class RDF4jParserTest extends AnyFunSpec with Matchers with EitherValues with OptionValues {
 
   describe("RDF4jParser") {
     it(s"Should parse simple Turtle string") {

@@ -1,13 +1,13 @@
 package es.weso.rdf.jena
-
-import org.scalatest.Matchers
-import org.scalatest.FunSpec
+
 import es.weso.rdf.triples.RDFTriple
 import es.weso.rdf.nodes._
 import es.weso.rdf._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
 class RDFAsJenaModelTest
-  extends FunSpec
+  extends AnyFunSpec
   with JenaBased
   with Matchers {
 
