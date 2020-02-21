@@ -3,8 +3,10 @@ package es.weso.rdf.operations
 import es.weso.rdf.nodes._
 import org.scalatest._
 import cats.implicits._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class ComparisonsTest extends FunSpec with Matchers with TryValues {
+class ComparisonsTest extends AnyFunSpec with Matchers with TryValues {
 
   describe("Comparison less than") {
 

@@ -4,8 +4,9 @@ import java.nio.file.Paths
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest._
+import org.scalatest.funspec.AnyFunSpec
 
-class RDF2ManifestTest extends FunSpec with ValidateManifest {
+class RDF2ManifestTest extends AnyFunSpec with ValidateManifest {
 
   val conf: Config = ConfigFactory.load()
   val shexFolder = conf.getString("localFolderTest")

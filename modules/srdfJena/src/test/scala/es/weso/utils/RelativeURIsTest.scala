@@ -4,8 +4,10 @@ import es.weso.rdf.jena.RDFAsJenaModel
 import es.weso.rdf.nodes.IRI
 import es.weso.rdf.triples.RDFTriple
 import org.scalatest._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class RelativeURIsTest extends FunSpec with Matchers {
+class RelativeURIsTest extends AnyFunSpec with Matchers {
   describe("Relative URIs") {
     it(s"Should parse Turtle with relative URIs") {
       val str = """<x> <p> <y>"""
