@@ -1,7 +1,8 @@
 package es.weso.rdf.saver
 
-import cats.data.{State, _}
+import cats.data._
 import cats.implicits._
+import cats.effect._
 import es.weso.rdf.PREFIXES._
 import es.weso.rdf.nodes._
 import es.weso.rdf.path._
@@ -9,7 +10,7 @@ import es.weso.rdf.triples.RDFTriple
 import es.weso.rdf.{PrefixMap, RDFBuilder}
 
 trait RDFSaver {
-  type RDFSaver[A] = State[RDFBuilder, A]
+  type RDFSaver[A] = StateT[IO, RDFBuilder, A]
 
   def ok[A](x: A): RDFSaver[A] = StateT.pure(x)
 
@@ -21,8 +22,26 @@ trait RDFSaver {
     sequence(ls.map(saver(_)))
   }
 
+  def fromIO[A](x: IO[A]): RDFSaver[A] = StateT.liftF(x)
+
+  def modify(upd: RDFBuilder => IO[RDFBuilder]): RDFSaver[Unit] = {
+    StateT.modifyF(upd)
+  }
+
+  def getRDF: RDFSaver[RDFBuilder] = StateT.get
+
+  def setRDF(rdf: RDFBuilder): RDFSaver[Unit] = 
+    StateT.modify(_ => rdf)
+
+  def modifyGet[A](upd: RDFBuilder => IO[(A, RDFBuilder)]): RDFSaver[A] = for {
+    rdf <- getRDF
+    pair <- fromIO(upd(rdf))
+    (v,newRdf) = pair
+    _ <- setRDF(newRdf) 
+  } yield v
+
   def saveToRDFList[A](ls: List[A], f: A => RDFSaver[RDFNode]): RDFSaver[RDFNode] = ls match {
-    case Nil => State.pure(`rdf:nil`)
+    case Nil => ok(`rdf:nil`)
     case x :: xs => for {
       nodeX <- f(x)
       bNode <- createBNode()
@@ -33,20 +52,16 @@ trait RDFSaver {
   }
 
   def addTriple(s: RDFNode, p: IRI, o: RDFNode): RDFSaver[Unit] =
-    State.modify(_.addTriple(RDFTriple(s, p, o)).right.get)
+    modify(_.addTriple(RDFTriple(s, p, o)))
 
   def addTripleObjects(s:RDFNode, p: IRI, os: List[RDFNode]): RDFSaver[Unit] = {
     saveList(os, (o: RDFNode) => addTriple(s,p,o))
   }
 
-  def createBNode(): RDFSaver[RDFNode] = for {
-    rdf <- State.get[RDFBuilder]
-    (bNode, newRdf) = rdf.createBNode
-    _ <- State.set[RDFBuilder](newRdf)
-  } yield bNode
+  def createBNode(): RDFSaver[RDFNode] = modifyGet(_.createBNode)
 
   def makePath(path: SHACLPath): RDFSaver[RDFNode] = path match {
-    case PredicatePath(iri) => State.pure(iri)
+    case PredicatePath(iri) => ok(iri)
     case InversePath(p) => for {
       node <- createBNode()
       pathNode <- makePath(p)
@@ -81,7 +96,7 @@ trait RDFSaver {
 
   def makeId(v: Option[IRI]): RDFSaver[RDFNode] = v match {
     case None => createBNode()
-    case Some(iri) => State.pure(iri)
+    case Some(iri) => ok(iri)
   }
 
   def optSaver[A](maybe: Option[A], saver: A => RDFSaver[RDFNode]): RDFSaver[Option[RDFNode]] = {
@@ -93,7 +108,7 @@ trait RDFSaver {
 
   def maybeAddTriple[A](node: RDFNode, pred: IRI, maybe: Option[RDFNode]): RDFSaver[Unit] = {
     maybe match {
-      case None => State.pure(())
+      case None => ok(())
       case Some(x) => addTriple(node, pred, x)
     }
   }
@@ -120,11 +135,11 @@ trait RDFSaver {
   def iri(i: IRI): RDFSaver[RDFNode] = ok(i)
 
   def addPrefix(alias: String, iri: IRI): RDFSaver[Unit] = {
-    State.modify(_.addPrefix(alias, iri))
+    modify(_.addPrefix(alias, iri))
   }
 
   def addPrefixMap(pm: PrefixMap): RDFSaver[Unit] =
-    State.modify(_.addPrefixMap(pm))
+    modify(_.addPrefixMap(pm))
 
 
   def saveAsRDFList[A](ls: List[A], saver: A => RDFSaver[RDFNode]): RDFSaver[RDFNode] = for {

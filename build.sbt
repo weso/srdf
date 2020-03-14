@@ -5,7 +5,8 @@ lazy val supportedScalaVersions = List(scala212, scala213)
 lazy val utilsVersion         = "0.1.63"
 
 // Dependency versions
-lazy val catsVersion           = "2.1.2"
+lazy val catsVersion           = "2.0.0"
+lazy val fs2Version            = "2.1.0"
 lazy val circeVersion          = "0.12.0-RC3"
 lazy val jenaVersion           = "3.13.1"
 lazy val logbackVersion        = "1.2.3"
@@ -16,7 +17,7 @@ lazy val scalacticVersion      = "3.0.8"
 lazy val scalaTestVersion      = "3.0.8"
 lazy val scalatagsVersion      = "0.6.7"
 lazy val scallopVersion        = "3.3.1"
-lazy val typesafeConfigVersion = "1.3.4"
+lazy val typesafeConfigVersion = "1.4.0"
 
 // Compiler plugin dependency versions
 lazy val simulacrumVersion    = "1.0.0"
@@ -34,6 +35,7 @@ lazy val catsEffect        = "org.typelevel"              %% "cats-effect"      
 lazy val circeCore         = "io.circe"                   %% "circe-core"          % circeVersion
 lazy val circeGeneric      = "io.circe"                   %% "circe-generic"       % circeVersion
 lazy val circeParser       = "io.circe"                   %% "circe-parser"        % circeVersion
+lazy val fs2Core           = "co.fs2"                     %% "fs2-core"            % fs2Version  
 lazy val jenaArq           = "org.apache.jena"            % "jena-arq"             % jenaVersion
 lazy val jenaFuseki        = "org.apache.jena"            % "jena-fuseki-main"     % jenaVersion
 lazy val logbackClassic    = "ch.qos.logback"             % "logback-classic"      % logbackVersion
@@ -86,6 +88,8 @@ lazy val srdf = project
       circeCore,
       circeGeneric,
       circeParser,
+      fs2Core,
+      utils,
       scalaLogging
     )
     )
@@ -106,7 +110,8 @@ lazy val srdf = project
       catsCore,
       catsKernel,
       catsMacros,
-      catsEffect
+      catsEffect,
+      fs2Core
     )
   )
 
@@ -124,7 +129,8 @@ lazy val srdf4j = project
       catsCore,
       catsKernel,
       catsMacros,
-      catsEffect
+      catsEffect,
+      fs2Core
     )
   )
 

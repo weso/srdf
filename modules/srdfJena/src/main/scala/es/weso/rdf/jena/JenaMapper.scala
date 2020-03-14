@@ -7,15 +7,16 @@ import org.apache.jena.datatypes.BaseDatatype
 import org.apache.jena.datatypes.xsd.XSDDatatype
 import es.weso.rdf.triples.RDFTriple
 
-import scala.collection.JavaConverters._
+import es.weso.utils.internal.CollectionCompat.CollectionConverters._
 import com.typesafe.scalalogging._
 import es.weso.rdf.path._
 import es.weso.utils.EitherUtils
 import org.apache.jena.sparql.path._
-
 import util._
-import es.weso.utils.EitherUtils._
 import org.apache.jena.query._
+import cats.effect._
+import es.weso.utils.IOUtils._
+import cats.implicits._
 
 object JenaMapper {
 
@@ -42,7 +43,7 @@ object JenaMapper {
     throw new Exception("RDFTriple2Statement: unimplemented conversion from " + triple)
   }
 
-  def statement2RDFTriple(s: Statement): Either[String,RDFTriple] = for {
+  def statement2RDFTriple(s: Statement): IO[RDFTriple] = for {
     subj <- jenaNode2RDFNode(s.getSubject)
     pred = property2IRI(s.getPredicate)
     obj <- jenaNode2RDFNode(s.getObject)
@@ -57,32 +58,46 @@ object JenaMapper {
   def rdfNode2Property(n: RDFNode,
                        m: JenaModel,
                        base: Option[IRI]
-                      ): Either[String, Property] = {
+                      ): IO[Property] = {
     n match {
-      case i: IRI => Right(m.getProperty(resolve(i,base)))
-      case _ => Left("rdfNode2Property: unexpected node " + n)
+      case i: IRI => ok(m.getProperty(resolve(i,base)))
+      case _ => err("rdfNode2Property: unexpected node " + n)
     }
   }
 
   def rdfNode2Resource(n: RDFNode,
                        m: JenaModel,
-                       base: Option[IRI]): Either[String, JenaResource] = {
+                       base: Option[IRI]): IO[JenaResource] = {
     n match {
-      case i: IRI => Right(m.getResource(resolve(i,base)))
+      case i: IRI => ok(m.getResource(resolve(i,base)))
       case BNode(id) => {
         // Creates the BNode if it doesn't exist
-        Right(m.createResource(new AnonId(id)))
+        ok(m.createResource(new AnonId(id)))
       }
-      case _ => Left(s"rdfNode2Resource: $n is not a resource")
+      case _ => err(s"rdfNode2Resource: $n is not a resource")
     }
+  }
+
+  def model2triples(model: JenaModel): IO[List[RDFTriple]] = {
+    model.listStatements.asScala.map(st => statement2triple(st)).toList.sequence
+  }
+
+  def statement2triple(st: Statement): IO[RDFTriple] =
+    for {
+      subj <- jenaNode2RDFNode(st.getSubject)
+      obj  <- jenaNode2RDFNode(st.getObject)
+    } yield RDFTriple(subj, property2iri(st.getPredicate), obj)
+
+  def property2iri(p: Property): IRI = {
+      IRI(p.getURI)
   }
 
   def rdfNode2JenaNode(n: RDFNode, m: JenaModel, base: Option[IRI]): JenaRDFNode =
     createRDFNode(m, n, base)
 
-  def jenaNode2RDFNodeUnsafe(r: JenaRDFNode): RDFNode = {
+/*  def jenaNode2RDFNodeUnsafe(r: JenaRDFNode): RDFNode = {
     jenaNode2RDFNode(r).fold(e => StringLiteral(s"Error: $e"), identity)
-  }
+  } */
 
   /**
   * If str is "xsd:year" returns http://www.w3.org/2001/XMLSchema#
@@ -98,50 +113,49 @@ object JenaMapper {
     }
   }
 
-  // TODO: Change this code to return an Either[String,RDFNode]
-  def jenaNode2RDFNode(r: JenaRDFNode): Either[String,RDFNode] = r match {
+  def jenaNode2RDFNode(r: JenaRDFNode): IO[RDFNode] = r match {
     case _ if r.isAnon =>  {
       val b = BNode(r.asResource().getId.getLabelString)
-      Right(b)
+      ok(b)
     }
     case _ if r.isURIResource => {
-      Right(IRI(r.asResource.getURI))
+      ok(IRI(r.asResource.getURI))
     }
     case lit: JenaLiteral => {
       extendNS(lit.getDatatype.getURI) match {
         case None | Some(RDFNode.`StringDatatypeIRI`) =>
-          Right(StringLiteral(lit.getLexicalForm))
+          ok(StringLiteral(lit.getLexicalForm))
         case Some(RDFNode.`IntegerDatatypeIRI`) => {
           Try(IntegerLiteral(lit.getLexicalForm.toInt, lit.getLexicalForm)).fold(
-            e => Right(DatatypeLiteral(lit.getLexicalForm, RDFNode.IntegerDatatypeIRI)),
-            Right(_)
+            e => ok(DatatypeLiteral(lit.getLexicalForm, RDFNode.IntegerDatatypeIRI)),
+            ok(_)
           )
         }
        case Some(RDFNode.`DecimalDatatypeIRI`) =>
               Try(DecimalLiteral(lit.getLexicalForm.toDouble, lit.getLexicalForm)).fold(
-                e => Right(DatatypeLiteral(lit.getLexicalForm, RDFNode.DecimalDatatypeIRI)),Right(_))
+                e => ok(DatatypeLiteral(lit.getLexicalForm, RDFNode.DecimalDatatypeIRI)),ok(_))
        case Some(RDFNode.`DoubleDatatypeIRI`) =>
               Try(DoubleLiteral(lit.getLexicalForm.toDouble,lit.getLexicalForm)).fold(
-                e => Right(DatatypeLiteral(lit.getLexicalForm, RDFNode.DoubleDatatypeIRI)),Right(_))
+                e => ok(DatatypeLiteral(lit.getLexicalForm, RDFNode.DoubleDatatypeIRI)),ok(_))
        case Some(RDFNode.BooleanDatatypeIRI) => {
               // Lexical form of boolean literals is lowercase true or false
               lit.getLexicalForm match {
-                case "true" => Right(BooleanLiteral(true))
-                case "false" => Right(BooleanLiteral(false))
-                case _ => Right(DatatypeLiteral(lit.getLexicalForm, RDFNode.BooleanDatatypeIRI))
+                case "true" => ok(BooleanLiteral(true))
+                case "false" => ok(BooleanLiteral(false))
+                case _ => ok(DatatypeLiteral(lit.getLexicalForm, RDFNode.BooleanDatatypeIRI))
               }
             }
        case Some(RDFNode.`LangStringDatatypeIRI`) => {
               // TODO: Check that the language tag conforms to BCP 47 (https://tools.ietf.org/html/bcp47#section-2.1)
-              Right(LangLiteral(lit.getLexicalForm, Lang(lit.getLanguage)))
+              ok(LangLiteral(lit.getLexicalForm, Lang(lit.getLanguage)))
             }
        case Some(datatype) => {
-              Right(DatatypeLiteral(lit.getLexicalForm, datatype))
+              ok(DatatypeLiteral(lit.getLexicalForm, datatype))
             }
           }
         }
    case _ =>
-    Left(s"resource2RDFNode: unexpected type of resource: $r")
+    err(s"resource2RDFNode: unexpected type of resource: $r")
   }
 
   def property2IRI(p: Property): IRI = IRI(p.getURI)
@@ -197,64 +211,62 @@ object JenaMapper {
     m.createProperty(resolve(pred,base))
   }
 
-  def triplesSubject(resource: JenaResource, model: JenaModel): Either[String, Set[Statement]] =
+  def triplesSubject(resource: JenaResource, model: JenaModel): IO[Set[Statement]] =
   Try {
     model.listStatements(resource, null, null).toSet.asScala.toSet
-  }.fold(e => Left(s"triplesSubject: Error obtaining statements from $resource"), Right(_))
+  }.fold(e => err(s"triplesSubject: Error obtaining statements from $resource"), ok(_))
 
   def triplesSubjectPredicate(resource: JenaResource,
                               pred: IRI,
                               model: JenaModel,
                               base: Option[IRI]
-                             ): Either[String, Set[Statement]] = Try {
+                             ): IO[Set[Statement]] = Try {
     model.listStatements(resource, createProperty(model,pred,base), null).toSet.asScala.toSet
-  }.fold(e => Left(s"triplesSubjectPredicate: Error obtaining triples from $resource"), Right(_))
+  }.fold(e => err(s"triplesSubjectPredicate: Error obtaining triples from $resource"), ok(_))
 
   def triplesPredicateObject(pred: IRI,
                              resource: JenaResource,
                              model: JenaModel,
                              base: Option[IRI]
-                            ): Set[Statement] = {
-    model.listStatements(null, createProperty(model,pred,base), resource).toSet.asScala.toSet
+                            ): IO[Set[Statement]] = {
+    IO(model.listStatements(null, createProperty(model,pred,base), resource).toSet.asScala.toSet)
   }
 
-  def triplesPredicate(pred: Property, model: JenaModel): Either[String, Set[Statement]] =
+  def triplesPredicate(pred: Property, model: JenaModel): IO[Set[Statement]] =
   Try {
     model.listStatements(null, pred, null).toSet.asScala.toSet
-  }.fold(e => Left(e.getMessage), Right(_))
+  }.fold(e => err(e.getMessage), ok(_))
 
-  def triplesObject(obj: JenaResource, model: JenaModel): Either[String, Set[Statement]] =
+  def triplesObject(obj: JenaResource, model: JenaModel): IO[Set[Statement]] =
   Try {
     model.listStatements(null, null, obj).toSet.asScala.toSet
-  }.fold(e => Left(e.getMessage), Right(_))
+  }.fold(e => err(e.getMessage), ok(_))
 
   def triplesPredicateObject(property: Property,
                              obj: JenaResource,
                              model: JenaModel
-                            ): Either[String,Set[Statement]] = Try {
+                            ): IO[Set[Statement]] = Try {
     model.listStatements(null, property, obj).toSet.asScala.toSet
-  }.fold(e => Left(e.getMessage), Right(_))
+  }.fold(e => err(e.getMessage), ok(_))
 
   // TODO: Return Either[String,Path]
-  def path2JenaPath(path: SHACLPath, model: JenaModel, base: Option[IRI]): Either[String,Path] = {
+  def path2JenaPath(path: SHACLPath, model: JenaModel, base: Option[IRI]): IO[Path] = {
     path match {
       case PredicatePath(iri) => for {
         prop <- rdfNode2Property(iri, model,base)
       } yield new P_Link(prop.asNode)
+      
       case InversePath(path) => for {
         jenaPath <- path2JenaPath(path, model,base)
       } yield new P_Inverse(jenaPath)
+      
       case SequencePath(paths) => {
         def seq(p1: Path, p2: Path): Path = new P_Seq(p1, p2)
-        for {
-        jenaPaths <- sequence(paths.toList.map(path => path2JenaPath(path, model,base)))
-      } yield jenaPaths.reduce(seq)
+        paths.toList.map(path2JenaPath(_, model,base)).sequence.map(_.reduce(seq))
       }
       case AlternativePath(paths) => {
         def alt(p1: Path, p2: Path): Path = new P_Alt(p1, p2)
-        for {
-        jenaPaths <- sequence(paths.toList.map(path => path2JenaPath(path, model,base)))
-        } yield jenaPaths.reduce(alt)
+        paths.toList.map(path2JenaPath(_, model,base)).sequence.map(_.reduce(alt))
       }
       case ZeroOrMorePath(path) => for {
         jenaPath <- path2JenaPath(path, model,base)
@@ -268,19 +280,14 @@ object JenaMapper {
     }
   }
 
-  def wellTypedDatatype(node: RDFNode, expectedDatatype: IRI): Either[String, Boolean] = {
+  def wellTypedDatatype(node: RDFNode, expectedDatatype: IRI): IO[Boolean] = {
     node match {
       case l: es.weso.rdf.nodes.Literal => Try {
           val jenaLiteral = emptyModel.createTypedLiteral(l.getLexicalForm, l.dataType.str)
           jenaLiteral.getValue // if it is ill-typed it raises an exception
           jenaLiteral.getDatatypeURI
-        } match {
-          case Success(iri) => {
-            Right(iri == expectedDatatype.str)
-          }
-          case Failure(e) => Left(e.getMessage)
-      }
-      case _ => Right(false)
+        }.fold(IO.raiseError(_), iri => ok(iri == expectedDatatype.str)) 
+      case _ => ok(false)
     }
   }
 
