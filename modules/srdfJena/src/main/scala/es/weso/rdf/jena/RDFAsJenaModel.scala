@@ -452,7 +452,11 @@ object RDFAsJenaModel {
       val g: Graph        = m.getGraph
       val dest: StreamRDF = StreamRDFLib.graph(g)
       val ctx: Context    = null
-      RDFParser.create.source(iri.str).labelToNode(LabelToNode.createUseLabelEncoded()).context(ctx).parse(dest)
+      RDFParser.create
+        .source(iri.str)
+        .labelToNode(LabelToNode.createUseLabelEncoded)
+        .context(ctx)
+        .parse(dest)
       RDFAsJenaModel(m)
     }
 
