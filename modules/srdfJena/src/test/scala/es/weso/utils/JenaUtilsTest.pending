@@ -5,6 +5,8 @@ import es.weso.rdf.nodes.IRI
 import es.weso.rdf.path.PredicatePath
 import org.apache.jena.sparql.path.{P_Link, P_OneOrMoreN}
 import org.scalatest._
+import cats._
+import cats.effect._
 
 class JenaUtilsTest extends FunSpec with Matchers with EitherValues {
 
@@ -22,7 +24,7 @@ class JenaUtilsTest extends FunSpec with Matchers with EitherValues {
                    |:dog1 a :Dog .""".stripMargin
 
 
-      JenaUtils.parseFromString(rdfStr) match {
+      MonadError[IO,Throwable].attempt(JenaUtils.parseFromString(rdfStr)).unsafeRunSync match {
         case Right(model) => {
           val person1 = model.createResource(ex + "person1")
           val teacher1 = model.createResource(ex + "teacher1")
