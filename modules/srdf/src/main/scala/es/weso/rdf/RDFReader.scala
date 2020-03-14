@@ -203,7 +203,7 @@ trait RDFReader {
     * @param queryStr string representing the SPARQL query
     * @return Either a List of mappings or an error message
     */
-  def querySelect(queryStr: String): RDFRead[List[Map[String,RDFNode]]]
+  def querySelect(queryStr: String): RDFStream[Map[String,RDFNode]]
 
   def getNumberOfStatements(): RDFRead[Int]
 

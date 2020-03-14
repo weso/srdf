@@ -6,6 +6,7 @@ import es.weso.rdf.path.SHACLPath
 import es.weso.rdf.triples.RDFTriple
 import io.circe.Json
 import cats.effect._
+import fs2.Stream
 import org.slf4j._
 import cats.implicits._
 // import fs2.Stream
@@ -104,7 +105,8 @@ case class Compound(members: List[RDFReader])
 
   override def availableInferenceEngines: List[String] = List("NONE")
 
-  override def querySelect(queryStr: String): RDFRead[List[Map[String,RDFNode]]] = err("Not implemented querySelect for Compound")
+  override def querySelect(queryStr: String): RDFStream[Map[String,RDFNode]] = 
+     Stream.raiseError[IO](new RuntimeException("Not implemented querySelect for Compound"))
 
   override def queryAsJson(queryStr: String): RDFRead[Json] = err(s"Nor implemented queryAsJson for compound")
 

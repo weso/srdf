@@ -238,8 +238,8 @@ case class RDFAsRDF4jModel(model: Model, sourceIRI: Option[IRI] = None)
 
   override def availableInferenceEngines: List[String] = List(NONE, RDFS, OWL)
 
-  override def querySelect(queryStr: String): IO[List[Map[String, RDFNode]]] =
-    err(s"Not implemented querySelect for RDf4j yet")
+  override def querySelect(queryStr: String): RDFStream[Map[String, RDFNode]] =
+        Stream.raiseError[IO](new RuntimeException(s"Not implemented querySelect for RDf4j yet"))
 
   override def queryAsJson(queryStr: String): IO[Json] =
     err(s"Not implemented queryAsJson for RDf4j")
