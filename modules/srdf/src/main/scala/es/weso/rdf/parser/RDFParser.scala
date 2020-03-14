@@ -8,6 +8,7 @@ import es.weso.rdf.triples.RDFTriple
 import cats.data._
 import cats.implicits._
 import cats.effect._
+import fs2.Stream
 
 private[weso] case class Config(node: RDFNode,rdf: RDFReader) 
 
@@ -26,11 +27,10 @@ trait RDFParser {
    * and an `RDFReader` and tries to obtain a value of type `a`
    */
   type RDFParser[A] = EitherT[R, Err, A] 
-
-
-  type Err = String
+  type Err = Throwable
 
   type R[A] = ReaderT[IO,Config,A]
+
 
   def lift[A](r: R[A]): RDFParser[A] = EitherT.liftF(r)
 
@@ -56,7 +56,7 @@ trait RDFParser {
 
   def fromEitherT[A](e: EitherT[IO,Err,A]): RDFParser[A] = for {
     either <- liftIO(e.value)
-    v <- either.fold(err => parseFail(err), v => ok(v))
+    v <- either.fold(err => parseException(err), v => ok(v))
   } yield v
 
   def withNode[A](n: RDFNode, parser: RDFParser[A]): RDFParser[A] = {
@@ -168,6 +168,17 @@ trait RDFParser {
   def rdfTypes: RDFParser[Set[RDFNode]] =
     objectsFromPredicate(`rdf:type`)
 
+  def io2r[A](x: IO[A]): R[A] = ReaderT.liftF[IO,Config,A](x)
+
+  def fromIO[A](x: IO[A]): RDFParser[A] = EitherT.liftF(io2r(x))
+
+  def stream2list[A](st: Stream[IO,A]): IO[Vector[A]] = st.compile.toVector
+  // def ioVector[A](vs: IO[Vector[A]]): 
+  
+  def fromRDFStream[A](r: Stream[IO,A]): RDFParser[Vector[A]] = {
+    fromIO(r.compile.toVector)
+  }
+
   /**
    * RDFParser that retrieves the object associated with current node for a given predicate
    * <p>
@@ -179,7 +190,7 @@ trait RDFParser {
    for {
     rdf <- getRDF
     n <- getNode 
-    ts <- fromEither(rdf.triplesWithSubjectPredicate(n,p))
+    ts <- fromRDFStream(rdf.triplesWithSubjectPredicate(n,p))
     r <- ts.size match {
       case 0 => parseFail("objectFromPredicate: Not found triples with subject " + n + " and predicate " + p)
       case 1 => parseOk(ts.head.obj)
@@ -197,8 +208,8 @@ trait RDFParser {
    for {
     rdf <- getRDF
     n <- getNode
-    triples <- fromEither(rdf.triplesWithSubjectPredicate(n, p))
-    r <- parseOk(objectsFromTriples(triples))
+    triples <- fromRDFStream(rdf.triplesWithSubjectPredicate(n, p))
+    r <- parseOk(objectsFromTriples(triples.toSet))
    } yield r
   
 
@@ -260,7 +271,7 @@ trait RDFParser {
     for {
       n <- getNode
       rdf <- getRDF
-      ts <- fromEither(rdf.triplesWithSubjectPredicate(n, p))
+      ts <- fromRDFStream(rdf.triplesWithSubjectPredicate(n, p))
       r <- ts.size match {
         case 0 => parseFail("integerLiteralFromPredicate: Not found triples with subject " + n + " and predicate " + p)
         case 1 => getIntegerLiteral(ts.head)
@@ -272,17 +283,17 @@ trait RDFParser {
    for {
     rdf <- getRDF
     n <- getNode
-    ts <- fromEither(rdf.triplesWithSubjectPredicate(n, p))
+    ts <- fromRDFStream(rdf.triplesWithSubjectPredicate(n, p))
     // val zero : Either[String,List[Int]] = Right(List())
     r <- fromEither {
-      def cmb(ls: Either[String, List[Int]], node: RDFNode): Either[String, List[Int]] =
+      def cmb(ls: Either[Throwable, List[Int]], node: RDFNode): Either[Throwable, List[Int]] =
       ls.fold(e => Left(e),
                 vs =>
                   node match {
                     case i: IntegerLiteral => Right(i.int :: vs)
-                    case _                 => Left(s"node $node must be an integer literal")
+                    case _                 => Left(RDFException.fromString(s"node $node must be an integer literal"))
                 })
-      ts.map(_.obj).foldLeft(List[Int]().asRight[String])(cmb)
+      ts.map(_.obj).foldLeft(List[Int]().asRight[Throwable])(cmb)
     }
    } yield r
 
@@ -327,7 +338,7 @@ trait RDFParser {
    */
   def someOf[A](ps: RDFParser[A]*): RDFParser[A] = 
     {
-      val zero: RDFParser[A] = fromEither("someOf: none of the RDFParsers passed".asLeft[A])
+      val zero: RDFParser[A] = fromEither(RDFException.fromString("someOf: none of the RDFParsers passed").asLeft[A])
       def cmb(c: RDFParser[A], parser: RDFParser[A]): RDFParser[A] = 
         c orElse parser
       
@@ -663,7 +674,11 @@ trait RDFParser {
     parseOk(x)
 
   def parseFail[A](str: String): RDFParser[A] =
-    EitherT(ReaderT.pure(Left(str)))
+    EitherT(ReaderT.pure(Left(RDFException.fromString(str))))
+
+  def parseException[A](e: Throwable): RDFParser[A] =
+    EitherT(ReaderT.pure(Left(RDFException.fromException(e))))
+
 
   def parseOk[A](x: A): RDFParser[A] =
     EitherT.pure(x)

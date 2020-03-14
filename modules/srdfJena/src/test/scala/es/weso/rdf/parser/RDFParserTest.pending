@@ -15,7 +15,7 @@ class RDFParserTest extends FunSpec with Matchers with RDFParser with EitherValu
         val cs = """|prefix : <http://example.org/>
                    |:x :p :T .""".stripMargin
         val try1: EitherT[IO, String, IRI] = for {
-          rdf <- RDFAsJenaModel.fromStringIO(cs, "TURTLE")
+          rdf <- fromIO(RDFAsJenaModel.fromString(cs, "TURTLE"))
           n: RDFNode = IRI("http://example.org/x")
           p: IRI = IRI("http://example.org/p")
           obj <- EitherT(iriFromPredicate(p).value.run(Config(n,rdf)))
