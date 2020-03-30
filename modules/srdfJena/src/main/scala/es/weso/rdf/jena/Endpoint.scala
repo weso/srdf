@@ -25,6 +25,7 @@ import es.weso.rdf.jena.JenaMapper._
 import es.weso.utils.IOUtils._
 import cats.effect._
 import fs2.Stream
+import es.weso.utils.StreamUtils._
 
 case class Endpoint(endpointIRI: IRI)
   extends RDFReader
@@ -210,7 +211,7 @@ case class Endpoint(endpointIRI: IRI)
 
   override def availableInferenceEngines: List[String] = List("NONE")
 
-  override def querySelect(queryStr: String): RDFRead[List[Map[String,RDFNode]]] = {
+  override def querySelect(queryStr: String): RDFStream[Map[String,RDFNode]] = {
     Try {
       val query = QueryFactory.create(queryStr)
       val qExec = QueryExecutionFactory.sparqlService(endpoint, query)
@@ -233,7 +234,7 @@ case class Endpoint(endpointIRI: IRI)
         }
         case qtype => throw new Exception(s"Query ${queryStr} has type ${qtype} and must be SELECT query ")
       }
-    }.fold(IO.raiseError(_), identity)
+    }.fold(Stream.raiseError[IO], fromIOLs)
   }
 
   override def queryAsJson(queryStr: String): IO[Json] = 

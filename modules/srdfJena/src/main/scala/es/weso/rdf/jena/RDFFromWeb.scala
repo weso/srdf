@@ -18,7 +18,7 @@ import es.weso.rdf.path.SHACLPath
 import io.circe.Json
 // import org.apache.jena.rdf.model.{RDFNode => JenaRDFNode}
 import cats.effect.IO
-// import fs2.Stream
+import fs2.Stream
 // import es.weso.utils.internal.CollectionCompat.CollectionConverters
 import es.weso.utils.IOUtils._
 import JenaMapper._
@@ -119,7 +119,9 @@ case class RDFFromWeb() extends RDFReader {
   override def checkDatatype(node: RDFNode, datatype: IRI): RDFRead[Boolean] =
     JenaMapper.wellTypedDatatype(node, datatype)
 
-  override def querySelect(queryStr: String): RDFRead[List[Map[String,RDFNode]]] = err(s"Unimplemented query on RDFFromWeb")
+  override def querySelect(queryStr: String): RDFStream[Map[String,RDFNode]] = 
+    Stream.raiseError[IO](new RuntimeException(s"Unimplemented query on RDFFromWeb"))
+
   override def queryAsJson(queryStr: String): RDFRead[Json] = err(s"Unimplemented query on RDFFromWeb")
 
   override def getNumberOfStatements(): RDFRead[Int] = err(s"Unimplemented number of statements of endpoint")

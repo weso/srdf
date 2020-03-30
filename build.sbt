@@ -2,12 +2,13 @@ lazy val scala212 = "2.12.10"
 lazy val scala213 = "2.13.1"
 lazy val supportedScalaVersions = List(scala212, scala213)
 
-lazy val utilsVersion         = "0.1.63"
+lazy val utilsVersion         = "0.1.67"
 
 // Dependency versions
-lazy val catsVersion           = "2.0.0"
-lazy val fs2Version            = "2.1.0"
-lazy val circeVersion          = "0.12.3"
+lazy val catsVersion           = "2.1.1"
+lazy val catsEffectVersion     = "2.1.2"
+lazy val fs2Version            = "2.2.1"
+lazy val circeVersion          = "0.12.0-RC3"
 lazy val jenaVersion           = "3.13.1"
 lazy val logbackVersion        = "1.2.3"
 lazy val loggingVersion        = "3.9.2"
@@ -31,7 +32,7 @@ lazy val utils             = "es.weso"                    %% "utils"            
 lazy val catsCore          = "org.typelevel"              %% "cats-core"           % catsVersion
 lazy val catsKernel        = "org.typelevel"              %% "cats-kernel"         % catsVersion
 lazy val catsMacros        = "org.typelevel"              %% "cats-macros"         % catsVersion
-lazy val catsEffect        = "org.typelevel"              %% "cats-effect"         % catsVersion
+lazy val catsEffect        = "org.typelevel"              %% "cats-effect"         % catsEffectVersion
 lazy val circeCore         = "io.circe"                   %% "circe-core"          % circeVersion
 lazy val circeGeneric      = "io.circe"                   %% "circe-generic"       % circeVersion
 lazy val circeParser       = "io.circe"                   %% "circe-parser"        % circeVersion
