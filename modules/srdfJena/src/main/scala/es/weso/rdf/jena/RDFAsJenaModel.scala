@@ -27,6 +27,7 @@ import cats.effect._
 import es.weso.utils.IOUtils._
 import cats.implicits._
 import fs2.Stream
+import es.weso.utils.StreamUtils._
 
 case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Option[IRI] = None)
     extends RDFReader
@@ -296,7 +297,7 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
 
   def availableInferenceEngines: List[String] = List(NONE, RDFS, OWL)
 
-  override def querySelect(queryStr: String): RDFRead[List[Map[String, RDFNode]]] =
+  override def querySelect(queryStr: String): RDFStream[Map[String, RDFNode]] =
     Try {
       val qExec = QueryExecutionFactory.create(queryStr, model)
       qExec.getQuery.getQueryType match {
@@ -320,8 +321,8 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
         }
         case qtype => throw new Exception(s"Query ${queryStr} has type ${qtype} and must be SELECT query ")
       }
-    }.fold(IO.raiseError(_), identity)
-
+    }.fold(Stream.raiseError[IO], fromIOLs)
+  
   override def queryAsJson(queryStr: String): IO[Json] =
     Try {
       val qExec = QueryExecutionFactory.create(queryStr, model)
