@@ -2,8 +2,10 @@ package es.weso.utils
 
 import es.weso.utils.XMLUtils._
 import org.scalatest._
+import matchers.should._
+import org.scalatest.funspec.AnyFunSpec
 
-class XMLUtilsTest extends FunSpec with Matchers {
+class XMLUtilsTest extends AnyFunSpec with Matchers {
 
   describe("lessThanXMLDateTime") {
     shouldLessThanXMLDatetyme("2012", "2013", Right(true))

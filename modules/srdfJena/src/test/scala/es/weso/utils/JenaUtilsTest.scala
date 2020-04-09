@@ -37,25 +37,25 @@ class JenaUtilsTest extends FunSpec with Matchers with EitherValues {
           val _Dog = model.createResource(ex + "Dog")
           val _Any = model.createResource(ex + "Any")
 
-          JenaUtils.hasClass(person1, _Person, model) should be(true)
-          JenaUtils.hasClass(person1, _Teacher, model) should be(false)
-          JenaUtils.hasClass(person1, _UniversityTeacher, model) should be(false)
-          JenaUtils.hasClass(person1, _Dog, model) should be(false)
-          JenaUtils.hasClass(teacher1, _Person, model) should be(true)
-          JenaUtils.hasClass(teacher1, _Teacher, model) should be(true)
-          JenaUtils.hasClass(teacher1, _UniversityTeacher, model) should be(false)
-          JenaUtils.hasClass(teacher1, _Dog, model) should be(false)
-          JenaUtils.hasClass(teacher2, _Person, model) should be(true)
-          JenaUtils.hasClass(teacher2, _Teacher, model) should be(true)
-          JenaUtils.hasClass(teacher2, _UniversityTeacher, model) should be(true)
-          JenaUtils.hasClass(teacher2, _Dog, model) should be(false)
-          JenaUtils.hasClass(dog1, _Person, model) should be(false)
-          JenaUtils.hasClass(dog1, _Teacher, model) should be(false)
-          JenaUtils.hasClass(dog1, _UniversityTeacher, model) should be(false)
-          JenaUtils.hasClass(dog1, _Dog, model) should be(true)
-          JenaUtils.hasClass(any, _Dog, model) should be(false)
-          JenaUtils.hasClass(any, _Any, model) should be(false)
-          JenaUtils.hasClass(dog1, _Any, model) should be(false)
+          JenaUtils.hasClass(person1, _Person, model).unsafeRunSync should be(true)
+          JenaUtils.hasClass(person1, _Teacher, model).unsafeRunSync should be(false)
+          JenaUtils.hasClass(person1, _UniversityTeacher, model).unsafeRunSync should be(false)
+          JenaUtils.hasClass(person1, _Dog, model).unsafeRunSync should be(false)
+          JenaUtils.hasClass(teacher1, _Person, model).unsafeRunSync should be(true)
+          JenaUtils.hasClass(teacher1, _Teacher, model).unsafeRunSync should be(true)
+          JenaUtils.hasClass(teacher1, _UniversityTeacher, model).unsafeRunSync should be(false)
+          JenaUtils.hasClass(teacher1, _Dog, model).unsafeRunSync should be(false)
+          JenaUtils.hasClass(teacher2, _Person, model).unsafeRunSync should be(true)
+          JenaUtils.hasClass(teacher2, _Teacher, model).unsafeRunSync should be(true)
+          JenaUtils.hasClass(teacher2, _UniversityTeacher, model).unsafeRunSync should be(true)
+          JenaUtils.hasClass(teacher2, _Dog, model).unsafeRunSync should be(false)
+          JenaUtils.hasClass(dog1, _Person, model).unsafeRunSync should be(false)
+          JenaUtils.hasClass(dog1, _Teacher, model).unsafeRunSync should be(false)
+          JenaUtils.hasClass(dog1, _UniversityTeacher, model).unsafeRunSync should be(false)
+          JenaUtils.hasClass(dog1, _Dog, model).unsafeRunSync should be(true)
+          JenaUtils.hasClass(any, _Dog, model).unsafeRunSync should be(false)
+          JenaUtils.hasClass(any, _Any, model).unsafeRunSync should be(false)
+          JenaUtils.hasClass(dog1, _Any, model).unsafeRunSync should be(false)
         }
         case Left(msg) => fail(msg)
       }
@@ -71,24 +71,24 @@ class JenaUtilsTest extends FunSpec with Matchers with EitherValues {
             |:z a :B .
             |_:C :c 1 .
          """.stripMargin
-      val model = JenaUtils.parseFromString(rdfStr).right.value
+      val model = JenaUtils.parseFromString(rdfStr).attempt.unsafeRunSync.right.value
       val ex = IRI.fromString("http://example.org/").right.value
-      val px = JenaMapper.path2JenaPath(PredicatePath(ex + "x"), model, None).right.value
-      val py = JenaMapper.path2JenaPath(PredicatePath(ex + "y"), model, None).right.value
-      val pc = JenaMapper.path2JenaPath(PredicatePath(ex + "c"), model, None).right.value
-      val bx = JenaUtils.getNodesFromPath(px, model).head._1
-      val by = JenaUtils.getNodesFromPath(py, model).head._1
+      val px = JenaMapper.path2JenaPath(PredicatePath(ex + "x"), model, None).attempt.unsafeRunSync.right.value
+      val py = JenaMapper.path2JenaPath(PredicatePath(ex + "y"), model, None).attempt.unsafeRunSync.right.value
+      val pc = JenaMapper.path2JenaPath(PredicatePath(ex + "c"), model, None).attempt.unsafeRunSync.right.value
+      val bx = JenaUtils.getNodesFromPath(px, model).unsafeRunSync.head._1
+      val by = JenaUtils.getNodesFromPath(py, model).unsafeRunSync.head._1
       val a = JenaMapper.rdfNode2JenaNode(ex+"A", model, None)
       val b = JenaMapper.rdfNode2JenaNode(ex+"B", model, None)
       val z = JenaMapper.rdfNode2JenaNode(ex+"z", model, None)
-      val bc = JenaUtils.getNodesFromPath(pc, model).head._1
-      JenaUtils.hasClass(bx,a,model) should be(true)
-      JenaUtils.hasClass(bx,b,model) should be(true)
-      JenaUtils.hasClass(by,a,model) should be(false)
-      JenaUtils.hasClass(by,b,model) should be(true)
-      JenaUtils.hasClass(bx,bc,model) should be(true)
-      JenaUtils.hasClass(by,bc,model) should be(true)
-      JenaUtils.hasClass(z,bc,model) should be(false)
+      val bc = JenaUtils.getNodesFromPath(pc, model).unsafeRunSync.head._1
+      JenaUtils.hasClass(bx,a,model).unsafeRunSync should be(true)
+      JenaUtils.hasClass(bx,b,model).unsafeRunSync should be(true)
+      JenaUtils.hasClass(by,a,model).unsafeRunSync should be(false)
+      JenaUtils.hasClass(by,b,model).unsafeRunSync should be(true)
+      JenaUtils.hasClass(bx,bc,model).unsafeRunSync should be(true)
+      JenaUtils.hasClass(by,bc,model).unsafeRunSync should be(true)
+      JenaUtils.hasClass(z,bc,model).unsafeRunSync should be(false)
     }
   }
 
@@ -105,7 +105,7 @@ class JenaUtilsTest extends FunSpec with Matchers with EitherValues {
                        |:UniversityTeacher rdfs:subClassOf :Teacher .
                        |:dog1 a :Dog .""".stripMargin
 
-      val model = JenaUtils.parseFromString(rdfStr).right.value
+      val model = JenaUtils.parseFromString(rdfStr).attempt.unsafeRunSync.right.value
       val person1 = model.createResource(ex + "person1")
       val teacher1 = model.createResource(ex + "teacher1")
       val teacher2 = model.createResource(ex + "teacher2")
@@ -116,11 +116,11 @@ class JenaUtilsTest extends FunSpec with Matchers with EitherValues {
       val _Dog = model.createResource(ex + "Dog")
       val _Any = model.createResource(ex +"Any")
 
-      JenaUtils.getSHACLInstances(_Person, model).right.value should contain only (person1, teacher1, teacher2)
-      JenaUtils.getSHACLInstances(_Teacher, model).right.value should contain only (teacher1, teacher2)
-      JenaUtils.getSHACLInstances(_UniversityTeacher, model).right.value should contain only (teacher2)
-      JenaUtils.getSHACLInstances(_Dog, model).right.value should contain only (dog1)
-      JenaUtils.getSHACLInstances(_Any, model).right.value shouldBe empty
+      JenaUtils.getSHACLInstances(_Person, model).attempt.unsafeRunSync.right.value should contain only (person1, teacher1, teacher2)
+      JenaUtils.getSHACLInstances(_Teacher, model).attempt.unsafeRunSync.right.value should contain only (teacher1, teacher2)
+      JenaUtils.getSHACLInstances(_UniversityTeacher, model).attempt.unsafeRunSync.right.value should contain only (teacher2)
+      JenaUtils.getSHACLInstances(_Dog, model).attempt.unsafeRunSync.right.value should contain only (dog1)
+      JenaUtils.getSHACLInstances(_Any, model).attempt.unsafeRunSync.right.value shouldBe empty
     }
   }
 
@@ -134,7 +134,7 @@ class JenaUtilsTest extends FunSpec with Matchers with EitherValues {
                     |:abraham :parent :homer .
                     |:abraham :parent :herb .
                     |""".stripMargin
-      JenaUtils.parseFromString(rdfStr) match {
+      JenaUtils.parseFromString(rdfStr).attempt.unsafeRunSync match {
         case Right(model) => {
           val abraham = model.createResource(ex + "abraham")
           val homer = model.createResource(ex + "homer")

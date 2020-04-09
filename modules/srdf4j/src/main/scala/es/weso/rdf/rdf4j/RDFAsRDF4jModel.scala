@@ -22,7 +22,7 @@ import cats.implicits._
 import fs2.Stream
 import es.weso.utils.IOUtils._
 
-case class RDFAsRDF4jModel(model: Model, sourceIRI: Option[IRI] = None)
+case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Option[IRI] = None)
     extends RDFReader
     with RDFBuilder
     with RDFReasoner {
@@ -173,6 +173,10 @@ case class RDFAsRDF4jModel(model: Model, sourceIRI: Option[IRI] = None)
       nsSet.map(ns => (Prefix(ns.getPrefix), IRI(ns.getName))).toMap
     }
   }
+
+  override def addBase(iri: IRI): IO[Rdf] = {
+    IO.pure(this.copy(base = Some(iri)))
+  } 
 
   override def addPrefixMap(pm: PrefixMap): IO[Rdf] = IO {
     pm.pm.foreach {

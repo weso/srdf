@@ -44,7 +44,7 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
   def availableSerializeFormats: List[String] = RDFAsJenaModel.availableFormats
 
   override def fromString(cs: CharSequence, format: String, base: Option[IRI] = None): RDFRead[Rdf] =
-    Try {
+    IO {
       val m               = ModelFactory.createDefaultModel
       val str_reader      = new StringReader(cs.toString)
       val baseURI         = base.getOrElse(IRI(""))
@@ -59,27 +59,7 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
         .context(ctx)
         .parse(dest)
       RDFAsJenaModel(m, base)
-    }.fold(e => err(s"Exception: ${e.getMessage}\nBase:$base, format: $format\n$cs"), ok(_))
-
-  /*  def fromStringIO(cs: CharSequence, format: String, base: Option[IRI] = None): IO[Either[String, Rdf]] =
-    IO {
-      Try {
-        val m               = ModelFactory.createDefaultModel
-        val str_reader      = new StringReader(cs.toString)
-        val baseURI         = base.getOrElse(IRI(""))
-        val g: Graph        = m.getGraph
-        val dest: StreamRDF = StreamRDFLib.graph(g)
-        val ctx: Context    = null
-        RDFParser.create
-          .source(str_reader)
-          .base(baseURI.str)
-          .labelToNode(LabelToNode.createUseLabelEncoded())
-          .lang(shortnameToLang(format))
-          .context(ctx)
-          .parse(dest)
-        RDFAsJenaModel(m, base)
-      }.fold(e => Left(s"Exception: ${e.getMessage}\nBase:$base, format: $format\n$cs"), Right(_))
-    } */
+    }
 
   private def getRDFFormat(formatName: String): Either[String, String] = {
     val supportedFormats: List[String] =
@@ -122,7 +102,7 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
   }
 
   override def triplesWithSubject(node: RDFNode): RDFStream[RDFTriple] = node match {
-    case _: Literal => Stream.empty
+    case n if n.isLiteral => Stream.empty
     case _ =>
       streamFromIOs(for {
         resource   <- rdfNode2Resource(node, model, base)
@@ -131,12 +111,14 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
       } yield ts)
   }
 
-  override def triplesWithSubjectPredicate(node: RDFNode, p: IRI): RDFStream[RDFTriple] =
-    streamFromIOs(for {
+  override def triplesWithSubjectPredicate(node: RDFNode, p: IRI): RDFStream[RDFTriple] = {
+    if (node.isLiteral) Stream.empty
+    else streamFromIOs(for {
       r  <- rdfNode2Resource(node, model, base)
       ss <- triplesSubjectPredicate(r, p, model, base)
       ts <- toRDFTriples(ss)
     } yield ts)
+  }
 
   /**
     * return the SHACL instances of a node `cls`
@@ -205,20 +187,22 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     } yield ts)
 
   override def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] = {
+    val r  = rdfNode2JenaNode(node, model, base)
     streamFromIOs(for {
-      r  <- rdfNode2Resource(node, model, base)
       ss <- triplesObject(r, model)
       ts <- toRDFTriples(ss)
     } yield ts)
   }
 
-  override def triplesWithPredicateObject(p: IRI, o: RDFNode): RDFStream[RDFTriple] =
+  override def triplesWithPredicateObject(p: IRI, o: RDFNode): RDFStream[RDFTriple] = {
+    val obj = rdfNode2JenaNode(o, model, base)
     streamFromIOs(for {
       pred <- rdfNode2Property(p, model, base)
-      obj  <- rdfNode2Resource(o, model, base)
+      
       ss   <- triplesPredicateObject(pred, obj, model)
       ts   <- toRDFTriples(ss)
     } yield ts)
+  }
 
   override def getPrefixMap: PrefixMap = {
     PrefixMap(model.getNsPrefixMap.asScala.toMap.map {
@@ -226,9 +210,9 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     })
   }
 
-/*  private def addBase(iri: IRI): Rdf = {
-    this.copy(base = Some(iri))
-  } */
+  override def addBase(iri: IRI): IO[Rdf] = {
+    IO.pure(this.copy(base = Some(iri)))
+  } 
 
   override def addPrefixMap(other: PrefixMap): IO[Rdf] = {
     val newMap = getPrefixMap.addPrefixMap(other)
