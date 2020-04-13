@@ -1,9 +1,14 @@
 package es.weso.rdf.nodes
 
 case class BooleanLiteral(bool: Boolean) extends Literal {
+
+
   val dataType = RDFNode.BooleanDatatypeIRI
   val lexicalForm = if (bool) "true" else "false"
 
+  override def isLiteral = true 
+  override def isBNode: Boolean = false
+  override def isIRI: Boolean = false
   override def isLangLiteral = false
   override def hasLang(lang: Lang) = false
 

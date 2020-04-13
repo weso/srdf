@@ -1,6 +1,5 @@
 package es.weso.rdf.rdf4j
 
-
 import es.weso.rdf.nodes._
 import es.weso.rdf.triples.RDFTriple
 import org.scalatest._
@@ -13,15 +12,12 @@ class RDF4jMapperTest extends FunSpec with Matchers with EitherValues with Optio
       val t2 = RDFTriple(IRI("http://example.org/x"), IRI("http://example.org/p"),BNode("x"))
       val t3 = RDFTriple(IRI("http://example.org/y"), IRI("http://example.org/p"),BNode("x"))
       val ts = Set(t1,t2,t3)
-      val result: Either[String,RDFAsRDF4jModel] = for {
+      val result = for {
         model <- RDF4jMapper.rdfTriples2Model(ts)
-      } yield RDFAsRDF4jModel(model)
-
-      result.fold(
-        e => fail(s"Error building model for triples $ts: $e"),
-        r => {
-          r.triplesWithSubject(IRI("http://example.org/x")).right.value should contain theSameElementsAs(List(t1,t2))
-       })
+        rdf = RDFAsRDF4jModel(model)
+        ts <- rdf.triplesWithSubject(IRI("http://example.org/x")).compile.toList
+      } yield ts
+      result.unsafeRunSync should contain theSameElementsAs(List(t1,t2)) 
     }
   }
 

@@ -2,8 +2,10 @@ package es.weso.rdf
 
 import es.weso.rdf.nodes._
 import org.scalatest._
+import org.scalatest.funspec._
+import org.scalatest.matchers.should._
 
-class PrefixMapTest extends FunSpec with Matchers with TryValues {
+class PrefixMapTest extends AnyFunSpec with Matchers with TryValues {
 
   describe("qualify") {
       val pm = PrefixMap.empty.
