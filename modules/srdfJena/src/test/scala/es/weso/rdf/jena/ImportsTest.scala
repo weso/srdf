@@ -5,9 +5,12 @@ import java.nio.file.Paths
 import es.weso.utils.IOUtils._
 import com.typesafe.config.{Config, ConfigFactory}
 import es.weso.rdf.nodes._
-import org.scalatest.{EitherValues, FunSpec, Matchers}
+import org.scalatest._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
+import cats.effect.IO
 
-class ImportsTest extends FunSpec with JenaBased with Matchers with EitherValues {
+class ImportsTest extends AnyFunSpec with JenaBased with Matchers with EitherValues {
 
   val conf: Config = ConfigFactory.load()
   val rdfFolderStr = conf.getString("rdfFolder")
@@ -68,12 +71,17 @@ class ImportsTest extends FunSpec with JenaBased with Matchers with EitherValues
     }
   }
 
-/*  describe("Imports test") {
+  describe("Imports test") {
+    
     it(s"Should extend with imports") {
     
      val r = io2ES(for {
        rdf1     <- RDFAsJenaModel.fromIRI(rdfFolder + "/testImport.ttl")
+       str <- rdf1.serialize("TURTLE")
+       _ <- IO { println(s"RDF1:\n${str}") }
        extended <- rdf1.extendImports
+       extendedStr <- extended.serialize("TURTLE")
+       _ <- IO { println(s"Extended:\n${extendedStr}") }
        x = IRI("http://example.org/x")
        p = IRI("http://example.org/p")
        ts <- extended.triplesWithSubjectPredicate(x,p).compile.toList
@@ -101,6 +109,6 @@ class ImportsTest extends FunSpec with JenaBased with Matchers with EitherValues
       })
     }
 
-  } */
+  } 
 }
 

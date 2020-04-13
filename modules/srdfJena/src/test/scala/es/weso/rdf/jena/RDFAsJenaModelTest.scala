@@ -17,6 +17,7 @@ class RDFAsJenaModelTest
    it(s"Parses a date") {
     val ex = "http://example.org#"
     val str =s"""|@prefix : <${ex}> .
+                 |@prefix xsd: <http://www.w3.org/2001/XMLSchema#>
                  |:p :q "2019-04-08T00:00:00Z"^^xsd:dateTime .
                  |:q :q 1 .
                  |""".stripMargin
@@ -25,9 +26,24 @@ class RDFAsJenaModelTest
       str <- rdf.serialize("TURTLE")
      } yield str
      r.attempt.unsafeRunSync.fold(err => fail(s"Error parsing $err"), str => info(s"Serialized as\n$str"))
-    }
   }
-/*
+
+   it(s"Parses a negative number") {
+    val ex = "http://example.org#"
+    val str =s"""|@prefix : <${ex}> .
+                 |@prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+                 |:p :q "-1"^^xsd:integer .
+                 |:r :q -1 .
+                 |""".stripMargin
+     val r = for {
+      rdf <- RDFAsJenaModel.fromString(str, "TURTLE")
+      str <- rdf.serialize("TURTLE")
+     } yield str
+     r.attempt.unsafeRunSync.fold(err => fail(s"Error parsing $err"), str => info(s"Serialized as\n$str"))
+  }
+
+  }
+
   describe("Checking base") {
     // println(s"ShaclFolder file...${shaclFolderURI}")
 
@@ -58,23 +74,26 @@ class RDFAsJenaModelTest
         })
     }
 
-/*    it("should be able to parse RDF with relative URIs") {
-      val emptyModel = ModelFactory.createDefaultModel
-      val rdf: RDFAsJenaModel = RDFAsJenaModel(emptyModel)
-      rdf.addTriples(Set(RDFTriple(
-        IRI("a"),
-        IRI("b"),
-        IntegerLiteral(1))
-      ))
+    it("should be able to parse RDF with relative URIs") {
       val str =
         """|<a> <b> 1 .
-                   |""".stripMargin
-      val m = ModelFactory.createDefaultModel
-      RDFAsJenaModel.fromChars(str, "TURTLE", None) match {
-        case Right(m2) => shouldBeIsomorphic(rdf.model, m2.model)
-        case Left(e) => fail(s"Error $e\n$str")
-      }
-    } */
+           |""".stripMargin
+      val ex = "http://example.org/"     
+      val r = for {
+        rdf <- RDFAsJenaModel.empty
+        rdf1 <- rdf.addTriples(Set(RDFTriple(IRI(ex + "a"),IRI(ex + "b"),IntegerLiteral(1))))
+        rdf2 <- RDFAsJenaModel.fromChars(str, "TURTLE", Some(IRI(ex)))
+      } yield (rdf1,rdf2)    
+      // val m = ModelFactory.createDefaultModel
+      r.attempt.unsafeRunSync.fold(
+        s => s"Error: ${s.getMessage}",
+        pair => { 
+          val (rdf1, rdf2) = pair 
+          shouldBeIsomorphic(rdf1.model, rdf2.model) 
+        }
+      ) 
+    }
+
   }
 
   describe(s"Triples with subject") {
@@ -100,6 +119,7 @@ class RDFAsJenaModelTest
      r.attempt.unsafeRunSync.fold(e => fail(s"Error: $e"), 
       ts => ts should contain theSameElementsAs(expected)
      )
+     info("Hi!") 
     }
    }
 
@@ -127,6 +147,6 @@ class RDFAsJenaModelTest
       ts => ts should contain theSameElementsAs(expected)
      )
     }
-   } */
+   } 
 }
 

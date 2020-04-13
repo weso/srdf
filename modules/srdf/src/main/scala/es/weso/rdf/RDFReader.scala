@@ -22,8 +22,15 @@ trait RDFReader {
 
   val id: String
 
+  /**
+    * @return List of available formats that this RDFReader supports
+    */
   def availableParseFormats: List[String]
 
+  /**
+    * 
+    * @return List of formats in which this RDFReader can be serialized 
+    */
   def availableSerializeFormats: List[String]
 
   /**

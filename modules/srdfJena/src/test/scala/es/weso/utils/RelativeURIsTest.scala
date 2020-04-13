@@ -7,8 +7,10 @@ import org.scalatest._
 import cats._
 import cats.effect._
 import es.weso.utils.IOUtils._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.funspec.AnyFunSpec
 
-class RelativeURIsTest extends FunSpec with Matchers {
+class RelativeURIsTest extends AnyFunSpec with Matchers {
   describe("Relative URIs") {
     it(s"Should parse Turtle with relative URIs") {
       val str = """<x> <p> <y>"""

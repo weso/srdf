@@ -75,7 +75,7 @@ case class Endpoint(endpointIRI: IRI)
     IO(s.toList)
   }.fold(e => errStream(s"predicates exception: ${e.getMessage}"), streamFromIOs(_))
 
-  override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] = ???
+  override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] = err(s"Endpoint: Not implemented hasPredicateWithSubject")
 
   override def iriObjects(): RDFStream[IRI] = Try {
     val resultSet = QueryExecutionFactory.sparqlService(endpoint, findIRIs).execSelect()
@@ -175,7 +175,7 @@ case class Endpoint(endpointIRI: IRI)
     streamFromIOs(model2triples(model))
   }
 
-  def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] = node match {
+  override def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] = node match {
     case obj: IRI => {
       val model = QueryExecutionFactory.sparqlService(endpoint, queryTriplesWithObject(obj)).execConstruct()
       streamFromIOs(model2triples(model))

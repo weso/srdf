@@ -7,8 +7,9 @@ lazy val utilsVersion         = "0.1.67"
 // Dependency versions
 lazy val catsVersion           = "2.1.1"
 lazy val catsEffectVersion     = "2.1.2"
+lazy val circeVersion          = "0.12.3"
 lazy val fs2Version            = "2.2.1"
-lazy val circeVersion          = "0.12.0-RC3"
+lazy val http4sVersion         = "0.21.3"
 lazy val jenaVersion           = "3.13.1"
 lazy val logbackVersion        = "1.2.3"
 lazy val loggingVersion        = "3.9.2"
@@ -36,7 +37,8 @@ lazy val catsEffect        = "org.typelevel"              %% "cats-effect"      
 lazy val circeCore         = "io.circe"                   %% "circe-core"          % circeVersion
 lazy val circeGeneric      = "io.circe"                   %% "circe-generic"       % circeVersion
 lazy val circeParser       = "io.circe"                   %% "circe-parser"        % circeVersion
-lazy val fs2Core           = "co.fs2"                     %% "fs2-core"            % fs2Version  
+lazy val fs2Core           = "co.fs2"                     %% "fs2-core"            % fs2Version
+lazy val http4sBlazeClient = "org.http4s"                 %% "http4s-blaze-client" % http4sVersion
 lazy val jenaArq           = "org.apache.jena"            % "jena-arq"             % jenaVersion
 lazy val jenaFuseki        = "org.apache.jena"            % "jena-fuseki-main"     % jenaVersion
 lazy val logbackClassic    = "ch.qos.logback"             % "logback-classic"      % logbackVersion
@@ -112,7 +114,8 @@ lazy val srdf = project
       catsKernel,
       catsMacros,
       catsEffect,
-      fs2Core
+      fs2Core,
+      http4sBlazeClient
     )
   )
 
