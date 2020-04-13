@@ -4,6 +4,10 @@ import cats.Show
 
 case class BNode(id: String) extends RDFNode {
 
+  override def isLiteral: Boolean = false
+  override def isBNode: Boolean = true
+  override def isIRI: Boolean = false
+
   /* @deprecated */
   def newBNodeId: BNode = {
     val n = id.drop(1).toInt + 1

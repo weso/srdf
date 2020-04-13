@@ -1,13 +1,18 @@
 package es.weso.rdf.jena
 
-import es.weso.rdf.nodes.{IRI, IntegerLiteral, RDFNode}
-import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
+import cats.effect._
+import es.weso.utils.IOUtils._
+import es.weso.rdf.nodes._
+import org.scalatest._
+import org.scalatest.matchers.should._
+import org.scalatest.funspec._
 import org.apache.jena.fuseki.main.FusekiServer
+
 import org.apache.jena.query._
 import org.apache.jena.system.Txn
 
 class EndpointTest
-  extends FunSpec
+  extends AnyFunSpec
   with JenaBased
   with Matchers with BeforeAndAfter {
 
@@ -77,8 +82,8 @@ class EndpointTest
     } */
 
     def withEndpoint[A](data: String,
-                        action: Endpoint => Either[String,A]
-                       ): Either[String,A] =
+                        action: Endpoint => IO[A]
+                       ): IO[A] =
      for {
         rdf <- RDFAsJenaModel.fromChars(data, "Turtle")
         result <- {
@@ -88,7 +93,7 @@ class EndpointTest
     } yield result
 
     def shouldObtainShaclInstances(data: String, node: IRI, expected: Seq[RDFNode]): Unit = {
-      val either = withEndpoint(data, _.getSHACLInstances(node))
+      val either = io2ES(withEndpoint(data, _.getSHACLInstances(node).compile.toList))
       info(s"shouldObtainShaclInstances for node $node")
       either.fold(e => fail(s"Error: $e"), is => {
         is should contain theSameElementsAs(expected)
@@ -96,9 +101,9 @@ class EndpointTest
     }
 
     def shouldQueryData(data: String, queryStr: String, expected: List[Map[String, RDFNode]]): Unit = {
-      val eitherRdf = for {
+      val eitherRdf = io2ES(for {
         rdf <- RDFAsJenaModel.fromChars(data,"Turtle")
-      } yield rdf
+      } yield rdf)
       eitherRdf.fold(
         e => fail(s"Error: $e"),
         rdf => {

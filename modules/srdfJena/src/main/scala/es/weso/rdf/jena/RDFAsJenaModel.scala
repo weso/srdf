@@ -2,11 +2,10 @@ package es.weso.rdf.jena
 import es.weso.rdf.nodes._
 import es.weso.rdf.nodes.RDFNode
 import es.weso.rdf.triples.RDFTriple
-import es.weso.utils.internal.CollectionCompat
 import es.weso.utils.internal.CollectionCompat.CollectionConverters._
 import scala.util.Try
 import es.weso.rdf._
-import org.apache.jena.rdf.model.{Model, Property, Resource, Statement, RDFNode => JenaRDFNode}
+import org.apache.jena.rdf.model.{Model, Resource, Statement, RDFNode => JenaRDFNode}
 import org.slf4j._
 import org.apache.jena.riot._
 import org.apache.jena.rdf.model.ModelFactory
@@ -24,9 +23,11 @@ import cats.implicits._
 import org.apache.jena.graph.Graph
 import org.apache.jena.riot.system.{StreamRDF, StreamRDFLib}
 import org.apache.jena.sparql.util.Context
-import es.weso.utils.EitherUtils._
 import cats.effect._
-import cats.data.EitherT
+import es.weso.utils.IOUtils._
+import cats.implicits._
+import fs2.Stream
+import es.weso.utils.StreamUtils._
 
 case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Option[IRI] = None)
     extends RDFReader
@@ -42,8 +43,8 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
   def availableParseFormats: List[String]     = RDFAsJenaModel.availableFormats
   def availableSerializeFormats: List[String] = RDFAsJenaModel.availableFormats
 
-  override def fromString(cs: CharSequence, format: String, base: Option[IRI] = None): Either[String, Rdf] =
-    Try {
+  override def fromString(cs: CharSequence, format: String, base: Option[IRI] = None): RDFRead[Rdf] =
+    IO {
       val m               = ModelFactory.createDefaultModel
       val str_reader      = new StringReader(cs.toString)
       val baseURI         = base.getOrElse(IRI(""))
@@ -58,26 +59,6 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
         .context(ctx)
         .parse(dest)
       RDFAsJenaModel(m, base)
-    }.fold(e => Left(s"Exception: ${e.getMessage}\nBase:$base, format: $format\n$cs"), Right(_))
-
-  def fromStringIO(cs: CharSequence, format: String, base: Option[IRI] = None): IO[Either[String, Rdf]] =
-    IO {
-      Try {
-        val m               = ModelFactory.createDefaultModel
-        val str_reader      = new StringReader(cs.toString)
-        val baseURI         = base.getOrElse(IRI(""))
-        val g: Graph        = m.getGraph
-        val dest: StreamRDF = StreamRDFLib.graph(g)
-        val ctx: Context    = null
-        RDFParser.create
-          .source(str_reader)
-          .base(baseURI.str)
-          .labelToNode(LabelToNode.createUseLabelEncoded())
-          .lang(shortnameToLang(format))
-          .context(ctx)
-          .parse(dest)
-        RDFAsJenaModel(m, base)
-      }.fold(e => Left(s"Exception: ${e.getMessage}\nBase:$base, format: $format\n$cs"), Right(_))
     }
 
   private def getRDFFormat(formatName: String): Either[String, String] = {
@@ -89,137 +70,138 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     }
   }
 
-  override def serialize(formatName: String, base: Option[IRI]): Either[String, String] =
-    for {
-      format <- getRDFFormat(formatName)
-      str <- Try {
-        val out              = new ByteArrayOutputStream()
-        val relativizedModel = JenaUtils.relativizeModel(model, base.map(_.uri))
-        relativizedModel.write(out, format)
-        out.toString
-      }.fold(e => Left(s"Error serializing RDF to format $formatName: $e"), Right(_))
-    } yield str
+  override def serialize(formatName: String, base: Option[IRI]): RDFRead[String] =
+    Try {
+      for {
+        format <- getRDFFormat(formatName)
+        str = {
+          val out              = new ByteArrayOutputStream()
+          val relativizedModel = JenaUtils.relativizeModel(model, base.map(_.uri))
+          relativizedModel.write(out, format)
+          out.toString
+        }
+      } yield str
+    }.fold(
+      e => err(s"Error serializing RDF to format $formatName: $e"),
+      _.fold(e => err(s"Format $formatName not found: $e"), ok(_))
+    )
 
   // TODO: this implementation only returns subjects
-  override def iris(): Either[String, Set[IRI]] = {
+  override def iris(): RDFStream[IRI] = {
+    val resources: Seq[Resource] = model.listSubjects().asScala.toSeq
+    Stream.emits(resources.filter(s => s.isURIResource).map(r => IRI(r.getURI)))
+  }
+
+  override def subjects(): RDFStream[RDFNode] = {
     val resources: Set[Resource] = model.listSubjects().asScala.toSet
-    Right(resources.filter(s => s.isURIResource).map(r => IRI(r.getURI)))
+    streamFromIOs(sequence(resources.map(r => jenaNode2RDFNode(r)).toList).map(_.toList))
   }
 
-  override def subjects(): Either[String, Set[RDFNode]] = {
-    val resources: Set[Resource] = model.listSubjects().asScala.toSet
-    Right(resources.map(r => jenaNode2RDFNodeUnsafe(r)))
+  override def rdfTriples(): RDFStream[RDFTriple] = {
+    streamFromIOs(model2triples(model))
   }
 
-  override def rdfTriples(): Either[String, Set[RDFTriple]] = {
-    Right(model2triples(model))
-  }
-
-  override def triplesWithSubject(node: RDFNode): Either[String, Set[RDFTriple]] = node match {
-    case _: Literal => Right(Set())
+  override def triplesWithSubject(node: RDFNode): RDFStream[RDFTriple] = node match {
+    case n if n.isLiteral => Stream.empty
     case _ =>
-      for {
+      streamFromIOs(for {
         resource   <- rdfNode2Resource(node, model, base)
         statements <- triplesSubject(resource, model)
         ts         <- toRDFTriples(statements)
-      } yield ts
+      } yield ts)
   }
 
-  override def triplesWithSubjectPredicate(node: RDFNode, p: IRI): Either[String, Set[RDFTriple]] =
-    for {
+  override def triplesWithSubjectPredicate(node: RDFNode, p: IRI): RDFStream[RDFTriple] = {
+    if (node.isLiteral) Stream.empty
+    else streamFromIOs(for {
       r  <- rdfNode2Resource(node, model, base)
       ss <- triplesSubjectPredicate(r, p, model, base)
       ts <- toRDFTriples(ss)
-    } yield ts
+    } yield ts)
+  }
 
   /**
     * return the SHACL instances of a node `cls`
     * A node `node` is a shacl instance of `cls` if `node rdf:type/rdfs:subClassOf* cls`
     */
-  override def getSHACLInstances(c: RDFNode): Either[String, Seq[RDFNode]] =
-    for {
+  override def getSHACLInstances(c: RDFNode): RDFStream[RDFNode] =
+    streamFromIOs(for {
       is <- JenaUtils.getSHACLInstances(JenaMapper.rdfNode2JenaNode(c, model, base), model)
-      ns <- sequence(is.toList.map(n => JenaMapper.jenaNode2RDFNode(n)))
-    } yield ns
+      ns <- is.toList.map(n => JenaMapper.jenaNode2RDFNode(n)).sequence
+    } yield ns)
 
-  override def hasSHACLClass(n: RDFNode, c: RDFNode): Either[String, Boolean] = {
+  override def hasSHACLClass(n: RDFNode, c: RDFNode): RDFRead[Boolean] = {
     val nJena = JenaMapper.rdfNode2JenaNode(n, model, base)
     val cJena = JenaMapper.rdfNode2JenaNode(c, model, base)
-    JenaUtils.hasClass(nJena, cJena, model).asRight[String]
+    JenaUtils.hasClass(nJena, cJena, model)
   }
 
-  override def nodesWithPath(path: SHACLPath): Either[String, Set[(RDFNode, RDFNode)]] =
-    for {
-      jenaPath <- JenaMapper.path2JenaPath(path, model, base)
-    } yield JenaUtils
-      .getNodesFromPath(jenaPath, model)
-      .map(p => (JenaMapper.jenaNode2RDFNodeUnsafe(p._1), JenaMapper.jenaNode2RDFNodeUnsafe(p._2)))
-      .toSet
+  override def nodesWithPath(path: SHACLPath): RDFStream[(RDFNode, RDFNode)] =
+    streamFromIOs(
+      for {
+        jenaPath <- JenaMapper.path2JenaPath(path, model, base)
+        nodes    <- JenaUtils.getNodesFromPath(jenaPath, model)
+        pairs <- {
+          val v: List[IO[(RDFNode, RDFNode)]] = nodes.map(pair => {
+            val (subj, obj) = pair
+            for {
+              s <- JenaMapper.jenaNode2RDFNode(subj)
+              o <- JenaMapper.jenaNode2RDFNode(obj)
+            } yield (s, o)
+          })
+          val r: IO[List[(RDFNode, RDFNode)]] = sequence(v)
+          r
+        }
+      } yield pairs
+    )
 
-  override def objectsWithPath(subj: RDFNode, path: SHACLPath): Either[String, Set[RDFNode]] = {
+  override def objectsWithPath(subj: RDFNode, path: SHACLPath): RDFStream[RDFNode] = {
     val jenaNode: JenaRDFNode = JenaMapper.rdfNode2JenaNode(subj, model, base)
-    for {
+    streamFromIOs(for {
       jenaPath <- JenaMapper.path2JenaPath(path, model, base)
       nodes <- sequence(
         JenaUtils.objectsFromPath(jenaNode, jenaPath, model).toList.map(n => JenaMapper.jenaNode2RDFNode(n))
       )
-    } yield nodes.toSet
+    } yield nodes)
   }
 
-  override def subjectsWithPath(path: SHACLPath, obj: RDFNode): Either[String, Set[RDFNode]] = {
+  override def subjectsWithPath(path: SHACLPath, obj: RDFNode): RDFStream[RDFNode] = {
     val jenaNode: JenaRDFNode = JenaMapper.rdfNode2JenaNode(obj, model, base)
-    for {
+    streamFromIOs(for {
       jenaPath <- JenaMapper.path2JenaPath(path, model, base)
       nodes <- sequence(
         JenaUtils.subjectsFromPath(jenaNode, jenaPath, model).toList.map(n => JenaMapper.jenaNode2RDFNode(n))
       )
-    } yield nodes.toSet
+    } yield nodes)
   }
 
-  private def toRDFTriples(ls: Set[Statement]): Either[String, Set[RDFTriple]] = {
-    EitherUtils.sequence(ls.toList.map(st => statement2triple(st))).map(_.toSet)
+  private def toRDFTriples(ls: Set[Statement]): IO[List[RDFTriple]] = {
+    sequence(ls.toList.map(st => statement2triple(st)))
   }
 
-  override def triplesWithPredicate(node: IRI): Either[String, Set[RDFTriple]] =
-    for {
+  override def triplesWithPredicate(node: IRI): RDFStream[RDFTriple] =
+    streamFromIOs(for {
       pred <- rdfNode2Property(node, model, base)
       ss   <- triplesPredicate(pred, model)
       ts   <- toRDFTriples(ss)
-    } yield ts
+    } yield ts)
 
-  override def triplesWithObject(node: RDFNode): Either[String, Set[RDFTriple]] =
-    for {
-      r  <- rdfNode2Resource(node, model, base)
+  override def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] = {
+    val r  = rdfNode2JenaNode(node, model, base)
+    streamFromIOs(for {
       ss <- triplesObject(r, model)
       ts <- toRDFTriples(ss)
-    } yield ts
+    } yield ts)
+  }
 
-  override def triplesWithPredicateObject(p: IRI, o: RDFNode): Either[String, Set[RDFTriple]] =
-    for {
+  override def triplesWithPredicateObject(p: IRI, o: RDFNode): RDFStream[RDFTriple] = {
+    val obj = rdfNode2JenaNode(o, model, base)
+    streamFromIOs(for {
       pred <- rdfNode2Property(p, model, base)
-      obj  <- rdfNode2Resource(o, model, base)
+      
       ss   <- triplesPredicateObject(pred, obj, model)
       ts   <- toRDFTriples(ss)
-    } yield ts
-
-  private def model2triples(model: Model): Set[RDFTriple] = {
-    model.listStatements().asScala.map(st => statement2tripleUnsafe(st)).toSet
-  }
-
-  private def statement2triple(st: Statement): Either[String, RDFTriple] =
-    for {
-      subj <- JenaMapper.jenaNode2RDFNode(st.getSubject)
-      obj  <- JenaMapper.jenaNode2RDFNode(st.getObject)
-    } yield RDFTriple(subj, property2iri(st.getPredicate), obj)
-
-  private def statement2tripleUnsafe(st: Statement): RDFTriple = {
-    val subj = JenaMapper.jenaNode2RDFNodeUnsafe(st.getSubject)
-    val obj  = JenaMapper.jenaNode2RDFNodeUnsafe(st.getObject)
-    RDFTriple(subj, property2iri(st.getPredicate), obj)
-  }
-
-  private def property2iri(p: Property): IRI = {
-    IRI(p.getURI)
+    } yield ts)
   }
 
   override def getPrefixMap: PrefixMap = {
@@ -228,43 +210,41 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     })
   }
 
-  def addBase(iri: IRI): Rdf = {
-    this.copy(base = Some(iri))
-  }
+  override def addBase(iri: IRI): IO[Rdf] = {
+    IO.pure(this.copy(base = Some(iri)))
+  } 
 
-  override def addPrefixMap(other: PrefixMap): Rdf = {
+  override def addPrefixMap(other: PrefixMap): IO[Rdf] = {
     val newMap = getPrefixMap.addPrefixMap(other)
     val map: Map[String, String] = newMap.pm.map {
       case (Prefix(str), iri) => (str, iri.str)
     }
-    RDFAsJenaModel(model.setNsPrefixes(map.asJava))
+    ok(RDFAsJenaModel(model.setNsPrefixes(map.asJava)))
   }
 
   // TODO: Check that the last character is indeed :
   // private def removeLastColon(str: String): String = str.init
 
-  override def addTriples(triples: Set[RDFTriple]): Either[String, Rdf] = {
-    Try {
+  override def addTriples(triples: Set[RDFTriple]): IO[Rdf] = IO {
       val newModel = JenaMapper.RDFTriples2Model(triples, model, base)
       val m        = model.add(newModel)
       RDFAsJenaModel(m)
-    }.fold(e => s"Error adding triples: ${e.getMessage}".asLeft[Rdf], Right(_))
   }
 
   // TODO: This is not efficient
-  override def rmTriple(triple: RDFTriple): Either[String, Rdf] = {
+  override def rmTriple(triple: RDFTriple): IO[Rdf] = IO {
     val empty        = ModelFactory.createDefaultModel
     val model2delete = JenaMapper.RDFTriples2Model(Set(triple), empty, base)
     model.difference(model2delete)
-    Right(this)
+    this
   }
 
-  override def createBNode: (RDFNode, RDFAsJenaModel) = {
+  override def createBNode: IO[(RDFNode, RDFAsJenaModel)] = IO {
     val resource = model.createResource
     (BNode(resource.getId.getLabelString), this)
   }
 
-  override def addPrefix(alias: String, iri: IRI): Rdf = {
+  override def addPrefix(alias: String, iri: IRI): IO[Rdf] = IO {
     model.setNsPrefix(alias, iri.str)
     this
   }
@@ -273,11 +253,11 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     IRI(model.expandPrefix(str))
   } */
 
-  override def empty: Rdf = {
+  override def empty: RDFRead[Rdf] = {
     RDFAsJenaModel.empty
   }
 
-  override def checkDatatype(node: RDFNode, datatype: IRI): Either[String, Boolean] =
+  override def checkDatatype(node: RDFNode, datatype: IRI): RDFRead[Boolean] =
     JenaMapper.wellTypedDatatype(node, datatype)
 
   /*private def resolveString(str: String): Either[String,IRI] = {
@@ -290,39 +270,44 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
   private val RDFS = "RDFS"
   private val OWL  = "OWL"
 
-  override def applyInference(inference: String): Either[String, Rdf] = {
+  override def applyInference(inference: String): IO[Rdf] = {
     inference.toUpperCase match {
-      case `NONE` => Right(this)
+      case `NONE` => ok(this)
       case `RDFS` => JenaUtils.inference(model, RDFS).map(RDFAsJenaModel(_))
       case `OWL`  => JenaUtils.inference(model, OWL).map(RDFAsJenaModel(_))
-      case other  => Left(s"Unsupported inference $other")
+      case other  => err(s"Unsupported inference $other")
     }
   }
 
   def availableInferenceEngines: List[String] = List(NONE, RDFS, OWL)
 
-  override def querySelect(queryStr: String): Either[String, List[Map[String, RDFNode]]] = {
-    val tryQuery: Try[List[Map[String, RDFNode]]] = Try {
+  override def querySelect(queryStr: String): RDFStream[Map[String, RDFNode]] =
+    Try {
       val qExec = QueryExecutionFactory.create(queryStr, model)
       qExec.getQuery.getQueryType match {
         case Query.QueryTypeSelect => {
           val result = qExec.execSelect()
-          // val varNames = result.getResultVars
-          val ls: List[Map[String, RDFNode]] = result.asScala.toList.map(qs => {
+          val ls: List[IO[Map[String, RDFNode]]] = result.asScala.toList.map(qs => {
             val qsm = new QuerySolutionMap()
             qsm.addAll(qs)
-            CollectionCompat.mapValues(qsm.asMap.asScala.view.toMap)(node => jenaNode2RDFNodeUnsafe(node))
-//          qsm.asMap.asScala.view.mapValues(node => jenaNode2RDFNodeUnsafe(node)).toMap
+            val pairs: List[(String, JenaRDFNode)] =
+              qsm.asMap.asScala.view.toMap.toList
+            val iom: IO[Map[String, RDFNode]] =
+              pairs
+                .map {
+                  case (v, jenaNode) => jenaNode2RDFNode(jenaNode).flatMap(node => ok((v, node)))
+                }
+                .sequence
+                .map(_.toMap)
+            iom
           })
-          ls
+          ls.sequence
         }
         case qtype => throw new Exception(s"Query ${queryStr} has type ${qtype} and must be SELECT query ")
       }
-    }
-    tryQuery.toEither.leftMap(_.getMessage)
-  }
-
-  override def queryAsJson(queryStr: String): Either[String, Json] =
+    }.fold(Stream.raiseError[IO], fromIOLs)
+  
+  override def queryAsJson(queryStr: String): IO[Json] =
     Try {
       val qExec = QueryExecutionFactory.create(queryStr, model)
       qExec.getQuery.getQueryType match {
@@ -348,27 +333,28 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
           Left(s"Unknown type of query. Not implemented")
         }
       }
-    }.toEither.fold(f => Left(f.getMessage), es => es)
+    }.fold(f => err(f.getMessage), _.fold(err(_), ok(_)))
 
-  override def getNumberOfStatements(): Either[String, Int] =
-    Right(model.size.toInt)
+  override def getNumberOfStatements(): IO[Int] =
+    ok(model.size.toInt)
 
-  override def isIsomorphicWith(other: RDFReader): Either[String, Boolean] = other match {
+  override def isIsomorphicWith(other: RDFReader): IO[Boolean] = other match {
     case o: RDFAsJenaModel => {
-      Right(model.isIsomorphicWith(o.model))
+      ok(model.isIsomorphicWith(o.model))
     }
-    case _ => Left(s"Cannot compare RDFAsJenaModel with reader of different type: ${other.getClass.toString}")
+    case _ => err(s"Cannot compare RDFAsJenaModel with reader of different type: ${other.getClass.toString}")
   }
 
-  def normalizeBNodes: Rdf = {
-    NormalizeBNodes.normalizeBNodes(this, this.empty)
-  }
+  def normalizeBNodes: IO[Rdf] = IO(this) /* for {
+    e <- RDFAsJenaModel.empty
+    normalize <- NormalizeBNodes.normalizeBNodes(this, e)
+  } yield normalize */
 
   /**
     * Apply owl:imports closure to an RDF source
     * @return new RDFReader
     */
-  override def extendImports(): Either[String, Rdf] =
+  override def extendImports(): RDFBuild[Rdf] =
     for {
       imports <- getImports
       newRdf  <- extendImports(this, imports, List(IRI("")))
@@ -376,15 +362,15 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
 
   private lazy val owlImports = IRI("http://www.w3.org/2002/07/owl#imports")
 
-  private def getImports: Either[String, List[IRI]] =
+  private def getImports: RDFBuild[List[IRI]] =
     for {
-      ts <- triplesWithPredicate(owlImports)
-      os <- sequence(ts.map(_.obj.toIRI).toList)
+      ts <- triplesWithPredicate(owlImports).compile.toList
+      os <- fromES(ts.map(_.obj.toIRI).sequence)
     } yield os
 
-  private def extendImports(rdf: Rdf, imports: List[IRI], visited: List[IRI]): Either[String, Rdf] = {
+  private def extendImports(rdf: Rdf, imports: List[IRI], visited: List[IRI]): RDFBuild[Rdf] = {
     imports match {
-      case Nil => Right(rdf)
+      case Nil => ok(rdf)
       case iri :: rest =>
         if (visited contains iri)
           extendImports(rdf, rest, visited)
@@ -397,48 +383,53 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     }
   }
 
-  override def merge(other: RDFReader): Either[String, Rdf] = other match {
-    case jenaRdf: RDFAsJenaModel =>
-      Right(RDFAsJenaModel(this.model.add(jenaRdf.normalizeBNodes.model)))
-    case _ => {
-      val zero: Either[String, Rdf] = Right(this)
-      def cmb(next: Either[String, Rdf], x: RDFTriple): Either[String, Rdf] =
-        for {
-          rdf1 <- next
-          rdf2 <- rdf1.addTriple(x)
-        } yield rdf2
-      for {
-        ts  <- other.rdfTriples
-        rdf <- ts.foldLeft(zero)(cmb)
-      } yield rdf
-    }
-  }
-
-  override def asRDFBuilder: Either[String, RDFBuilder] =
-    Right(this)
+  override def asRDFBuilder: RDFRead[RDFBuilder] =
+    err(s"Not implemented asRDFBuilder") // Right(this)
 
   override def rdfReaderName: String = s"ApacheJena"
 
   def addModel(model: Model): RDFAsJenaModel =
     this.copy(model = this.model.add(model))
 
-  override def triplesWithPredicateObjectIO(p: IRI, o: RDFNode): ESIO[Set[RDFTriple]] = 
-    fromES(triplesWithPredicateObject(p,o))
+  override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] =
+    triplesWithSubjectPredicate(n,p).compile.toList.map(!_.isEmpty)
+
+  override def merge(other: RDFReader): RDFBuild[RDFAsJenaModel] = 
+   other match {
+    case jenaRdf: RDFAsJenaModel => /*for {
+      normalized <- jenaRdf.normalizeBNodes
+      result = RDFAsJenaModel(this.model.add(normalized.model))
+    } yield result*/
+    IO(RDFAsJenaModel(this.model.union(jenaRdf.model)))
+    case _ => {
+      val zero: IO[Rdf] = ok(this)
+      def cmb(next: IO[Rdf], x: RDFTriple): IO[Rdf] =
+        for {
+          rdf1 <- next
+          rdf2 <- rdf1.addTriple(x)
+        } yield rdf2
+   
+      for {
+        ts  <- other.rdfTriples.compile.toList
+        rdf <- ts.foldLeft(zero)(cmb)
+      } yield rdf
+    }
+  }
 
 }
 
 object RDFAsJenaModel {
 
-  def apply(): RDFAsJenaModel = {
+  /*  def apply(): RDFAsJenaModel = {
     RDFAsJenaModel.empty
+  } */
+
+  def empty: IO[RDFAsJenaModel] = {
+    IO(RDFAsJenaModel(ModelFactory.createDefaultModel))
   }
 
-  def empty: RDFAsJenaModel = {
-    RDFAsJenaModel(ModelFactory.createDefaultModel)
-  }
-
-  def fromIRI(iri: IRI): Either[String, RDFAsJenaModel] = {
-    Try {
+  def fromIRI(iri: IRI): IO[RDFAsJenaModel] = 
+    IO {
       // We delegate RDF management to Jena (content-negotiation and so...)
       // RDFDataMgr.loadModel(iri.str)
       val m = ModelFactory.createDefaultModel()
@@ -446,14 +437,15 @@ object RDFAsJenaModel {
       val g: Graph        = m.getGraph
       val dest: StreamRDF = StreamRDFLib.graph(g)
       val ctx: Context    = null
-      RDFParser.create.source(iri.str).labelToNode(LabelToNode.createUseLabelEncoded()).context(ctx).parse(dest)
-      m
-    }.toEither
-      .leftMap(e => s"Exception reading RDF from ${iri.show}: ${e.getMessage}")
-      .map(model => RDFAsJenaModel(model))
-  }
+      RDFParser.create
+        .source(iri.str)
+        .labelToNode(LabelToNode.createUseLabelEncoded)
+        .context(ctx)
+        .parse(dest)
+      RDFAsJenaModel(m)
+    }
 
-  def fromURI(uri: String, format: String = "TURTLE", base: Option[IRI] = None): Either[String, RDFAsJenaModel] = {
+  def fromURI(uri: String, format: String = "TURTLE", base: Option[IRI] = None): IO[RDFAsJenaModel] = {
     val baseURI = base.getOrElse(IRI(FileUtils.currentFolderURL))
     Try {
       val m = ModelFactory.createDefaultModel()
@@ -470,10 +462,10 @@ object RDFAsJenaModel {
         .parse(dest)
       // RDFAsJenaModel(JenaUtils.relativizeModel(m), Some(IRI(uri)))
       RDFAsJenaModel(m, base, Some(IRI(uri)))
-    }.fold(e => Left(s"Exception accessing uri $uri: ${e.getMessage}"), (Right(_)))
+    }.fold(e => IO.raiseError(e), IO(_))
   }
 
-  def fromFile(file: File, format: String, base: Option[IRI] = None): Either[String, RDFAsJenaModel] = {
+  def fromFile(file: File, format: String, base: Option[IRI] = None): IO[RDFAsJenaModel] = {
     val baseURI = base.getOrElse(IRI(""))
     Try {
       val m               = ModelFactory.createDefaultModel()
@@ -492,16 +484,18 @@ object RDFAsJenaModel {
 
       // RDFAsJenaModel(JenaUtils.relativizeModel(m), Some(IRI(file.toURI)))
       RDFAsJenaModel(m, base, Some(IRI(file.toURI)))
-    }.fold(e => Left(s"Exception parsing RDF from file ${file.getName}: ${e.getMessage}"), Right(_))
+    }.fold(e => IO.raiseError(e), IO(_))
   }
 
-  def fromString(str: String, format: String, base: Option[IRI] = None): Either[String, RDFAsJenaModel] = {
+  def fromString(str: String, format: String, base: Option[IRI] = None): IO[RDFAsJenaModel] = {
     fromChars(str, format, base)
   }
 
-  def fromChars(cs: CharSequence, format: String, base: Option[IRI] = None): Either[String, RDFAsJenaModel] = {
-    RDFAsJenaModel.empty.fromString(cs, format, base)
-  }
+  def fromChars(cs: CharSequence, format: String, base: Option[IRI] = None): IO[RDFAsJenaModel] =
+    for {
+      empty  <- RDFAsJenaModel.empty
+      newRdf <- empty.fromString(cs, format, base)
+    } yield newRdf
 
   def extractModel(rdf: RDFAsJenaModel): Model = {
     rdf match {
@@ -513,24 +507,5 @@ object RDFAsJenaModel {
   def availableFormats: List[String] = {
     RDFLanguages.getRegisteredLanguages().asScala.map(_.getName).toList.distinct
   }
-
-  def emptyIO: IO[RDFAsJenaModel] = {
-    IO { RDFAsJenaModel(ModelFactory.createDefaultModel) }
-  }
-
-  def fromIRIIO(iri: IRI): EitherT[IO, String, RDFAsJenaModel] =
-    EitherT(IO(fromIRI(iri)))
-
-  def fromURIIO(uri: String, format: String = "TURTLE", base: Option[IRI] = None): EitherT[IO, String, RDFAsJenaModel] = {
-    EitherT(IO(fromURI(uri,format,base)))
-  }
-
-
-  def fromStringIO(str: String, format: String, base: Option[IRI] = None): EitherT[IO, String, RDFAsJenaModel] = 
-    EitherT(IO(fromString(str, format, base)))
-
-  def fromFileIO(file: File, format: String, base: Option[IRI] = None): EitherT[IO, String, RDFAsJenaModel] = 
-    EitherT(IO(fromFile(file, format, base)))
-
 
 }
