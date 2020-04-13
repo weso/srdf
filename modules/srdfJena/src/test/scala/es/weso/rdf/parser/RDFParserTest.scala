@@ -4,9 +4,11 @@ import util._
 import es.weso.rdf.jena.RDFAsJenaModel
 import es.weso.rdf.nodes._
 import cats.data.EitherT
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should._
 import cats.effect._
 
-class RDFParserTest extends FunSpec with Matchers with RDFParser with EitherValues {
+class RDFParserTest extends AnyFunSpec with Matchers with RDFParser with EitherValues {
 
   describe("RDFParser") {
 

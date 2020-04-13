@@ -127,7 +127,7 @@ trait RDFSaver {
     ok(BooleanLiteral(x))
 
   def rdfInt(x: Int): RDFSaver[RDFNode] =
-    ok(IntegerLiteral(x))
+    ok(IntegerLiteral(x, x.toString))
 
   def rdfString(x: String): RDFSaver[RDFNode] =
     ok(StringLiteral(x))

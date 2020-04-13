@@ -1,6 +1,6 @@
 package es.weso.rdf.jena
 
-import org.apache.jena.query._
+// import org.apache.jena.query._
 import es.weso.rdf.nodes._
 import es.weso.rdf.nodes.RDFNode
 import es.weso.rdf.triples.RDFTriple
@@ -10,21 +10,36 @@ import es.weso.rdf.triples.RDFTriple
 // import org.apache.jena.rdf.model.Statement
 // import org.apache.jena.rdf.model.Model
 import org.slf4j._
-import org.apache.jena.riot.RDFDataMgr
-import org.apache.jena.rdf.model.ModelFactory
+// import org.apache.jena.riot.RDFDataMgr
+// import org.apache.jena.rdf.model.ModelFactory
 import es.weso.rdf._
-import es.weso.rdf.jena.SPARQLQueries._
+// import es.weso.rdf.jena.SPARQLQueries._
 import es.weso.rdf.path.SHACLPath
 import io.circe.Json
 // import org.apache.jena.rdf.model.{RDFNode => JenaRDFNode}
-import cats.effect.IO
+import cats.effect._
 import fs2.Stream
 // import es.weso.utils.internal.CollectionCompat.CollectionConverters
 import es.weso.utils.IOUtils._
-import JenaMapper._
+// import JenaMapper._
+import org.http4s.client._
+import es.weso.utils.DerefUtils._
+import es.weso.utils.IOUtils._
+import scala.concurrent.ExecutionContext.global
 
-case class RDFFromWeb() extends RDFReader {
+/**
+  * Obtains triples by redirect
+  * @param prefixMap 
+  * @param client is specified, the requests will use http4s client, otherwise Java's httpClient
+  */
+case class RDFFromWeb(
+  prefixMap: Option[PrefixMap] = None,
+  maybeClient: Option[Client[IO]] = None 
+  ) extends RDFReader {
+
   type Rdf = RDFFromWeb
+  
+  implicit val contextShift: ContextShift[IO] = IO.contextShift(global)  
 
   val id = "RDFFromWeb"
   val log = LoggerFactory.getLogger("RDFFromWeb")
@@ -33,8 +48,7 @@ case class RDFFromWeb() extends RDFReader {
   def availableSerializeFormats: List[String] = List()
 
   override def getPrefixMap: PrefixMap = {
-    // TODO: Can we get more info about prefix maps from an endpoint?
-    PrefixMap(Map())
+    prefixMap.getOrElse(PrefixMap.empty)
   }
 
   override def fromString(cs: CharSequence, format: String, base: Option[IRI]): RDFRead[Rdf] = {
@@ -52,26 +66,39 @@ case class RDFFromWeb() extends RDFReader {
 
   override def triplesWithSubject(node: RDFNode): RDFStream[RDFTriple] =
    node match {
-     case subj: IRI => {
-      val derefModel = ModelFactory.createDefaultModel
+     case subj: IRI => maybeClient match {
+       case None => {
+         for {
+         rdf <- Stream.eval(derefRDFJava(subj))
+         ts <- rdf.triplesWithSubject(subj)
+       } yield ts
+       }
+       case Some(client) => {       
+       val vs: Stream[IO,RDFReader] = Stream.eval(derefRDF(subj,client))
+       vs.flatMap(rdf => rdf.triplesWithSubject(subj)) 
+       }
+     } 
+/*  val derefModel = ModelFactory.createDefaultModel
       RDFDataMgr.read(derefModel, subj.str)
       val model = QueryExecutionFactory.create(queryTriplesWithSubject(subj), derefModel).execConstruct()
       val triples = model2triples(model)
       log.debug("triples with subject " + subj + " =\n" + triples)
-      streamFromIOs(triples)
-    }
+      streamFromIOs(triples) */
     case _ => errStream("triplesWithSubject: node " + node + " must be a IRI")
   }
 
-  override def triplesWithPredicate(p: IRI): RDFStream[RDFTriple] = {
+  override def triplesWithPredicate(p: IRI): RDFStream[RDFTriple] = 
+   errStream(s"Cannot obtain triplesWithPredicate from dereferentiation")
+  /*{
     val derefModel = ModelFactory.createDefaultModel
     RDFDataMgr.read(derefModel, p.str)
     val model = QueryExecutionFactory.create(queryTriplesWithPredicate(p), derefModel).execConstruct()
     streamFromIOs(model2triples(model))
-  }
+  }*/
 
-  override def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] =
-   node match {
+  override def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] = 
+   errStream(s"Cannot obtain triples with Object by dereferentiation")
+/*   node match {
     case obj: IRI => {
       val derefModel = ModelFactory.createDefaultModel
       RDFDataMgr.read(derefModel, obj.str)
@@ -80,10 +107,11 @@ case class RDFFromWeb() extends RDFReader {
     }
     case _ =>
       errStream("triplesWithObject: node " + node + " must be a IRI")
-  }
+  } */
 
   override def triplesWithPredicateObject(p: IRI, node: RDFNode): RDFStream[RDFTriple] =
-   node match {
+   errStream(s"Cannot obtain triplesWithPredicateObject by dereferentiation") 
+/*   node match {
      case obj: IRI => {
       val derefModel = ModelFactory.createDefaultModel
       RDFDataMgr.read(derefModel, obj.str)
@@ -91,7 +119,7 @@ case class RDFFromWeb() extends RDFReader {
       streamFromIOs(model2triples(model))
     }
      case _ => errStream("triplesWithObject: node " + node + " must be a IRI")
-  }
+  }  */
 
   override def getSHACLInstances(c: RDFNode): RDFStream[RDFNode] = {
     errStream(s"Undefined getSHACLInstances at RDFFromWeb. Node $c")

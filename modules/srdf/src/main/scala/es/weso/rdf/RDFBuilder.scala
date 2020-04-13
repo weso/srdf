@@ -8,6 +8,9 @@ trait RDFBuilder extends RDFReader {
 
   type Rdf <: RDFBuilder
   type RDFBuild[A] = IO[A]
+
+  def addBase(iri: IRI): RDFBuild[Rdf]
+  
   def addPrefixMap(pm: PrefixMap): RDFBuild[Rdf]
 
   def addPrefix(alias: String, iri: IRI): RDFBuild[Rdf]

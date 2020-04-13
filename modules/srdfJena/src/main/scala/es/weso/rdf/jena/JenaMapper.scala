@@ -225,11 +225,11 @@ object JenaMapper {
   }.fold(e => err(s"triplesSubjectPredicate: Error obtaining triples from $resource"), ok(_))
 
   def triplesPredicateObject(pred: IRI,
-                             resource: JenaResource,
+                             obj: JenaRDFNode,
                              model: JenaModel,
                              base: Option[IRI]
                             ): IO[Set[Statement]] = {
-    IO(model.listStatements(null, createProperty(model,pred,base), resource).toSet.asScala.toSet)
+    IO(model.listStatements(null, createProperty(model,pred,base), obj).toSet.asScala.toSet)
   }
 
   def triplesPredicate(pred: Property, model: JenaModel): IO[Set[Statement]] =
@@ -237,13 +237,13 @@ object JenaMapper {
     model.listStatements(null, pred, null).toSet.asScala.toSet
   }.fold(e => err(e.getMessage), ok(_))
 
-  def triplesObject(obj: JenaResource, model: JenaModel): IO[Set[Statement]] =
+  def triplesObject(obj: JenaRDFNode, model: JenaModel): IO[Set[Statement]] =
   Try {
     model.listStatements(null, null, obj).toSet.asScala.toSet
   }.fold(e => err(e.getMessage), ok(_))
 
   def triplesPredicateObject(property: Property,
-                             obj: JenaResource,
+                             obj: JenaRDFNode,
                              model: JenaModel
                             ): IO[Set[Statement]] = Try {
     model.listStatements(null, property, obj).toSet.asScala.toSet

@@ -3,23 +3,10 @@ package es.weso.rdf.nodes
 import cats.Show
 
 abstract class RDFNode {
-  def isIRI = this match {
-    case _: IRI => true
-    case _ => false
-  }
-
-  def isBNode = this match {
-    case _: BNode => true
-    case _ => false
-  }
-
-  def isLiteral = this match {
-    case _: Literal => true
-    case _ => false
-  }
-
-  def isNonLiteral =
-    this.isIRI || this.isBNode
+  def isIRI : Boolean
+  def isBNode : Boolean
+  def isLiteral : Boolean
+  def isNonLiteral = this.isIRI || this.isBNode
 
   def toIRI: Either[String,IRI] = this match {
     case i: IRI => Right(i)
@@ -80,7 +67,7 @@ object RDFNode {
       case bNodeRegex(bnodeId) => Right(BNode(bnodeId))
       case literalRegex(str) => Right(StringLiteral(str))
       case integerRegex(s) => {
-        try Right(IntegerLiteral(s.toInt))
+        try Right(IntegerLiteral(s.toInt,s))
         catch {
           case e: NumberFormatException =>
             Left(s"Error parsing as integer: $e")
