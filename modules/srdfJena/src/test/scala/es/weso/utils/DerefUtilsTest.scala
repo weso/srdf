@@ -1,0 +1,56 @@
+package es.weso.utils
+import org.scalatest._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should._
+import cats._
+import cats.effect._
+import es.weso.utils.DerefUtils._
+import org.http4s._
+import org.http4s.client.dsl.io._
+import org.http4s.client.Client
+import org.http4s.client.blaze._
+import cats.effect._
+import org.http4s.implicits._
+import scala.concurrent.ExecutionContext.global
+import es.weso.utils.internal.CollectionCompat._
+import es.weso.rdf._
+import es.weso.rdf.nodes._
+import es.weso.utils.IOUtils._
+import es.weso.rdf.jena.RDFAsJenaModel
+class DerefUtilsTest extends AnyFunSpec with Matchers {
+
+ implicit val timer: Timer[IO] = IO.timer(global)
+
+  describe("deref basis") {
+  
+/*  it("deref basic wikidata") {
+      val q42 = uri"http://www.wikidata.org/entity/Q42"
+
+      def f(client:Client[IO]):IO[String] = for { 
+        str <- derefIRI(q42,client)
+      } yield str
+
+      val r = BlazeClientBuilder[IO](global).resource.use(f)
+      r.attempt.unsafeRunSync.fold(s => s"Error: $s", ts => info(s"First lines: ${ts.linesIterator.take(10).mkString("\n")}"))
+  }
+
+  it("deref basic wikidata as RDF") {
+      val q42 = IRI("http://www.wikidata.org/entity/Q42")
+
+      val r = BlazeClientBuilder[IO](global).resource.use(derefRDF(q42,_))
+      r.attempt.unsafeRunSync.fold(s => s"Error: $s", rdf => info(s"PrefixMap: ${rdf.getPrefixMap}"))
+  }
+*/
+  it("deref basic wikidata as RDF Java") {
+      val q42 = IRI("http://www.wikidata.org/entity/Q42")
+
+      val r = for { 
+        rdf <- derefRDFJava(q42)
+        ts <- rdf.triplesWithSubject(q42).compile.toList
+      } yield ts
+
+      r.attempt.unsafeRunSync.fold(s => s"Error: $s", ts => info(s"Triples: ${ts}"))
+  }
+
+ }
+}

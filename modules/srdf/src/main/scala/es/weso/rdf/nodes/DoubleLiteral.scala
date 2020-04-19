@@ -1,6 +1,6 @@
 package es.weso.rdf.nodes
 
-case class DoubleLiteral(double: Double, repr: String = null) extends Literal {
+case class DoubleLiteral(double: Double, repr: String) extends Literal {
   val dataType = RDFNode.DoubleDatatypeIRI
   val lexicalForm = if (repr == null) double.toString else repr
 
@@ -25,5 +25,11 @@ case class DoubleLiteral(double: Double, repr: String = null) extends Literal {
     case DecimalLiteral(d, _) => Right(double < d)
     case DoubleLiteral(d, _) => Right(double < d)
     case _ => Left(s"Type error comparing $this with $other")
+  }
+}
+
+object DoubleLiteral {
+  def apply(double: Double): DoubleLiteral = {
+    DoubleLiteral(double, double.toString)
   }
 }

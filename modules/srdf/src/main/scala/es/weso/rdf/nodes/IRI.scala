@@ -10,6 +10,9 @@ import scala.util.matching.Regex
 
 case class IRI(uri: URI) extends RDFNode {
 
+  override def isBNode: Boolean = false
+  override def isIRI: Boolean = true
+  override def isLiteral: Boolean = false
   def add(str: String): IRI = {
     IRI(uri.toString + str)
   }

@@ -9,10 +9,10 @@ class ComparisonsTest extends FunSpec with Matchers with TryValues {
   describe("Comparison less than") {
 
     shouldBeLessThan(DoubleLiteral(2.3), DoubleLiteral(2.4), true)
-    shouldBeLessThan(DoubleLiteral(2.3), IntegerLiteral(2), false)
-    shouldBeLessThan(DoubleLiteral(2.3), IntegerLiteral(3), true)
-    shouldBeLessThan(DoubleLiteral(2.3), DecimalLiteral(2.3), false)
-    shouldBeLessThan(DoubleLiteral(2.3), DecimalLiteral(2.34), true)
+    shouldBeLessThan(DoubleLiteral(2.3), IntegerLiteral(2,"2"), false)
+    shouldBeLessThan(DoubleLiteral(2.3), IntegerLiteral(3,"3"), true)
+    shouldBeLessThan(DoubleLiteral(2.3), DecimalLiteral(2.3,"2.3"), false)
+    shouldBeLessThan(DoubleLiteral(2.3), DecimalLiteral(2.34,"2.34"), true)
 
     def shouldBeLessThan(node1: RDFNode, node2: RDFNode, expected: Boolean): Unit = {
       it(s"lessThan(${node1.show}, ${node2.show}) should be $expected") {
@@ -27,10 +27,10 @@ class ComparisonsTest extends FunSpec with Matchers with TryValues {
   describe("Comparison less than or equals") {
 
     shouldBeLessThan(DoubleLiteral(2.3), DoubleLiteral(2.4), true)
-    shouldBeLessThan(DoubleLiteral(2.3), IntegerLiteral(2), false)
-    shouldBeLessThan(DoubleLiteral(2.3), IntegerLiteral(3), true)
-    shouldBeLessThan(DoubleLiteral(2.3), DecimalLiteral(2.3), true)
-    shouldBeLessThan(DoubleLiteral(2.3), DecimalLiteral(2.34), true)
+    shouldBeLessThan(DoubleLiteral(2.3), IntegerLiteral(2,"2"), false)
+    shouldBeLessThan(DoubleLiteral(2.3), IntegerLiteral(3,"3"), true)
+    shouldBeLessThan(DoubleLiteral(2.3), DecimalLiteral(2.3,"2.3"), true)
+    shouldBeLessThan(DoubleLiteral(2.3), DecimalLiteral(2.34,"2.34"), true)
 
     def shouldBeLessThan(node1: RDFNode, node2: RDFNode, expected: Boolean): Unit = {
       it(s"lessThan(${node1.show}, ${node2.show}) should be $expected") {
@@ -44,8 +44,8 @@ class ComparisonsTest extends FunSpec with Matchers with TryValues {
 
   describe("Comparison belongs") {
 
-    shouldContain(List(DoubleLiteral(2.0),IntegerLiteral(2)), IntegerLiteral(2), true)
-    shouldContain(List(DoubleLiteral(2.0),IntegerLiteral(2)), IntegerLiteral(3), false)
+    shouldContain(List(DoubleLiteral(2.0),IntegerLiteral(2,"2")), IntegerLiteral(2,"2"), true)
+    shouldContain(List(DoubleLiteral(2.0),IntegerLiteral(2,"2")), IntegerLiteral(3,"3"), false)
 
     def shouldContain(ns: List[RDFNode], node: RDFNode, expected: Boolean): Unit = {
       it(s"contain(${ns.show}, ${node.show}) should be $expected") {
@@ -59,8 +59,8 @@ class ComparisonsTest extends FunSpec with Matchers with TryValues {
 
   describe("Comparison not contained") {
 
-    shouldCheckNotContained(List(DoubleLiteral(3.0),IntegerLiteral(2)), List(IntegerLiteral(2)), List(DoubleLiteral(3.0)))
-    shouldCheckNotContained(List(DoubleLiteral(2.0),IntegerLiteral(2)), List(IntegerLiteral(2)), List())
+    shouldCheckNotContained(List(DoubleLiteral(3.0),IntegerLiteral(2,"2")), List(IntegerLiteral(2,"2")), List(DoubleLiteral(3.0)))
+    shouldCheckNotContained(List(DoubleLiteral(2.0),IntegerLiteral(2,"2")), List(IntegerLiteral(2,"2")), List())
     shouldCheckNotContained(List(IntegerLiteral(2)), List(DoubleLiteral(3.0),IntegerLiteral(2)), List())
     shouldCheckNotContained(List(IntegerLiteral(2)), List(IntegerLiteral(3)), List(IntegerLiteral(2)))
     shouldCheckNotContained(List(IntegerLiteral(2)), List(), List(IntegerLiteral(2)))

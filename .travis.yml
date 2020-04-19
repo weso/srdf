@@ -24,6 +24,7 @@ install:
   - gem update --system
   - gem install sass
   - gem install jekyll -v 3.8.5  
+  - gem install asciidoctor
 
 script:
 #  - sbt clean coverage test 
@@ -31,9 +32,19 @@ script:
     then
       sbt ++$TRAVIS_SCALA_VERSION  clean coverage test coverageReport && bash <(curl -s https://codecov.io/bash);
     else 
-      sbt ++$TRAVIS_SCALA_VERSION  clean test && echo "Skipping code coverage reporting and docs on 2.13";
+      sbt ++$TRAVIS_SCALA_VERSION  clean test makeSite && echo "Skipping code coverage reporting and docs on 2.13";
     fi  
 
 jdk:
   - oraclejdk12
   - openjdk12
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GITHUB_TOKEN
+  keep_history: true
+  local_dir: target/site
+  on:
+    branch: master
+    condition: $TRAVIS_SCALA_VERSION = 2.13.1

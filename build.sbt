@@ -1,19 +1,22 @@
-lazy val scala212 = "2.12.10"
+lazy val scala212 = "2.12.11"
 lazy val scala213 = "2.13.1"
 lazy val supportedScalaVersions = List(scala212, scala213)
 
-lazy val utilsVersion         = "0.1.63"
+lazy val utilsVersion         = "0.1.67"
 
 // Dependency versions
-lazy val catsVersion           = "2.0.0"
-lazy val circeVersion          = "0.12.0-RC3"
+lazy val catsVersion           = "2.1.1"
+lazy val catsEffectVersion     = "2.1.2"
+lazy val circeVersion          = "0.12.3"
+lazy val fs2Version            = "2.2.1"
+lazy val http4sVersion         = "0.21.3"
 lazy val jenaVersion           = "3.13.1"
 lazy val logbackVersion        = "1.2.3"
 lazy val loggingVersion        = "3.9.2"
 lazy val rdf4jVersion          = "3.0.0"
 lazy val scalacheckVersion     = "1.14.0"
 lazy val scalacticVersion      = "3.0.8"
-lazy val scalaTestVersion      = "3.0.8"
+lazy val scalaTestVersion      = "3.1.1"
 lazy val scalatagsVersion      = "0.6.7"
 lazy val scallopVersion        = "3.3.1"
 lazy val typesafeConfigVersion = "1.4.0"
@@ -30,10 +33,12 @@ lazy val utils             = "es.weso"                    %% "utils"            
 lazy val catsCore          = "org.typelevel"              %% "cats-core"           % catsVersion
 lazy val catsKernel        = "org.typelevel"              %% "cats-kernel"         % catsVersion
 lazy val catsMacros        = "org.typelevel"              %% "cats-macros"         % catsVersion
-lazy val catsEffect        = "org.typelevel"              %% "cats-effect"         % catsVersion
+lazy val catsEffect        = "org.typelevel"              %% "cats-effect"         % catsEffectVersion
 lazy val circeCore         = "io.circe"                   %% "circe-core"          % circeVersion
 lazy val circeGeneric      = "io.circe"                   %% "circe-generic"       % circeVersion
 lazy val circeParser       = "io.circe"                   %% "circe-parser"        % circeVersion
+lazy val fs2Core           = "co.fs2"                     %% "fs2-core"            % fs2Version
+lazy val http4sBlazeClient = "org.http4s"                 %% "http4s-blaze-client" % http4sVersion
 lazy val jenaArq           = "org.apache.jena"            % "jena-arq"             % jenaVersion
 lazy val jenaFuseki        = "org.apache.jena"            % "jena-fuseki-main"     % jenaVersion
 lazy val logbackClassic    = "ch.qos.logback"             % "logback-classic"      % logbackVersion
@@ -55,10 +60,16 @@ def priorTo2_13(scalaVersion: String): Boolean =
 
 lazy val srdfMain = project
   .in(file("."))
-  .enablePlugins(ScalaUnidocPlugin, SbtNativePackager, WindowsPlugin, JavaAppPackaging, LauncherJarPlugin)
-  .settings(commonSettings, packagingSettings, publishSettings, ghPagesSettings, wixSettings)
+  .enablePlugins(ScalaUnidocPlugin, SiteScaladocPlugin, AsciidoctorPlugin)
+  .settings(
+    commonSettings, 
+    // packagingSettings, 
+    publishSettings
+  )
   .aggregate(srdfJena, srdf4j, srdf)
   .settings(
+    siteSubdirName in ScalaUnidoc := "api/latest",
+    addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
     unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(noDocProjects: _*),
     libraryDependencies ++= Seq(
       logbackClassic,
@@ -86,6 +97,8 @@ lazy val srdf = project
       circeCore,
       circeGeneric,
       circeParser,
+      fs2Core,
+      utils,
       scalaLogging
     )
     )
@@ -106,7 +119,9 @@ lazy val srdf = project
       catsCore,
       catsKernel,
       catsMacros,
-      catsEffect
+      catsEffect,
+      fs2Core,
+      http4sBlazeClient
     )
   )
 
@@ -124,7 +139,8 @@ lazy val srdf4j = project
       catsCore,
       catsKernel,
       catsMacros,
-      catsEffect
+      catsEffect,
+      fs2Core
     )
   )
 
@@ -148,24 +164,6 @@ lazy val sharedDependencies = Seq(
   )
 )
 
-lazy val packagingSettings = Seq(
-  mainClass in Compile        := Some("es.weso.shaclex.Main"),
-  mainClass in assembly       := Some("es.weso.shaclex.Main"),
-  test in assembly            := {},
-  assemblyJarName in assembly := "shaclex.jar",
-  packageSummary in Linux     := name.value,
-  packageSummary in Windows   := name.value,
-  packageDescription          := name.value
-)
-
-lazy val wixSettings = Seq(
-  wixProductId        := "39b564d5-d381-4282-ada9-87244c76e14b",
-  wixProductUpgradeId := "6a710435-9af4-4adb-a597-98d3dd0bade1"
-// The same numbers as in the docs?
-// wixProductId := "ce07be71-510d-414a-92d4-dff47631848a",
-// wixProductUpgradeId := "4552fb0e-e257-4dbd-9ecb-dba9dbacf424"
-)
-
 lazy val compilationSettings = Seq(
   scalaVersion := scala213,
   // format: off
@@ -184,10 +182,6 @@ lazy val compilationSettings = Seq(
     "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
   )
   // format: on
-)
-
-lazy val ghPagesSettings = Seq(
-  git.remoteRepo := "git@github.com:weso/srdf.git"
 )
 
 lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
