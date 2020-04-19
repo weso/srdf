@@ -10,7 +10,7 @@ import scala.concurrent.ExecutionContext.global
 import es.weso.rdf._
 import es.weso.rdf.nodes._
 import es.weso.rdf.jena._
-import java.net._
+// import java.net._
 import java.net.http._
 import java.net.http.HttpResponse.BodyHandlers
 import java.time.Duration

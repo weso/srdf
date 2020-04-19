@@ -60,10 +60,16 @@ def priorTo2_13(scalaVersion: String): Boolean =
 
 lazy val srdfMain = project
   .in(file("."))
-  .enablePlugins(ScalaUnidocPlugin, SbtNativePackager, WindowsPlugin, JavaAppPackaging, LauncherJarPlugin)
-  .settings(commonSettings, packagingSettings, publishSettings, ghPagesSettings, wixSettings)
+  .enablePlugins(ScalaUnidocPlugin, SiteScaladocPlugin, AsciidoctorPlugin)
+  .settings(
+    commonSettings, 
+    // packagingSettings, 
+    publishSettings
+  )
   .aggregate(srdfJena, srdf4j, srdf)
   .settings(
+    siteSubdirName in ScalaUnidoc := "api/latest",
+    addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
     unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(noDocProjects: _*),
     libraryDependencies ++= Seq(
       logbackClassic,
@@ -158,24 +164,6 @@ lazy val sharedDependencies = Seq(
   )
 )
 
-lazy val packagingSettings = Seq(
-  mainClass in Compile        := Some("es.weso.shaclex.Main"),
-  mainClass in assembly       := Some("es.weso.shaclex.Main"),
-  test in assembly            := {},
-  assemblyJarName in assembly := "shaclex.jar",
-  packageSummary in Linux     := name.value,
-  packageSummary in Windows   := name.value,
-  packageDescription          := name.value
-)
-
-lazy val wixSettings = Seq(
-  wixProductId        := "39b564d5-d381-4282-ada9-87244c76e14b",
-  wixProductUpgradeId := "6a710435-9af4-4adb-a597-98d3dd0bade1"
-// The same numbers as in the docs?
-// wixProductId := "ce07be71-510d-414a-92d4-dff47631848a",
-// wixProductUpgradeId := "4552fb0e-e257-4dbd-9ecb-dba9dbacf424"
-)
-
 lazy val compilationSettings = Seq(
   scalaVersion := scala213,
   // format: off
@@ -194,10 +182,6 @@ lazy val compilationSettings = Seq(
     "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
   )
   // format: on
-)
-
-lazy val ghPagesSettings = Seq(
-  git.remoteRepo := "git@github.com:weso/srdf.git"
 )
 
 lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
