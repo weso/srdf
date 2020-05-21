@@ -1,8 +1,8 @@
-lazy val scala212 = "2.12.11"
-lazy val scala213 = "2.13.1"
+lazy val scala212               = "2.12.11"
+lazy val scala213               = "2.13.1"
 lazy val supportedScalaVersions = List(scala212, scala213)
 
-lazy val utilsVersion         = "0.1.67"
+lazy val utilsVersion = "0.1.67"
 
 // Dependency versions
 lazy val catsVersion           = "2.1.1"
@@ -22,34 +22,35 @@ lazy val scallopVersion        = "3.3.1"
 lazy val typesafeConfigVersion = "1.4.0"
 
 // Compiler plugin dependency versions
-lazy val simulacrumVersion    = "1.0.0"
+lazy val simulacrumVersion = "1.0.0"
 // lazy val kindProjectorVersion = "0.9.5"
-lazy val scalaMacrosVersion   = "2.1.1"
+lazy val scalaMacrosVersion = "2.1.1"
 
 // Dependency modules
 
-lazy val utils             = "es.weso"                    %% "utils"              % utilsVersion
+lazy val utils = "es.weso" %% "utils" % utilsVersion
 
-lazy val catsCore          = "org.typelevel"              %% "cats-core"           % catsVersion
-lazy val catsKernel        = "org.typelevel"              %% "cats-kernel"         % catsVersion
-lazy val catsMacros        = "org.typelevel"              %% "cats-macros"         % catsVersion
-lazy val catsEffect        = "org.typelevel"              %% "cats-effect"         % catsEffectVersion
-lazy val circeCore         = "io.circe"                   %% "circe-core"          % circeVersion
-lazy val circeGeneric      = "io.circe"                   %% "circe-generic"       % circeVersion
-lazy val circeParser       = "io.circe"                   %% "circe-parser"        % circeVersion
-lazy val fs2Core           = "co.fs2"                     %% "fs2-core"            % fs2Version
-lazy val http4sBlazeClient = "org.http4s"                 %% "http4s-blaze-client" % http4sVersion
-lazy val jenaArq           = "org.apache.jena"            % "jena-arq"             % jenaVersion
-lazy val jenaFuseki        = "org.apache.jena"            % "jena-fuseki-main"     % jenaVersion
-lazy val logbackClassic    = "ch.qos.logback"             % "logback-classic"      % logbackVersion
-lazy val rdf4j_runtime     = "org.eclipse.rdf4j"          % "rdf4j-runtime"        % rdf4jVersion
-lazy val scalaLogging      = "com.typesafe.scala-logging" %% "scala-logging"       % loggingVersion
-lazy val scallop           = "org.rogach"                 %% "scallop"             % scallopVersion
-lazy val scalactic         = "org.scalactic"              %% "scalactic"           % scalacticVersion
-lazy val scalacheck        = "org.scalacheck"             %% "scalacheck"          % scalacheckVersion
-lazy val scalaTest         = "org.scalatest"              %% "scalatest"           % scalaTestVersion
-lazy val scalatags         = "com.lihaoyi"                %% "scalatags"           % scalatagsVersion
-lazy val typesafeConfig    = "com.typesafe"               % "config"               % typesafeConfigVersion
+lazy val catsCore          = "org.typelevel"              %% "cats-core"            % catsVersion
+lazy val catsKernel        = "org.typelevel"              %% "cats-kernel"          % catsVersion
+lazy val catsMacros        = "org.typelevel"              %% "cats-macros"          % catsVersion
+lazy val catsEffect        = "org.typelevel"              %% "cats-effect"          % catsEffectVersion
+lazy val circeCore         = "io.circe"                   %% "circe-core"           % circeVersion
+lazy val circeGeneric      = "io.circe"                   %% "circe-generic"        % circeVersion
+lazy val circeParser       = "io.circe"                   %% "circe-parser"         % circeVersion
+lazy val fs2Core           = "co.fs2"                     %% "fs2-core"             % fs2Version
+lazy val http4sBlazeClient = "org.http4s"                 %% "http4s-blaze-client"  % http4sVersion
+lazy val jenaArq           = "org.apache.jena"            % "jena-arq"              % jenaVersion
+lazy val jenaFuseki        = "org.apache.jena"            % "jena-fuseki-main"      % jenaVersion
+lazy val logbackClassic    = "ch.qos.logback"             % "logback-classic"       % logbackVersion
+lazy val rdf4j_model       = "org.eclipse.rdf4j"          % "rdf4j-model"           % rdf4jVersion
+lazy val rdf4j_sail        = "org.eclipse.rdf4j"          % "rdf4j-repository-sail" % rdf4jVersion
+lazy val rdf4j_sail_memory = "org.eclipse.rdf4j"          % "rdf4j-sail-memory"     % rdf4jVersion
+lazy val scalaLogging      = "com.typesafe.scala-logging" %% "scala-logging"        % loggingVersion
+lazy val scallop           = "org.rogach"                 %% "scallop"              % scallopVersion
+lazy val scalacheck        = "org.scalacheck"             %% "scalacheck"           % scalacheckVersion
+lazy val scalaTest         = "org.scalatest"              %% "scalatest"            % scalaTestVersion
+lazy val scalatags         = "com.lihaoyi"                %% "scalatags"            % scalatagsVersion
+lazy val typesafeConfig    = "com.typesafe"               % "config"                % typesafeConfigVersion
 
 def priorTo2_13(scalaVersion: String): Boolean =
   CrossVersion.partialVersion(scalaVersion) match {
@@ -57,13 +58,12 @@ def priorTo2_13(scalaVersion: String): Boolean =
     case _                              => false
   }
 
-
 lazy val srdfMain = project
   .in(file("."))
   .enablePlugins(ScalaUnidocPlugin, SiteScaladocPlugin, AsciidoctorPlugin)
   .settings(
-    commonSettings, 
-    // packagingSettings, 
+    commonSettings,
+    // packagingSettings,
     publishSettings
   )
   .aggregate(srdfJena, srdf4j, srdf)
@@ -76,9 +76,8 @@ lazy val srdfMain = project
       scalaLogging,
       scallop
     ),
-    cancelable in Global      := true,
-    fork                      := true,
-    parallelExecution in Test := false,
+    cancelable in Global := true,
+    fork := true,
     crossScalaVersions := Nil,
     publish / skip := true,
     ThisBuild / turbo := true
@@ -101,9 +100,9 @@ lazy val srdf = project
       utils,
       scalaLogging
     )
-    )
-    
-  lazy val srdfJena = project
+  )
+
+lazy val srdfJena = project
   .in(file("modules/srdfJena"))
   .dependsOn(srdf)
   .settings(commonSettings, publishSettings)
@@ -112,15 +111,12 @@ lazy val srdf = project
     libraryDependencies ++= Seq(
       logbackClassic % Test,
       scalaLogging,
-      jenaFuseki % Test,
+      jenaFuseki     % Test,
       typesafeConfig % Test,
       utils,
       jenaArq,
       catsCore,
-      catsKernel,
-      catsMacros,
       catsEffect,
-      fs2Core,
       http4sBlazeClient
     )
   )
@@ -135,10 +131,10 @@ lazy val srdf4j = project
       logbackClassic % Test,
       scalaLogging,
       utils,
-      rdf4j_runtime,
+      rdf4j_model,
+      rdf4j_sail,
+      rdf4j_sail_memory,
       catsCore,
-      catsKernel,
-      catsMacros,
       catsEffect,
       fs2Core
     )
@@ -149,7 +145,7 @@ lazy val srdf4j = project
  **********************************************************/
 
 lazy val noDocProjects = Seq[ProjectReference](
-)
+  )
 
 lazy val noPublishSettings = Seq(
 //  publish := (),
@@ -159,7 +155,6 @@ lazy val noPublishSettings = Seq(
 
 lazy val sharedDependencies = Seq(
   libraryDependencies ++= Seq(
-    scalactic,
     scalaTest % Test
   )
 )
@@ -179,7 +174,7 @@ lazy val compilationSettings = Seq(
     "-Xlint",
     "-Yrangepos",
     "-Ywarn-dead-code",                  // Warn when dead code is identified.
-    "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
+    "-Ywarn-extra-implicit"              // Warn when more than one implicit parameter section is defined.
   )
   // format: on
 )
@@ -190,17 +185,18 @@ lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
     Resolver.bintrayRepo("labra", "maven"),
     Resolver.bintrayRepo("weso", "weso-releases"),
     Resolver.sonatypeRepo("snapshots")
-  ), 
+  ),
+  parallelExecution in Test := false,
   coverageHighlighting := priorTo2_13(scalaVersion.value)
- )
+)
 
 lazy val publishSettings = Seq(
-  maintainer      := "Jose Emilio Labra Gayo <labra@uniovi.es>",
-  homepage        := Some(url("https://github.com/weso/srdf")),
-  licenses        := Seq("MIT" -> url("http://opensource.org/licenses/MIT")),
-  scmInfo         := Some(ScmInfo(url("https://github.com/weso/srdf"), "scm:git:git@github.com:weso/srdf.git")),
+  maintainer := "Jose Emilio Labra Gayo <labra@uniovi.es>",
+  homepage := Some(url("https://github.com/weso/srdf")),
+  licenses := Seq("MIT" -> url("http://opensource.org/licenses/MIT")),
+  scmInfo := Some(ScmInfo(url("https://github.com/weso/srdf"), "scm:git:git@github.com:weso/srdf.git")),
   autoAPIMappings := true,
-  pomExtra        := <developers>
+  pomExtra := <developers>
                        <developer>
                          <id>labra</id>
                          <name>Jose Emilio Labra Gayo</name>
@@ -213,9 +209,9 @@ lazy val publishSettings = Seq(
     scmInfo.value.get.browseUrl + "/tree/master€{FILE_PATH}.scala",
     "-sourcepath",
     baseDirectory.in(LocalRootProject).value.getAbsolutePath,
-    "-diagrams",
+    "-diagrams"
   ),
-  publishMavenStyle              := true,
-  bintrayRepository in bintray   := "weso-releases",
+  publishMavenStyle := true,
+  bintrayRepository in bintray := "weso-releases",
   bintrayOrganization in bintray := Some("weso")
 )
