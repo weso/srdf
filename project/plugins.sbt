@@ -1,7 +1,7 @@
 addSbtPlugin("com.47deg"         % "sbt-microsites"      % "1.0.2")
 // addSbtPlugin("com.dwijnand"      % "sbt-travisci"        % "1.2.0")
 addSbtPlugin("com.eed3si9n"      % "sbt-unidoc"          % "0.4.2")
-addSbtPlugin("com.eed3si9n"      % "sbt-assembly"        % "0.14.10")
+addSbtPlugin("com.eed3si9n"      % "sbt-assembly"        % "0.15.0")
 // addSbtPlugin("com.typesafe.sbt"  % "sbt-twirl"           % "1.4.2")
 addSbtPlugin("com.typesafe.sbt"  % "sbt-site"            % "1.4.0")
 // addSbtPlugin("com.typesafe.sbt"  % "sbt-ghpages"         % "0.6.3")
