@@ -8,7 +8,7 @@ import org.eclipse.rdf4j.model.impl.{SimpleValueFactory, BooleanLiteral => Boole
 import org.eclipse.rdf4j.model.util.ModelBuilder
 import org.eclipse.rdf4j.model.vocabulary.XMLSchema
 import cats.effect.IO
-import cats.implicits._
+import cats.syntax.all._
 import es.weso.utils.IOUtils._
 
 import scala.util.{Failure, Success, Try}

@@ -4,8 +4,7 @@ import es.weso.rdf.nodes.RDFNode
 import es.weso.rdf.path.{PredicatePath, SHACLPath, SequencePath, ZeroOrMorePath}
 import org.eclipse.rdf4j.model.Model
 import org.eclipse.rdf4j.repository.sail.SailRepository
-import org.eclipse.rdf4j.sail.memory.MemoryStore
-import cats.implicits._
+import org.eclipse.rdf4j.sail.memory.MemoryStore
 import RDF4jMapper._
 import es.weso.rdf.PREFIXES._
 import cats.effect.IO

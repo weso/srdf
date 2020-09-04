@@ -18,7 +18,7 @@ import es.weso.utils.internal.CollectionCompat.CollectionConverters._
 import RDF4jMapper._
 import cats.effect.IO
 import cats._
-import cats.implicits._
+import cats.syntax.all._
 import fs2.Stream
 import es.weso.utils.IOUtils._
 

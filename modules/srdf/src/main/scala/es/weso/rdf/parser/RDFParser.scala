@@ -6,7 +6,7 @@ import es.weso.rdf._
 import es.weso.rdf.PREFIXES._
 import es.weso.rdf.triples.RDFTriple
 import cats.data._
-import cats.implicits._
+import cats.syntax.all._
 import cats.effect._
 import fs2.Stream
 

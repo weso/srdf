@@ -2,8 +2,7 @@ package es.weso.rdf.operations
 
 import java.time.Instant
 
-import cats._
-import cats.implicits._
+import cats._
 import es.weso.rdf.nodes._
 import es.weso.rdf.PREFIXES._
 

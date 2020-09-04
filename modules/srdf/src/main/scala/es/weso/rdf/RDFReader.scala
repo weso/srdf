@@ -4,7 +4,7 @@ import es.weso.rdf.nodes._
 import es.weso.rdf.PREFIXES._
 import es.weso.rdf.path.SHACLPath
 import io.circe.Json
-import cats.implicits._
+import cats.syntax.all._
 import cats.effect._
 import fs2.Stream
 import es.weso.utils.internal.CollectionCompat._

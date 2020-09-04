@@ -2,7 +2,7 @@ package es.weso.utils
 import cats._
 import cats.data._
 import cats.effect._
-import cats.implicits._
+import cats.syntax.all._
 import fs2.Stream
 import es.weso.utils.internal.CollectionCompat._
 

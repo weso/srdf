@@ -2,7 +2,7 @@ package es.weso.utils
 
 import cats._
 import cats.data._
-import cats.implicits._
+import cats.syntax.all._
 import cats.effect._
 import es.weso.rdf.nodes.{BNode, IRI, Literal, RDFNode}
 import es.weso.rdf.triples.RDFTriple

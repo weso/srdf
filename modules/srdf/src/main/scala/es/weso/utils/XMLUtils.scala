@@ -2,7 +2,7 @@ package es.weso.utils
 
 // import java.util.GregorianCalendar
 
-import cats.implicits._
+import cats.syntax.all._
 import javax.xml.datatype.{DatatypeConstants, DatatypeFactory, XMLGregorianCalendar}
 
 import scala.util.{Either, Try}
