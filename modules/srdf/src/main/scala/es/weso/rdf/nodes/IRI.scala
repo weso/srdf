@@ -1,6 +1,6 @@
 package es.weso.rdf.nodes
 
-import cats.implicits._
+import cats.syntax.all._
 import java.net.{URI, URISyntaxException}
 
 import cats.Show

@@ -1,8 +1,7 @@
 package es.weso.rdf.operations
 
 import es.weso.rdf.nodes._
-import org.scalatest._
-import cats.implicits._
+import org.scalatest._
 
 class ComparisonsTest extends FunSpec with Matchers with TryValues {
 

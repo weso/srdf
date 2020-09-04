@@ -1,7 +1,7 @@
 package es.weso.rdf.path
 
 import cats._
-import cats.implicits._
+import cats.syntax.all._
 import es.weso.rdf.nodes.{IRI, RDFNode}
 import es.weso.rdf.nodes.IRI.iriShow
 import io.circe.{Json, _}
