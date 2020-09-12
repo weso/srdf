@@ -28,6 +28,7 @@ import es.weso.utils.IOUtils._
 import cats.implicits._
 import fs2.Stream
 import es.weso.utils.StreamUtils._
+import org.apache.jena.riot.system.SyntaxLabels
 
 case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Option[IRI] = None)
     extends RDFReader
@@ -43,7 +44,10 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
   def availableParseFormats: List[String]     = RDFAsJenaModel.availableFormats
   def availableSerializeFormats: List[String] = RDFAsJenaModel.availableFormats
 
-  override def fromString(cs: CharSequence, format: String, base: Option[IRI] = None): RDFRead[Rdf] =
+  override def fromString(cs: CharSequence, 
+    format: String, 
+    base: Option[IRI] = None
+  ): RDFRead[Rdf] =
     IO {
       val m               = ModelFactory.createDefaultModel
       val str_reader      = new StringReader(cs.toString)
@@ -487,9 +491,27 @@ object RDFAsJenaModel {
     }.fold(e => IO.raiseError(e), IO(_))
   }
 
-  def fromString(str: String, format: String, base: Option[IRI] = None): IO[RDFAsJenaModel] = {
-    fromChars(str, format, base)
-  }
+  def fromString(str: String, format: String, base: Option[IRI] = None, useBNodeLabels: Boolean = true): IO[RDFAsJenaModel] =
+    IO {
+      val m               = ModelFactory.createDefaultModel
+      val str_reader      = new StringReader(str)
+      val baseURI         = base.getOrElse(IRI(""))
+      val g: Graph        = m.getGraph
+      val dest: StreamRDF = StreamRDFLib.graph(g)
+      val ctx: Context    = null
+      val labelToNodePolicy = 
+        if (useBNodeLabels) LabelToNode.createUseLabelEncoded()
+        else SyntaxLabels.createLabelToNode()
+        
+      RDFParser.create
+        .source(str_reader)
+        .base(baseURI.str)
+        .labelToNode(labelToNodePolicy)
+        .lang(shortnameToLang(format))
+        .context(ctx)
+        .parse(dest)
+      RDFAsJenaModel(m, base)
+    }
 
   def fromChars(cs: CharSequence, format: String, base: Option[IRI] = None): IO[RDFAsJenaModel] =
     for {

@@ -12,7 +12,7 @@ class RDFAsJenaModelTest
   with JenaBased
   with Matchers {
 
-  describe(s"From String") {
+/*  describe(s"From String") {
 
    it(s"Parses a date") {
     val ex = "http://example.org#"
@@ -135,7 +135,7 @@ class RDFAsJenaModelTest
        triplesWithObject(str,p, List())
        triplesWithObject(str,q, List(RDFTriple(p,q,q)))
        triplesWithObject(str,one, List(RDFTriple(q,q,one)))
-     }
+   }
 
    def triplesWithObject(strRdf: String, node: RDFNode, expected: List[RDFTriple]): Unit = {
      it(s"Should calculate triplesWithObject($node) for ${strRdf} and get ${expected}") {
@@ -147,6 +147,47 @@ class RDFAsJenaModelTest
       ts => ts should contain theSameElementsAs(expected)
      )
     }
-   } 
+  }  */
+
+  describe(s"Merging without keeping BNode labels") {
+    val str1 = """|prefix : <http://example.org/>
+                 |:x :p _:1 .
+                 |_:1 :q :r .
+                 |""".stripMargin 
+    val str2 = """|prefix : <http://example.org/>
+                  |:x :p _:1 .
+                  |_:1 :q :r .
+                  |""".stripMargin 
+    it(s"Merges with BNodes") {
+      val r = for {
+        rdf1 <- RDFAsJenaModel.fromString(str1,"TURTLE", None,false)
+        rdf2 <- RDFAsJenaModel.fromString(str2,"TURTLE", None,false)
+        merged = RDFAsJenaModel(rdf1.model.add(rdf2.model))
+        str <- merged.serialize("TURTLE")
+      } yield str
+      r.attempt.unsafeRunSync.fold(e => fail(s"Error: $e"), str => info(s"Merged: $str"))
+    }
+  }
+
+  describe(s"Merging keeping BNode labels") {
+    val str1 = """|prefix : <http://example.org/>
+                 |:x :p _:1 .
+                 |_:1 :q :r .
+                 |""".stripMargin 
+    val str2 = """|prefix : <http://example.org/>
+                  |:x :p _:1 .
+                  |_:1 :q :r .
+                  |""".stripMargin 
+    it(s"Merges with BNodes") {
+      val r = for {
+        rdf1 <- RDFAsJenaModel.fromString(str1,"TURTLE", None,true)
+        rdf2 <- RDFAsJenaModel.fromString(str2,"TURTLE", None,true)
+        merged = RDFAsJenaModel(rdf1.model.add(rdf2.model))
+        str <- merged.serialize("TURTLE")
+      } yield str
+      r.attempt.unsafeRunSync.fold(e => fail(s"Error: $e"), str => info(s"Merged: $str"))
+    }
+  }
+
 }
 
