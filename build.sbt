@@ -22,9 +22,9 @@ lazy val scallopVersion        = "3.3.1"
 lazy val typesafeConfigVersion = "1.4.0"
 
 // Compiler plugin dependency versions
-lazy val simulacrumVersion    = "1.0.0"
-// lazy val kindProjectorVersion = "0.9.5"
-lazy val scalaMacrosVersion   = "2.1.1"
+lazy val simulacrumVersion       = "1.0.0"
+lazy val scalaMacrosVersion      = "2.1.1"
+lazy val scalaCollCompatVersion  = "2.2.0"
 
 // Dependency modules
 
@@ -47,6 +47,7 @@ lazy val scalaLogging      = "com.typesafe.scala-logging" %% "scala-logging"    
 lazy val scallop           = "org.rogach"                 %% "scallop"             % scallopVersion
 lazy val scalactic         = "org.scalactic"              %% "scalactic"           % scalacticVersion
 lazy val scalacheck        = "org.scalacheck"             %% "scalacheck"          % scalacheckVersion
+lazy val scalaCollCompat   = "org.scala-lang.modules"     %% "scala-collection-compat" % scalaCollCompatVersion
 lazy val scalaTest         = "org.scalatest"              %% "scalatest"           % scalaTestVersion
 lazy val scalatags         = "com.lihaoyi"                %% "scalatags"           % scalatagsVersion
 lazy val typesafeConfig    = "com.typesafe"               % "config"               % typesafeConfigVersion
@@ -99,7 +100,8 @@ lazy val srdf = project
       circeParser,
       fs2Core,
       utils,
-      scalaLogging
+      scalaLogging,
+      scalaCollCompat
     )
     )
     

@@ -10,7 +10,8 @@ import org.scalatest.funspec._
 import es.weso.utils.IOUtils._
 import cats.effect.IO
 import es.weso.rdf.RDFReader
-import org.scalatest.matchers.should.Matchers.theSameElementsAs
+// import org.scalatest.matchers.should.Matchers._
+import es.weso.utils.internal.CollectionCompat._
 
 class GraphTest extends AnyFunSpec with Matchers with EitherValues {
 

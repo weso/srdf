@@ -6,6 +6,7 @@ import cats._
 import cats.implicits._
 import es.weso.rdf.nodes._
 import es.weso.rdf.PREFIXES._
+// import scala.collection.compat._
 
 object Comparisons {
 
@@ -121,6 +122,6 @@ object Comparisons {
   def different(ns1: List[RDFNode], ns2: List[RDFNode]): Either[String,List[RDFNode]] = for {
     d1 <- notContained(ns1,ns2)
     d2 <- notContained(ns2,ns1)
-  } yield d1.concat(d2)
+  } yield d1 union d2
 
 }
