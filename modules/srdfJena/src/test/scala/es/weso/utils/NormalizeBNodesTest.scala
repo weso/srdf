@@ -7,10 +7,13 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should._
 import es.weso.utils.NormalizeBNodes._
 import es.weso.utils.IOUtils._
-
+import cats.effect.IO
+import es.weso.rdf.RDFReader
+import es.weso.rdf.operations.Graph
 
 class NormalizeBNodesTest extends AnyFunSpec with Matchers {
   describe(s"Parse RDF with blank nodes") {
+
     it(s"Should show RDF") {
       val str =
         """|prefix : <http://e.com/>
@@ -29,8 +32,8 @@ class NormalizeBNodesTest extends AnyFunSpec with Matchers {
         n1 <- normalizeBNodes(rdf1, empty)
         rdf2 <- RDFAsJenaModel.fromChars(str,"TURTLE", None)
         n2 <- normalizeBNodes(rdf2,empty)
-        ss1 <- stream2io(n1.triplesWithSubject(BNode("0"))) // .right.value
-        ss2 <- stream2io(n2.triplesWithSubject(BNode("0"))) // .right.value
+        ss1 <- stream2io(n1.triplesWithSubject(BNode("0")))
+        ss2 <- stream2io(n2.triplesWithSubject(BNode("0")))
       } yield (ss1,ss2)
       r.attempt.unsafeRunSync.fold(e => fail(s"Error: $e"), pair => {
         val (ss1,ss2) = pair
@@ -43,7 +46,59 @@ class NormalizeBNodesTest extends AnyFunSpec with Matchers {
       ss2 should contain theSameElementsAs expected
       }
       )
+    }
+  }
 
+  shouldNormalizeBNodes(
+    """|prefix : <http://example.org/>
+       |:x :p _:1, _:2 ;
+       |   :q 1 .
+       |_:1 :p :y, :z .
+       |:r :q :x .
+      """.stripMargin,
+    s"""|prefix : <http://example.org/>
+        |:x :p _:B0,_:B1 ;
+        |   :q 1 .
+        |_:B0 :p :y, :z .
+        |:r :q :x .
+        |""".stripMargin,
+    withLog = true
+  )
+
+  def shouldNormalizeBNodes(rdfStr: String,
+                            expected: String,
+                            withLog: Boolean = false
+                           ): Unit = {
+
+    def showLog(rdf: RDFReader, tag: String, withLog: Boolean): IO[Unit] = if (withLog)
+    for {
+      str <- rdf.serialize("N-TRIPLES")
+      _ <- IO { pprint.log(str,tag) }
+    } yield ()
+    else IO(())
+
+    it (s"should normalize BNodes of\n$rdfStr\nand obtain\n$expected\n") {
+      val cmp = for {
+        rdf <- RDFAsJenaModel.fromString(rdfStr, "TURTLE")
+        _ <- showLog(rdf, "rdf", withLog)
+        builder <- RDFAsJenaModel.empty
+        normalized <- NormalizeBNodes.normalizeBNodes(rdf, builder)
+        _ <- showLog(normalized, "normalized", withLog)
+        rdfExpected <- RDFAsJenaModel.fromString(expected, "TURTLE")
+        _ <- showLog(rdfExpected, "rdfExpected", withLog)
+        normalizedNodes <- normalized.subjects().compile.toList
+        expectedNodes <- rdfExpected.subjects().compile.toList
+      } yield (normalizedNodes, expectedNodes)
+
+      cmp.attempt.unsafeRunSync.fold(
+        err => fail(s"Error: $err"),
+        result => {
+          val (ns,es) = result
+          pprint.log(ns)
+          pprint.log(es)
+          ns should contain theSameElementsAs(es)
+        }
+      )
     }
   }
 
