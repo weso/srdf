@@ -19,7 +19,7 @@ import es.weso.utils._
 import io.circe.Json
 import io.circe.parser.parse
 import org.apache.jena.query.{Query, QueryExecutionFactory, QuerySolutionMap, ResultSetFormatter}
-import cats.implicits._
+//import cats.implicits._
 import org.apache.jena.graph.Graph
 import org.apache.jena.riot.system.{StreamRDF, StreamRDFLib}
 import org.apache.jena.sparql.util.Context
@@ -39,7 +39,7 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
 
   type Rdf = RDFAsJenaModel
 
-  val log = LoggerFactory.getLogger("RDFAsJenaModel")
+  val log: Logger = LoggerFactory.getLogger("RDFAsJenaModel")
 
   def availableParseFormats: List[String]     = RDFAsJenaModel.availableFormats
   def availableSerializeFormats: List[String] = RDFAsJenaModel.availableFormats
@@ -349,10 +349,14 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     case _ => err(s"Cannot compare RDFAsJenaModel with reader of different type: ${other.getClass.toString}")
   }
 
-  def normalizeBNodes: IO[Rdf] = IO(this) /* for {
+  override def normalizeBNodes: RDFBuild[RDFBuilder] = // IO(this)
+   for {
     e <- RDFAsJenaModel.empty
-    normalize <- NormalizeBNodes.normalizeBNodes(this, e)
-  } yield normalize */
+    normalized <- normalizeBNodesJena(this)
+  } yield normalized
+
+  private def normalizeBNodesJena(rdf: RDFAsJenaModel): IO[RDFBuilder] =
+    NormalizeBNodes.normalizeBNodes(rdf,rdf)
 
   /**
     * Apply owl:imports closure to an RDF source

@@ -121,6 +121,6 @@ object Comparisons {
   def different(ns1: List[RDFNode], ns2: List[RDFNode]): Either[String,List[RDFNode]] = for {
     d1 <- notContained(ns1,ns2)
     d2 <- notContained(ns2,ns1)
-  } yield (d1 union d2)
+  } yield d1.concat(d2)
 
 }
