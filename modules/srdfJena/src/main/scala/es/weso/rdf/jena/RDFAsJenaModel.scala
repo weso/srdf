@@ -418,7 +418,7 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
         } yield rdf2
    
       for {
-        ts  <- other.rdfTriples.compile.toList
+        ts  <- other.rdfTriples().compile.toList
         rdf <- ts.foldLeft(zero)(cmb)
       } yield rdf
     }
@@ -495,7 +495,11 @@ object RDFAsJenaModel {
     }.fold(e => IO.raiseError(e), IO(_))
   }
 
-  def fromString(str: String, format: String, base: Option[IRI] = None, useBNodeLabels: Boolean = true): IO[RDFAsJenaModel] =
+  def fromString(str: String,
+                 format: String,
+                 base: Option[IRI] = None,
+                 useBNodeLabels: Boolean = true
+                ): IO[RDFAsJenaModel] =
     IO {
       val m               = ModelFactory.createDefaultModel
       val str_reader      = new StringReader(str)

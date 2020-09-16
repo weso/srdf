@@ -359,7 +359,7 @@
         "platform": {
             "name": "jvm",
             "config": {
-                "home": "/usr/lib/jvm/jdk-12.0.2",
+                "home": "/usr/lib/jvm/java-8-openjdk-amd64/jre",
                 "options": [
                     "-Duser.dir=/home/labra/src/shapes/srdf/project"
                 ]
