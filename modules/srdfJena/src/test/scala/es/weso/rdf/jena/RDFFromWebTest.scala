@@ -34,18 +34,19 @@ class RDFFromWebTest
         Prefix("wd") -> wd,
         Prefix("wdt") -> wdt
       ))
-    it("Gets labels") {
+
+    // TODO: We ignore the following test to avoid tests that depend on internet access
+    ignore("Gets labels") {
       val r = BlazeClientBuilder[IO](global).resource.use { client => {
        val web = RDFFromWeb(Some(wikidataPrefixMap), Some(client))
        web.triplesWithSubjectPredicate(wd + "Q42", rdfs + "label").compile.toList
       }
-    }
+     }
 
     r.attempt.unsafeRunSync.fold(s => s"Error: $s", ts => { 
       info(s"Labels: ${ts.length}") 
       ts.length should be > 0
-     }
-    )
+     })
    }
   }
 }
