@@ -11,7 +11,9 @@ import org.apache.jena.fuseki.main.FusekiServer
 import org.apache.jena.query._
 import org.apache.jena.system.Txn
 
-class EndpointTest
+// TODO: Refactor the following code to use IO Resources (bracket) to ensure that the resources are closed...
+
+/*class EndpointTest
   extends AnyFunSpec
   with JenaBased
   with Matchers with BeforeAndAfter {
@@ -25,12 +27,13 @@ class EndpointTest
   val endpoint = Endpoint(IRI(endpointName))
   val endpointUpdate = s"http://host:3330/${dataset}/update"
 
+
   before {
     server.start
   }
 
   after {
-    server.stop
+    server.stop()
   }
 
   describe("Checking endpoint") {
@@ -141,3 +144,4 @@ class EndpointTest
   }
 
 }
+*/
