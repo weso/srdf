@@ -79,7 +79,7 @@ lazy val srdfMain = project
     ),
     cancelable in Global      := true,
     fork                      := true,
-    parallelExecution in Test := false,
+    parallelExecution in Test := true,
     crossScalaVersions := Nil,
     publish / skip := true,
     ThisBuild / turbo := true
@@ -110,6 +110,7 @@ lazy val srdf = project
   .dependsOn(srdf)
   .settings(commonSettings, publishSettings)
   .settings(
+    parallelExecution in Test := false,
     crossScalaVersions := supportedScalaVersions,
     libraryDependencies ++= Seq(
       logbackClassic % Test,
@@ -132,6 +133,7 @@ lazy val srdf4j = project
   .dependsOn(srdf)
   .settings(commonSettings, publishSettings)
   .settings(
+    parallelExecution in Test := false,
     crossScalaVersions := supportedScalaVersions,
     libraryDependencies ++= Seq(
       logbackClassic % Test,
