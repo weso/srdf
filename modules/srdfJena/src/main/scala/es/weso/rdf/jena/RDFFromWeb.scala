@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext.global
 /**
   * Obtains triples by redirect
   * @param prefixMap 
-  * @param client is specified, the requests will use http4s client, otherwise Java's httpClient
+  * @param maybeClient if specified, the requests will use http4s client, otherwise Java's httpClient
   */
 case class RDFFromWeb(
   prefixMap: Option[PrefixMap] = None,
@@ -73,10 +73,10 @@ case class RDFFromWeb(
          ts <- rdf.triplesWithSubject(subj)
        } yield ts
        }
-       case Some(client) => {       
+       case Some(client) => ??? /*{
        val vs: Stream[IO,RDFReader] = Stream.eval(derefRDF(subj,client))
        vs.flatMap(rdf => rdf.triplesWithSubject(subj)) 
-       }
+       } */
      } 
 /*  val derefModel = ModelFactory.createDefaultModel
       RDFDataMgr.read(derefModel, subj.str)

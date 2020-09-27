@@ -47,11 +47,9 @@ class SPARQLQueriesTest
 
  def shouldQuery(query: Query, rdfStr: String, expected: String): Unit = {
    it(s"Should query $query on $rdfStr and obtain $expected") {
-   val r: EitherT[IO,String,Unit] = for {
-     rdf <- io2esf[RDFReader,IO](RDFAsJenaModel.fromString(rdfStr, "TURTLE"))
-     eitherQuery <- IO { QueryExecutionFactory.create(query) }.attemptT.leftMap(e => s"Error $e")
-   } yield ()
-   run_esf(r).unsafeRunSync.fold(e => fail(s"Error: $e"), v => info(s"$v"))
+   val r: IO[Unit] = RDFAsJenaModel.fromString(rdfStr, "TURTLE").use(rdf =>
+     IO { QueryExecutionFactory.create(query) })
+   r.attempt.unsafeRunSync.fold(e => fail(s"Error: $e"), v => info(s"$v"))
   }
  }
 

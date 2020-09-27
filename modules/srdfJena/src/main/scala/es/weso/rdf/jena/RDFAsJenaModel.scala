@@ -5,7 +5,7 @@ import es.weso.rdf.triples.RDFTriple
 import es.weso.utils.internal.CollectionCompat.CollectionConverters._
 import scala.util.Try
 import es.weso.rdf._
-import org.apache.jena.rdf.model.{Model, Resource, Statement, RDFNode => JenaRDFNode}
+import org.apache.jena.rdf.model.{Model, Resource => JenaResource, Statement, RDFNode => JenaRDFNode}
 import org.slf4j._
 import org.apache.jena.riot._
 import org.apache.jena.rdf.model.ModelFactory
@@ -92,12 +92,12 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
 
   // TODO: this implementation only returns subjects
   override def iris(): RDFStream[IRI] = {
-    val resources: Seq[Resource] = model.listSubjects().asScala.toSeq
+    val resources: Seq[JenaResource] = model.listSubjects().asScala.toSeq
     Stream.emits(resources.filter(s => s.isURIResource).map(r => IRI(r.getURI)))
   }
 
   override def subjects(): RDFStream[RDFNode] = {
-    val resources: Set[Resource] = model.listSubjects().asScala.toSet
+    val resources: Set[JenaResource] = model.listSubjects().asScala.toSet
     streamFromIOs(sequence(resources.map(r => jenaNode2RDFNode(r)).toList).map(_.toList))
   }
 
@@ -257,7 +257,7 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
     IRI(model.expandPrefix(str))
   } */
 
-  override def empty: RDFRead[Rdf] = {
+  override def empty: Resource[RDFRead,Rdf] = {
     RDFAsJenaModel.empty
   }
 
@@ -351,7 +351,7 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
 
   override def normalizeBNodes: RDFBuild[RDFBuilder] = // IO(this)
    for {
-    e <- RDFAsJenaModel.empty
+    // e <- RDFAsJenaModel.empty
     normalized <- normalizeBNodesJena(this)
   } yield normalized
 
@@ -376,18 +376,20 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
       os <- fromES(ts.map(_.obj.toIRI).sequence)
     } yield os
 
-  private def extendImports(rdf: Rdf, imports: List[IRI], visited: List[IRI]): RDFBuild[Rdf] = {
+  private def extendImports(rdf: Rdf,
+                            imports: List[IRI],
+                            visited: List[IRI]
+                           ): RDFBuild[Rdf] = {
     imports match {
       case Nil => ok(rdf)
       case iri :: rest =>
         if (visited contains iri)
           extendImports(rdf, rest, visited)
         else
-          for {
-            newRdf  <- RDFAsJenaModel.fromIRI(iri)
-            merged  <- merge(newRdf)
-            restRdf <- extendImports(merged, rest, iri :: visited)
-          } yield restRdf
+          RDFAsJenaModel.fromIRI(iri).use(newRdf => for {
+              merged  <- merge(newRdf)
+              restRdf <- extendImports(merged, rest, iri :: visited)
+            } yield restRdf)
     }
   }
 
@@ -428,16 +430,18 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
 
 object RDFAsJenaModel {
 
-  /*  def apply(): RDFAsJenaModel = {
-    RDFAsJenaModel.empty
-  } */
-
-  def empty: IO[RDFAsJenaModel] = {
-    IO(RDFAsJenaModel(ModelFactory.createDefaultModel))
+  private def closeJenaModel(m: RDFAsJenaModel): IO[Unit] = IO {
+    println(s"Closing model: ${m}")
+    m.model.close()
   }
 
-  def fromIRI(iri: IRI): IO[RDFAsJenaModel] = 
-    IO {
+  def empty: Resource[IO,RDFAsJenaModel] = {
+    val acquire: IO[RDFAsJenaModel] = IO(RDFAsJenaModel(ModelFactory.createDefaultModel))
+    Resource.make(acquire)(closeJenaModel)
+  }
+
+  def fromIRI(iri: IRI): Resource[IO,RDFAsJenaModel] = {
+    val acquire: IO[RDFAsJenaModel] = IO {
       // We delegate RDF management to Jena (content-negotiation and so...)
       // RDFDataMgr.loadModel(iri.str)
       val m = ModelFactory.createDefaultModel()
@@ -452,15 +456,19 @@ object RDFAsJenaModel {
         .parse(dest)
       RDFAsJenaModel(m)
     }
+    Resource.make(acquire)(closeJenaModel)
+  }
 
-  def fromURI(uri: String, format: String = "TURTLE", base: Option[IRI] = None): IO[RDFAsJenaModel] = {
+  def fromURI(uri: String,
+              format: String = "TURTLE",
+              base: Option[IRI] = None): Resource[IO,RDFAsJenaModel] = {
     val baseURI = base.getOrElse(IRI(FileUtils.currentFolderURL))
-    Try {
+    val acquire = IO {
       val m = ModelFactory.createDefaultModel()
-//      RDFDataMgr.read(m, uri, baseURI, shortnameToLang(format))
-      val g: Graph        = m.getGraph
+      //      RDFDataMgr.read(m, uri, baseURI, shortnameToLang(format))
+      val g: Graph = m.getGraph
       val dest: StreamRDF = StreamRDFLib.graph(g)
-      val ctx: Context    = null
+      val ctx: Context = null
       RDFParser.create
         .source(uri)
         .base(baseURI.str)
@@ -470,12 +478,13 @@ object RDFAsJenaModel {
         .parse(dest)
       // RDFAsJenaModel(JenaUtils.relativizeModel(m), Some(IRI(uri)))
       RDFAsJenaModel(m, base, Some(IRI(uri)))
-    }.fold(e => IO.raiseError(e), IO(_))
+    }
+    Resource.make(acquire)(closeJenaModel)
   }
 
-  def fromFile(file: File, format: String, base: Option[IRI] = None): IO[RDFAsJenaModel] = {
+  def fromFile(file: File, format: String, base: Option[IRI] = None): Resource[IO,RDFAsJenaModel] = {
     val baseURI = base.getOrElse(IRI(""))
-    Try {
+    val acquire: IO[RDFAsJenaModel] = IO {
       val m               = ModelFactory.createDefaultModel()
       val is: InputStream = new FileInputStream(file)
       // RDFDataMgr.read(m, is, baseURI, shortnameToLang(format))
@@ -492,15 +501,16 @@ object RDFAsJenaModel {
 
       // RDFAsJenaModel(JenaUtils.relativizeModel(m), Some(IRI(file.toURI)))
       RDFAsJenaModel(m, base, Some(IRI(file.toURI)))
-    }.fold(e => IO.raiseError(e), IO(_))
+    }
+    Resource.make(acquire)(closeJenaModel)
   }
 
   def fromString(str: String,
                  format: String,
                  base: Option[IRI] = None,
                  useBNodeLabels: Boolean = true
-                ): IO[RDFAsJenaModel] =
-    IO {
+                ): Resource[IO,RDFAsJenaModel] = {
+    val acquire = IO {
       val m               = ModelFactory.createDefaultModel
       val str_reader      = new StringReader(str)
       val baseURI         = base.getOrElse(IRI(""))
@@ -520,12 +530,18 @@ object RDFAsJenaModel {
         .parse(dest)
       RDFAsJenaModel(m, base)
     }
+    Resource.make(acquire)(closeJenaModel)
+  }
 
-  def fromChars(cs: CharSequence, format: String, base: Option[IRI] = None): IO[RDFAsJenaModel] =
-    for {
+  def fromChars(cs: CharSequence,
+                format: String,
+                base: Option[IRI] = None): Resource[IO,RDFAsJenaModel] = {
+    /*for {
       empty  <- RDFAsJenaModel.empty
       newRdf <- empty.fromString(cs, format, base)
-    } yield newRdf
+    } yield newRdf*/
+    fromString(cs.toString, format, base)
+  }
 
   def extractModel(rdf: RDFAsJenaModel): Model = {
     rdf match {

@@ -10,13 +10,13 @@ import org.scalatest.matchers.should._
 
 trait JenaBased extends Matchers  {
 
-  def shouldBeIsomorphic(m1: Model, m2: Model): Unit = {
+  def shouldBeIsomorphic(m1: Model, m2: Model): Either[String,Unit] = {
     val b = m1.isIsomorphicWith(m2)
     if (!b) {
-      fail(s"""|Models are not isomorphic
+      Left(s"""|Models are not isomorphic
                |-------------- Model 1: ${m1.toString}
                |-------------- Model 2: ${m2.toString}""".stripMargin)
-    } else ()
+    } else Right()
   }
 
   def str2model(s: String): Model = {
