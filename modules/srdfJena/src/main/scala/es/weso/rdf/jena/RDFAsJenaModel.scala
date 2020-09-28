@@ -44,7 +44,7 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
   def availableParseFormats: List[String]     = RDFAsJenaModel.availableFormats
   def availableSerializeFormats: List[String] = RDFAsJenaModel.availableFormats
 
-  override def fromString(cs: CharSequence, 
+/*  override def fromString(cs: CharSequence,
     format: String, 
     base: Option[IRI] = None
   ): RDFRead[Rdf] =
@@ -63,7 +63,7 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
         .context(ctx)
         .parse(dest)
       RDFAsJenaModel(m, base)
-    }
+    } */
 
   private def getRDFFormat(formatName: String): Either[String, String] = {
     val supportedFormats: List[String] =
@@ -431,7 +431,6 @@ case class RDFAsJenaModel(model: Model, base: Option[IRI] = None, sourceIRI: Opt
 object RDFAsJenaModel {
 
   private def closeJenaModel(m: RDFAsJenaModel): IO[Unit] = IO {
-    println(s"Closing model: ${m}")
     m.model.close()
   }
 

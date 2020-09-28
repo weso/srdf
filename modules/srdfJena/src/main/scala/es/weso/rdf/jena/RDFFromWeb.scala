@@ -51,9 +51,9 @@ case class RDFFromWeb(
     prefixMap.getOrElse(PrefixMap.empty)
   }
 
-  override def fromString(cs: CharSequence, format: String, base: Option[IRI]): RDFRead[Rdf] = {
+/*  override def fromString(cs: CharSequence, format: String, base: Option[IRI]): RDFRead[Rdf] = {
     err("Cannot parse RDFFromWeb ")
-  }
+  } */
 
   override def serialize(format: String,
                          base: Option[IRI]): RDFRead[String] = {

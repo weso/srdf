@@ -46,11 +46,11 @@ case class Endpoint(endpointIRI: IRI)
 
   val log = LoggerFactory.getLogger("Endpoint")
 
-  override def fromString(cs: CharSequence,
+/*  override def fromString(cs: CharSequence,
                           format: String,
                           base: Option[IRI]): IO[Endpoint] = {
     err("Cannot parse into an endpoint. endpoint = " + endpoint)
-  }
+  } */
 
   override def serialize(format: String, base: Option[IRI]): IO[String] = {
     err(s"Endpoint with url $endpoint. Cannot be serialized to $format")

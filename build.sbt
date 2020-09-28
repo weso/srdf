@@ -110,7 +110,7 @@ lazy val srdf = project
   .dependsOn(srdf)
   .settings(commonSettings, publishSettings)
   .settings(
-    parallelExecution in Test := false,
+    parallelExecution in Test := true,
     crossScalaVersions := supportedScalaVersions,
     libraryDependencies ++= Seq(
       logbackClassic % Test,
