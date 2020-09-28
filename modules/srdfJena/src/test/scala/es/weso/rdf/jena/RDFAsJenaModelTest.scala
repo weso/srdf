@@ -1,5 +1,6 @@
 package es.weso.rdf.jena
 
+import cats.effect._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.funspec.AnyFunSpec
 import es.weso.rdf.triples.RDFTriple
@@ -159,13 +160,19 @@ class RDFAsJenaModelTest
                   |_:1 :q :r .
                   |""".stripMargin 
     it(s"Merges with BNodes") {
-      val r = for {
-        rdf1 <- RDFAsJenaModel.fromString(str1,"TURTLE", None,false)
-        rdf2 <- RDFAsJenaModel.fromString(str2,"TURTLE", None,false)
-        merged = RDFAsJenaModel(rdf1.model.add(rdf2.model))
-        str <- merged.serialize("TURTLE")
-      } yield str
-      r.attempt.unsafeRunSync.fold(e => fail(s"Error: $e"), str => info(s"Merged: $str"))
+      val resources: Resource[IO, (RDFAsJenaModel, RDFAsJenaModel)] = for {
+        rdf1 <- RDFAsJenaModel.fromString(str1, "TURTLE", None, false)
+        rdf2 <- RDFAsJenaModel.fromString(str2, "TURTLE", None, false)
+      } yield (rdf1,rdf2)
+      val r = resources.use(pair => {
+        val (rdf1, rdf2) = pair
+        val merged = RDFAsJenaModel(rdf1.model.add(rdf2.model))
+        merged.serialize("TURTLE")
+      })
+      r.attempt.unsafeRunSync.fold(
+        e => fail(s"Error: $e"),
+        str => info(s"Merged: $str")
+      )
     }
   }
 
@@ -179,13 +186,18 @@ class RDFAsJenaModelTest
                   |_:1 :q :r .
                   |""".stripMargin 
     it(s"Merges with BNodes") {
-      val r = for {
+      val resources = for {
         rdf1 <- RDFAsJenaModel.fromString(str1,"TURTLE", None,true)
         rdf2 <- RDFAsJenaModel.fromString(str2,"TURTLE", None,true)
-        merged = RDFAsJenaModel(rdf1.model.add(rdf2.model))
-        str <- merged.serialize("TURTLE")
-      } yield str
-      r.attempt.unsafeRunSync.fold(e => fail(s"Error: $e"), str => info(s"Merged: $str"))
+      } yield (rdf1,rdf2)
+      val r = resources.use(pair => {
+        val (rdf1, rdf2) = pair
+        val merged = RDFAsJenaModel(rdf1.model.add(rdf2.model))
+        merged.serialize("TURTLE")
+      })
+      r.attempt.unsafeRunSync.fold(
+        e => fail(s"Error: $e"),
+        str => info(s"Merged: $str"))
     }
   }
 
