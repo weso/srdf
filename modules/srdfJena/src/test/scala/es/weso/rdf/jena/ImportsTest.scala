@@ -76,47 +76,45 @@ class ImportsTest extends AnyFunSpec with JenaBased with Matchers with EitherVal
       })
     }
   }
-/*
   describe("Imports test") {
     
     it(s"Should extend with imports") {
     
-     val r = io2ES(for {
-       rdf1     <- RDFAsJenaModel.fromIRI(rdfFolder + "/testImport.ttl")
-       str <- rdf1.serialize("TURTLE")
-       _ <- IO { println(s"RDF1:\n${str}") }
-       extended <- rdf1.extendImports
-       extendedStr <- extended.serialize("TURTLE")
-       _ <- IO { println(s"Extended:\n${extendedStr}") }
-       x = IRI("http://example.org/x")
-       p = IRI("http://example.org/p")
-       ts <- extended.triplesWithSubjectPredicate(x,p).compile.toList
-      } yield (rdf1,extended,ts)
+     val r = RDFAsJenaModel.fromIRI(rdfFolder + "/testImport.ttl").use(rdf1 =>
+       for {
+         str <- rdf1.serialize("TURTLE")
+         _ <- IO { println(s"RDF1:\n${str}") }
+         extended <- rdf1.extendImports
+         extendedStr <- extended.serialize("TURTLE")
+         _ <- IO { println(s"Extended:\n${extendedStr}") }
+         x = IRI("http://example.org/x")
+         p = IRI("http://example.org/p")
+         ts <- extended.triplesWithSubjectPredicate(x,p).compile.toList
+       } yield (rdf1,extended,ts)
      )
-
-      r.fold(e => fail(s"Error: $e"), values => {
+     r.attempt.unsafeRunSync.fold(
+       e => fail(s"Error: $e"), values => {
         val (_,_,ts) = values
         ts.size should be(2)
       })
     }
 
     it(s"Should handle loops") {
-      val r = io2ES(for {
-        rdf1     <- RDFAsJenaModel.fromIRI(rdfFolder + "/testImportWithLoop.ttl")
+      val r = RDFAsJenaModel.fromIRI(rdfFolder + "/testImportWithLoop.ttl").use(rdf1 =>
+       for {
         extended <- rdf1.extendImports()
         ts <- rdf1.rdfTriples.compile.toList
         tse <- extended.rdfTriples.compile.toList
-      } yield (rdf1,extended,ts,tse)
+       } yield (rdf1,extended,ts,tse)
       )
 
-      r.fold(e => fail(s"Error: $e"), values => {
+      r.attempt.unsafeRunSync.fold(
+        e => fail(s"Error: $e"), values => {
         val (rdf1,extended,ts,tse) = values
         ts.size should be(tse.size)
       })
     }
-
   }
 
- */
 }
 
