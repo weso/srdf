@@ -1,5 +1,5 @@
 package es.weso.rdftriple.jenaMapper
-import org.apache.jena.rdf.model.ModelFactory
+import org.apache.jena.rdf.model.{Model, ModelFactory}
 import org.scalatest.matchers.should.Matchers
 import es.weso.rdf.nodes._
 import es.weso.rdf.jena.JenaMapper._
@@ -13,6 +13,8 @@ class JenaMapperTest
   with Matchers {
 
   describe("Jena Mapper") {
+
+
     it("Should compare one triple with 2 different bNodes") {
       val ts = Set(RDFTriple(BNode("b" + 0), IRI("http://example.org#p"), BNode("b" + 1)))
       val s = """[] <http://example.org#p> [] ."""

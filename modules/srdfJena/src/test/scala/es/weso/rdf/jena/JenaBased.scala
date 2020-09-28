@@ -10,7 +10,7 @@ import org.scalatest.matchers.should._
 
 trait JenaBased extends Matchers  {
 
-  def shouldBeIsomorphic(m1: Model, m2: Model): Either[String,Unit] = {
+  def checkIsomorphic(m1: Model, m2: Model): Either[String,Unit] = {
     val b = m1.isIsomorphicWith(m2)
     if (!b) {
       Left(s"""|Models are not isomorphic
@@ -18,6 +18,11 @@ trait JenaBased extends Matchers  {
                |-------------- Model 2: ${m2.toString}""".stripMargin)
     } else Right()
   }
+
+  def shouldBeIsomorphic(m1: Model,m2: Model): Unit = {
+    checkIsomorphic(m1,m2).fold(fail(_), _ => ())
+  }
+
 
   def str2model(s: String): Model = {
     val m = ModelFactory.createDefaultModel
