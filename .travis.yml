@@ -3,8 +3,8 @@ dist: xenial
 language: scala
 
 scala:
-   - 2.13.1
-   - 2.12.10
+   - 2.13.3
+   - 2.12.12
 
 before_cache:
   # Cleanup the cached directories to avoid unnecessary cache updates
@@ -42,9 +42,10 @@ jdk:
 deploy:
   provider: pages
   skip_cleanup: true
+  skip_existing: true
   github_token: $GITHUB_TOKEN
   keep_history: true
   local_dir: target/site
   on:
     branch: master
-    condition: $TRAVIS_SCALA_VERSION = 2.13.1
+    condition: $TRAVIS_SCALA_VERSION = 2.13.3
