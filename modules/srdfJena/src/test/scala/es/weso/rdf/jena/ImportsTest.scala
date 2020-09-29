@@ -8,7 +8,7 @@ import es.weso.rdf.nodes._
 import org.scalatest._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
-import cats.effect.IO
+import cats.implicits._
 
 class ImportsTest extends AnyFunSpec with JenaBased with Matchers with EitherValues {
 
@@ -19,12 +19,12 @@ class ImportsTest extends AnyFunSpec with JenaBased with Matchers with EitherVal
   describe("Merge test") {
 
     it(s"Should read merged file") {
-    val r = io2ES(for {
-      rdf1 <- RDFAsJenaModel.fromIRI(rdfFolder + "/merged.ttl")
+    val r = RDFAsJenaModel.fromIRI(rdfFolder + "/merged.ttl").use(rdf1 => for {
       iris <- rdf1.iris.compile.toList
     } yield (rdf1,iris))
 
-    r.fold(e => fail(s"Error: $e"), t => {
+    r.attempt.unsafeRunSync.fold(
+      e => fail(s"Error: $e"), t => {
       val (rdf,iris) = t
       info(s"RDF read: ${iris}")
       iris.size should be(1)
@@ -32,12 +32,12 @@ class ImportsTest extends AnyFunSpec with JenaBased with Matchers with EitherVal
     } 
 
     it(s"Should read m1") {
-      val r = io2ES(for {
-        rdf1 <- RDFAsJenaModel.fromIRI(rdfFolder + "/m1.ttl")
+      val r = RDFAsJenaModel.fromIRI(rdfFolder + "/m1.ttl").use(rdf1 => for {
         iris <- rdf1.iris.compile.toList
       } yield (rdf1,iris))
   
-      r.fold(e => fail(s"Error: $e"), t => {
+      r.attempt.unsafeRunSync.fold(
+        e => fail(s"Error: $e"), t => {
         val (rdf,iris) = t
         info(s"IRIs from m1: ${iris}")
         iris.size should be(1)
@@ -46,69 +46,75 @@ class ImportsTest extends AnyFunSpec with JenaBased with Matchers with EitherVal
   
 
     it(s"Should merge files") {
-      val r = io2ES(for {
-        rdf1 <- RDFAsJenaModel.fromIRI(rdfFolder + "/m1.ttl")
-        srdf1 <- rdf1.serialize("N-TRIPLES")
-        _ <- IO { println(s"rdf1:\n${srdf1}") }
-        rdf2 <- RDFAsJenaModel.fromIRI(rdfFolder + "/m2.ttl")
-        srdf2 <- rdf2.serialize("N-TRIPLES")
-        _ <- IO { println(s"rdf2:\n${srdf2}") }
-        merged <- rdf1.merge(rdf2)
-        smerged <- merged.serialize("N-TRIPLES")
-        _ <- IO { println(s"merged:\n${smerged}") }
-        mergedFromFile <- RDFAsJenaModel.fromIRI(rdfFolder + "/mergedWithoutRenaming.ttl")
-        smergedFromFile <- mergedFromFile.serialize("N-TRIPLES")
-        _ <- IO { println(s"mergedExpected:\n${smergedFromFile}") }
-        b <- merged.isIsomorphicWith(mergedFromFile)
-      } yield {
-        (merged,mergedFromFile,b)
-      })
+      val r = (
+        RDFAsJenaModel.fromIRI(rdfFolder + "/m1.ttl"),
+        RDFAsJenaModel.fromIRI(rdfFolder + "/m2.ttl"),
+        RDFAsJenaModel.fromIRI(rdfFolder + "/mergedWithoutRenaming.ttl")
+        ).tupled.use{
+        case (rdf1,rdf2,mergedFromFile) => {
+          for {
+            srdf1 <- rdf1.serialize("N-TRIPLES")
+            _ <- IO { println(s"rdf1:\n${srdf1}") }
+            srdf2 <- rdf2.serialize("N-TRIPLES")
+            _ <- IO { println(s"rdf2:\n${srdf2}") }
+            merged <- rdf1.merge(rdf2)
+            smerged <- merged.serialize("N-TRIPLES")
+            _ <- IO { println(s"merged:\n${smerged}") }
+            smergedFromFile <- mergedFromFile.serialize("N-TRIPLES")
+            _ <- IO { println(s"mergedExpected:\n${smergedFromFile}") }
+            b <- merged.isIsomorphicWith(mergedFromFile)
+          } yield {
+            (merged,mergedFromFile,b)
+          }
+        }
+      }
 
-      r.fold(e => fail(s"Error: $e"), values => {
+      r.attempt.unsafeRunSync.fold(
+        e => fail(s"Error: $e"), values => {
         val (_, _,b) = values
         b should be(true)
       })
     }
   }
-
   describe("Imports test") {
     
     it(s"Should extend with imports") {
     
-     val r = io2ES(for {
-       rdf1     <- RDFAsJenaModel.fromIRI(rdfFolder + "/testImport.ttl")
-       str <- rdf1.serialize("TURTLE")
-       _ <- IO { println(s"RDF1:\n${str}") }
-       extended <- rdf1.extendImports
-       extendedStr <- extended.serialize("TURTLE")
-       _ <- IO { println(s"Extended:\n${extendedStr}") }
-       x = IRI("http://example.org/x")
-       p = IRI("http://example.org/p")
-       ts <- extended.triplesWithSubjectPredicate(x,p).compile.toList
-      } yield (rdf1,extended,ts)
+     val r = RDFAsJenaModel.fromIRI(rdfFolder + "/testImport.ttl").use(rdf1 =>
+       for {
+         str <- rdf1.serialize("TURTLE")
+         _ <- IO { println(s"RDF1:\n${str}") }
+         extended <- rdf1.extendImports
+         extendedStr <- extended.serialize("TURTLE")
+         _ <- IO { println(s"Extended:\n${extendedStr}") }
+         x = IRI("http://example.org/x")
+         p = IRI("http://example.org/p")
+         ts <- extended.triplesWithSubjectPredicate(x,p).compile.toList
+       } yield (rdf1,extended,ts)
      )
-
-      r.fold(e => fail(s"Error: $e"), values => {
+     r.attempt.unsafeRunSync.fold(
+       e => fail(s"Error: $e"), values => {
         val (_,_,ts) = values
         ts.size should be(2)
       })
     }
 
     it(s"Should handle loops") {
-      val r = io2ES(for {
-        rdf1     <- RDFAsJenaModel.fromIRI(rdfFolder + "/testImportWithLoop.ttl")
+      val r = RDFAsJenaModel.fromIRI(rdfFolder + "/testImportWithLoop.ttl").use(rdf1 =>
+       for {
         extended <- rdf1.extendImports()
         ts <- rdf1.rdfTriples.compile.toList
         tse <- extended.rdfTriples.compile.toList
-      } yield (rdf1,extended,ts,tse)
+       } yield (rdf1,extended,ts,tse)
       )
 
-      r.fold(e => fail(s"Error: $e"), values => {
+      r.attempt.unsafeRunSync.fold(
+        e => fail(s"Error: $e"), values => {
         val (rdf1,extended,ts,tse) = values
         ts.size should be(tse.size)
       })
     }
+  }
 
-  } 
 }
 

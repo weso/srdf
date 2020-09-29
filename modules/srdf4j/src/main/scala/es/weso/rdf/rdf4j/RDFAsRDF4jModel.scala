@@ -5,7 +5,13 @@ import es.weso.rdf._
 import es.weso.rdf.path.SHACLPath
 import es.weso.rdf.triples.RDFTriple
 import io.circe.Json
-import org.eclipse.rdf4j.model.{IRI => IRI_RDF4j, BNode => _, Literal => _, _}
+import org.eclipse.rdf4j.model.{
+  IRI => IRI_RDF4j,
+  BNode => _,
+  Literal => _,
+  Resource => RDF4jResource,
+  _
+}
 import es.weso.rdf.nodes.{IRI, _}
 import org.eclipse.rdf4j.model.util.{ModelBuilder, Models}
 import org.eclipse.rdf4j.rio.RDFFormat._
@@ -16,7 +22,7 @@ import scala.util._
 // import es.weso.utils.internal.CollectionCompat
 import es.weso.utils.internal.CollectionCompat.CollectionConverters._
 import RDF4jMapper._
-import cats.effect.IO
+import cats.effect._
 import cats._
 import cats.implicits._
 import fs2.Stream
@@ -34,7 +40,7 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
   override def availableParseFormats: List[String]     = RDFAsRDF4jModel.availableFormats
   override def availableSerializeFormats: List[String] = RDFAsRDF4jModel.availableFormats
 
-  override def fromString(cs: CharSequence, format: String, base: Option[IRI] = None): IO[Rdf] = 
+/*  override def fromString(cs: CharSequence, format: String, base: Option[IRI] = None): IO[Rdf] =
   fromES {
     val baseURI = base.map(_.str).getOrElse("")
     for {
@@ -44,16 +50,8 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
         Rio.parse(is, baseURI, format)
       }.fold(e => Left(s"Exception: ${e.getMessage}\nBase:$base, format: $format\n$cs"), Right(_))
     } yield RDFAsRDF4jModel(model)
-  }
+  } */
 
-  private def getRDFFormat(name: String): Either[String, RDFFormat] = {
-    name.toUpperCase match {
-      case "TURTLE" => Right(TURTLE)
-      case "JSONLD" => Right(JSONLD)
-      case "RDFXML" => Right(RDFXML)
-      case x        => Left(s"Unsupported syntax $x")
-    }
-  }
 
   override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] = 
    triplesWithSubjectPredicate(n,p).compile.toList.map(!_.isEmpty)
@@ -61,7 +59,7 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
 
   override def serialize(formatName: String, base: Option[IRI]): IO[String] =
     fromES(for {
-      format <- getRDFFormat(formatName)
+      format <- RDFAsRDF4jModel.getRDFFormat(formatName)
       str <- Try {
         val out: StringWriter = new StringWriter()
         // TODO: relitivize model according to base
@@ -79,7 +77,7 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
 
   // TODO: this implementation only returns subjects
   override def iris(): RDFStream[IRI] = {
-    val resources: Set[Resource] = model.subjects().asScala.toSet
+    val resources: Set[RDF4jResource] = model.subjects().asScala.toSet
     val ls = resources.filter(_.isInstanceOf[IRI_RDF4j]).map(_.asInstanceOf[IRI_RDF4j].toString).map(IRI(_)).toList
     Stream.emits(ls)
   }
@@ -167,11 +165,11 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
    } yield ts
    )
 
-  override def getPrefixMap: PrefixMap = {
-    PrefixMap {
+  override def getPrefixMap: IO[PrefixMap] = {
+    IO(PrefixMap {
       val nsSet: Set[Namespace] = model.getNamespaces.asScala.toSet
       nsSet.map(ns => (Prefix(ns.getPrefix), IRI(ns.getName))).toMap
-    }
+    })
   }
 
   override def addBase(iri: IRI): IO[Rdf] = {
@@ -210,7 +208,7 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
     this
   }
 
-  override def empty: IO[Rdf] = {
+  override def empty: Resource[IO,Rdf] = {
     // TODO: Refactor to avoid unsafeRunSync
     RDFAsRDF4jModel.empty
   }
@@ -309,29 +307,46 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
   override def rdfReaderName: String = s"RDF4j"
 
   // TODO: This method is not implemented yet
-  override def normalizeBNodes(): IO[RDFAsRDF4jModel] =
+  override def normalizeBNodes(): IO[RDFBuilder] =
     IO(this)
 
 }
 
 object RDFAsRDF4jModel {
 
-  def apply(): IO[RDFAsRDF4jModel] = {
+  def closeRDFjModel(m: RDFAsRDF4jModel): IO[Unit] = IO {
+    // It seems there is no close() method in RDF4j
+  }
+
+  def apply(): Resource[IO,RDFAsRDF4jModel] = {
     empty
   }
 
-  lazy val empty: IO[RDFAsRDF4jModel] = {
-    IO {
+  lazy val empty: Resource[IO,RDFAsRDF4jModel] = {
+    val acquire: IO[RDFAsRDF4jModel] = IO {
       val builder = new ModelBuilder()
       RDFAsRDF4jModel(builder.build)
     }
+    Resource.make(acquire)(closeRDFjModel)
   }
 
-  def fromChars(cs: CharSequence, format: String, base: Option[IRI] = None): IO[RDFAsRDF4jModel] =
-    for {
-      rdfEmpty <- empty
-      rdf      <- rdfEmpty.fromString(cs, format, base)
-    } yield rdf
+  def fromChars(cs: CharSequence, format: String, base: Option[IRI] = None): Resource[IO,RDFAsRDF4jModel] = {
+    val acquire: IO[RDFAsRDF4jModel] =
+      fromES {
+        val baseURI = base.map(_.str).getOrElse("")
+        for {
+          format <- getRDFFormat(format)
+          model <- Try {
+            val is: InputStream = new CharSequenceInputStream(cs, "UTF-8")
+            Rio.parse(is, baseURI, format)
+          }.fold(
+            e => Left(s"Exception obtaining RDF: ${e.getMessage}\nBase:$base, format: $format\n$cs"),
+            Right(_)
+          )
+        } yield RDFAsRDF4jModel(model)
+      }
+    Resource.make(acquire)(closeRDFjModel)
+  }
 
   def availableFormats: List[String] = {
     val formats = List(TURTLE, JSONLD, RDFXML)
@@ -340,6 +355,15 @@ object RDFAsRDF4jModel {
 
   def fromIRI(iri: IRI): IO[RDFAsRDF4jModel] = {
     err(s"Not implemented get RDF4j from IRI: $iri")
+  }
+
+  private def getRDFFormat(name: String): Either[String, RDFFormat] = {
+    name.toUpperCase match {
+      case "TURTLE" => Right(TURTLE)
+      case "JSONLD" => Right(JSONLD)
+      case "RDFXML" => Right(RDFXML)
+      case x        => Left(s"Unsupported syntax $x")
+    }
   }
 
 
