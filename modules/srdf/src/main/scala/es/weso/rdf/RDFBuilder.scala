@@ -31,7 +31,7 @@ trait RDFBuilder extends RDFReader {
 
   def rmTriple(triple: RDFTriple): RDFBuild[Rdf]
 
-  def empty: RDFBuild[Rdf]
+  def empty: Resource[RDFBuild,Rdf]
 
   def merge(other: RDFReader): RDFBuild[Rdf]
 

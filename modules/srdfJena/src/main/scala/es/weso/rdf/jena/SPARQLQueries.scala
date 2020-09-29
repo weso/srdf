@@ -3,6 +3,7 @@ package es.weso.rdf.jena
 import org.apache.jena.query._
 import es.weso.rdf.nodes._
 import es.weso.rdf.path.SHACLPath
+import cats.effect._
 
 object SPARQLQueries {
 
