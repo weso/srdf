@@ -24,13 +24,13 @@ class SPARQLQueriesTest
       )
     }
 
-    it("Should create SPARQL query from an inverse SHACLPath") {
+    ignore("Should create SPARQL query from an inverse SHACLPath") {
       val sp = InversePath(PredicatePath(IRI("http://example.org/p")))
       val query = SPARQLQueries.queryPath(sp)
       info(s"Query: $query")
     }
 
-    it("Should create SPARQL query from a sequence SHACLPath") {
+    ignore("Should create SPARQL query from a sequence SHACLPath") {
       val sp = SequencePath(Seq(
         PredicatePath(IRI("http://example.org/p")),
         PredicatePath(IRI("http://example.org/q")))
