@@ -66,7 +66,7 @@ trait RDFParser {
   }
 
   def withRdf[A](rdf: RDFReader, parser: RDFParser[A]): RDFParser[A] = {
-    def localEnv(cfg: Config): Config = cfg.copy(rdf = rdf)
+    val localEnv: Config => Config = _.copy(rdf = rdf)
     val f: R[Either[Err,A]] = ReaderT.local(localEnv)(parser.value)
     EitherT(f)
   }

@@ -2,12 +2,12 @@ lazy val scala212 = "2.12.11"
 lazy val scala213 = "2.13.1"
 lazy val supportedScalaVersions = List(scala212, scala213)
 
-lazy val utilsVersion         = "0.1.67"
+lazy val utilsVersion         = "0.1.69"
 
 // Dependency versions
 lazy val catsVersion           = "2.1.1"
 lazy val catsEffectVersion     = "2.1.2"
-lazy val circeVersion          = "0.13.0"
+lazy val circeVersion          = "0.12.3"
 lazy val fs2Version            = "2.2.1"
 lazy val http4sVersion         = "0.21.3"
 lazy val jenaVersion           = "3.13.1"
@@ -22,9 +22,9 @@ lazy val scallopVersion        = "3.3.1"
 lazy val typesafeConfigVersion = "1.4.0"
 
 // Compiler plugin dependency versions
-lazy val simulacrumVersion    = "1.0.0"
-// lazy val kindProjectorVersion = "0.9.5"
-lazy val scalaMacrosVersion   = "2.1.1"
+lazy val simulacrumVersion       = "1.0.0"
+lazy val scalaMacrosVersion      = "2.1.1"
+lazy val scalaCollCompatVersion  = "2.2.0"
 
 // Dependency modules
 
@@ -47,6 +47,7 @@ lazy val scalaLogging      = "com.typesafe.scala-logging" %% "scala-logging"    
 lazy val scallop           = "org.rogach"                 %% "scallop"             % scallopVersion
 lazy val scalactic         = "org.scalactic"              %% "scalactic"           % scalacticVersion
 lazy val scalacheck        = "org.scalacheck"             %% "scalacheck"          % scalacheckVersion
+lazy val scalaCollCompat   = "org.scala-lang.modules"     %% "scala-collection-compat" % scalaCollCompatVersion
 lazy val scalaTest         = "org.scalatest"              %% "scalatest"           % scalaTestVersion
 lazy val scalatags         = "com.lihaoyi"                %% "scalatags"           % scalatagsVersion
 lazy val typesafeConfig    = "com.typesafe"               % "config"               % typesafeConfigVersion
@@ -60,10 +61,16 @@ def priorTo2_13(scalaVersion: String): Boolean =
 
 lazy val srdfMain = project
   .in(file("."))
-  .enablePlugins(ScalaUnidocPlugin, SbtNativePackager, WindowsPlugin, JavaAppPackaging, LauncherJarPlugin)
-  .settings(commonSettings, packagingSettings, publishSettings, ghPagesSettings, wixSettings)
+  .enablePlugins(ScalaUnidocPlugin, SiteScaladocPlugin, AsciidoctorPlugin)
+  .settings(
+    commonSettings, 
+    // packagingSettings, 
+    publishSettings
+  )
   .aggregate(srdfJena, srdf4j, srdf)
   .settings(
+    siteSubdirName in ScalaUnidoc := "api/latest",
+    addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc), siteSubdirName in ScalaUnidoc),
     unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(noDocProjects: _*),
     libraryDependencies ++= Seq(
       logbackClassic,
@@ -72,7 +79,7 @@ lazy val srdfMain = project
     ),
     cancelable in Global      := true,
     fork                      := true,
-    parallelExecution in Test := false,
+    parallelExecution in Test := true,
     crossScalaVersions := Nil,
     publish / skip := true,
     ThisBuild / turbo := true
@@ -93,7 +100,8 @@ lazy val srdf = project
       circeParser,
       fs2Core,
       utils,
-      scalaLogging
+      scalaLogging,
+      scalaCollCompat
     )
     )
     
@@ -102,6 +110,7 @@ lazy val srdf = project
   .dependsOn(srdf)
   .settings(commonSettings, publishSettings)
   .settings(
+    parallelExecution in Test := true,
     crossScalaVersions := supportedScalaVersions,
     libraryDependencies ++= Seq(
       logbackClassic % Test,
@@ -124,6 +133,7 @@ lazy val srdf4j = project
   .dependsOn(srdf)
   .settings(commonSettings, publishSettings)
   .settings(
+    parallelExecution in Test := false,
     crossScalaVersions := supportedScalaVersions,
     libraryDependencies ++= Seq(
       logbackClassic % Test,
@@ -158,24 +168,6 @@ lazy val sharedDependencies = Seq(
   )
 )
 
-lazy val packagingSettings = Seq(
-  mainClass in Compile        := Some("es.weso.shaclex.Main"),
-  mainClass in assembly       := Some("es.weso.shaclex.Main"),
-  test in assembly            := {},
-  assemblyJarName in assembly := "shaclex.jar",
-  packageSummary in Linux     := name.value,
-  packageSummary in Windows   := name.value,
-  packageDescription          := name.value
-)
-
-lazy val wixSettings = Seq(
-  wixProductId        := "39b564d5-d381-4282-ada9-87244c76e14b",
-  wixProductUpgradeId := "6a710435-9af4-4adb-a597-98d3dd0bade1"
-// The same numbers as in the docs?
-// wixProductId := "ce07be71-510d-414a-92d4-dff47631848a",
-// wixProductUpgradeId := "4552fb0e-e257-4dbd-9ecb-dba9dbacf424"
-)
-
 lazy val compilationSettings = Seq(
   scalaVersion := scala213,
   // format: off
@@ -194,10 +186,6 @@ lazy val compilationSettings = Seq(
     "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
   )
   // format: on
-)
-
-lazy val ghPagesSettings = Seq(
-  git.remoteRepo := "git@github.com:weso/srdf.git"
 )
 
 lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
