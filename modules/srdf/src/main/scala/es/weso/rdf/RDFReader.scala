@@ -40,9 +40,9 @@ trait RDFReader {
     * @param base base IRI (None by default)
     * @return Right RDF or Left error message
     */
-  def fromString(cs: CharSequence,
+  /*def fromString(cs: CharSequence,
                  format: String = "TURTLE",
-                 base: Option[IRI] = None): RDFRead[Rdf]
+                 base: Option[IRI] = None): Resource[RDFRead,Rdf] */
 
   /**
    * convert a RDF graph to a String
@@ -173,7 +173,7 @@ trait RDFReader {
   /**
    * Prefix map
    */
-  def getPrefixMap(): PrefixMap
+  def getPrefixMap: RDFRead[PrefixMap]
 
   /**
    * `true` if `node rdf:type/rdfs:subClassOf* cls`
