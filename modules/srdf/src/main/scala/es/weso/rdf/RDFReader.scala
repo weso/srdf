@@ -173,7 +173,7 @@ trait RDFReader {
   /**
    * Prefix map
    */
-  def getPrefixMap(): PrefixMap
+  def getPrefixMap: RDFRead[PrefixMap]
 
   /**
    * `true` if `node rdf:type/rdfs:subClassOf* cls`
