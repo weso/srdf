@@ -1,15 +1,19 @@
 package es.weso.rdf.jena
 
 import cats.effect._
+import cats.implicits._
 import es.weso.utils.IOUtils._
 import es.weso.rdf.nodes._
 import org.scalatest._
 import org.scalatest.matchers.should._
 import org.scalatest.funspec._
 import org.apache.jena.fuseki.main.FusekiServer
-
 import org.apache.jena.query._
 import org.apache.jena.system.Txn
+
+import scala.util.Try
+
+// TODO: Refactor the following code to use IO Resources (bracket) to ensure that the resources are closed...
 
 class EndpointTest
   extends AnyFunSpec
@@ -20,22 +24,28 @@ class EndpointTest
   val portNumber: Int = 5678
   val endpointName = s"http://localhost:${portNumber}/${dataset}/sparql"
   val ex = IRI("http://example.org/")
-  val ds = DatasetFactory.createTxnMem
-  val server = FusekiServer.create.port(portNumber).add(s"/${dataset}", ds).build
+
+  val acquireServer: IO[(FusekiServer,Dataset)] = IO {
+    val ds = DatasetFactory.createTxnMem
+    val server = FusekiServer.create.port(portNumber).add(s"/${dataset}", ds).build
+    server.start()
+    (server,ds)
+  }
+  def releaseServer(pair: (FusekiServer,Dataset)): IO[Unit] = {
+    val (server,ds) = pair
+    IO {
+      ds.close()
+      server.stop()
+    }
+  }
+  val server: Resource[IO,(FusekiServer, Dataset)] = Resource.make(acquireServer)(releaseServer)
+
   val endpoint = Endpoint(IRI(endpointName))
   val endpointUpdate = s"http://host:3330/${dataset}/update"
 
-  before {
-    server.start
-  }
-
-  after {
-    server.stop
-  }
-
   describe("Checking endpoint") {
 
-/*
+
     it("should be able to obtain SHACL instances in an endpoint") {
       shouldObtainShaclInstances(
         s"""|prefix : ${ex}
@@ -48,10 +58,8 @@ class EndpointTest
         Seq(ex+"x",ex+"y")
       )
     }
-*/
-/* Commented because, for some reason, when I repeat the test, it fails
-    it("should be able to obtain SHACL instances in an endpoint 2") {
 
+    it("should be able to obtain SHACL instances in an endpoint 2") {
       shouldObtainShaclInstances(
         s"""|prefix : ${ex}
             |prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -63,8 +71,7 @@ class EndpointTest
         Seq(ex+"x",ex+"y")
       )
     }
-*/
-/*    it("should be able to run a query over an endpoint") {
+    it("should be able to run a query over an endpoint") {
       shouldQueryData(
         s"""|prefix : ${ex}
             |:a :p 2,3 .
@@ -79,18 +86,20 @@ class EndpointTest
         List(Map("x" -> (ex + "a"), "p" -> (ex + "p"), "y" -> IntegerLiteral(3)),
              Map("x" -> (ex + "a"), "p" -> (ex + "p"), "y" -> IntegerLiteral(2)))
       )
-    } */
+    } 
 
     def withEndpoint[A](data: String,
                         action: Endpoint => IO[A]
                        ): IO[A] =
-     for {
-        rdf <- RDFAsJenaModel.fromChars(data, "Turtle")
+      (server,RDFAsJenaModel.fromChars(data, "Turtle")).tupled.use { case (server,rdf) => for {
+        model <- rdf.getModel
         result <- {
-          Txn.executeWrite(ds, execute(ds.setDefaultModel(rdf.model)))
+          val (_,ds) = server
+          Txn.executeWrite(ds, execute(ds.setDefaultModel(model)))
           action(endpoint)
         }
-    } yield result
+      } yield result
+    }
 
     def shouldObtainShaclInstances(data: String, node: IRI, expected: Seq[RDFNode]): Unit = {
       val either = io2ES(withEndpoint(data, _.getSHACLInstances(node).compile.toList))
@@ -101,21 +110,23 @@ class EndpointTest
     }
 
     def shouldQueryData(data: String, queryStr: String, expected: List[Map[String, RDFNode]]): Unit = {
-      val eitherRdf = io2ES(for {
-        rdf <- RDFAsJenaModel.fromChars(data,"Turtle")
-      } yield rdf)
-      eitherRdf.fold(
-        e => fail(s"Error: $e"),
-        rdf => {
-          Txn.executeWrite(ds, execute(ds.setDefaultModel(rdf.model)))
+      val r: IO[List[Map[String,RDFNode]]] =
+        (server,RDFAsJenaModel.fromChars(data,"Turtle")).tupled.use{ case (pair,rdf) => for {
+        model <- rdf.getModel
+        rm <- Try {
+          val (_,ds) = pair
+          Txn.executeWrite(ds, execute(ds.setDefaultModel(model)))
           val query = QueryFactory.create(queryStr)
           val rs = QueryExecutionFactory.sparqlService(endpointName, query).execSelect()
-          val eitherResultMap = JenaMapper.resultSet2Map(rs)
-          eitherResultMap.fold(e => fail(s"Error: $e"), rm => {
-            shouldCompareListMaps(rm, expected)
-          })
-        }
-      )
+          JenaMapper.resultSet2Map(rs)
+        }.fold(
+          e => IO.raiseError(e),
+          maybeRM => maybeRM.fold(e => IO.raiseError(new RuntimeException(e)), rm => IO(rm))
+        )
+      } yield rm}
+      r.attempt.unsafeRunSync().fold(
+        e => fail(s"Error: $e"),
+        rm => shouldCompareListMaps(rm, expected))
     }
 
     def execute(body: => Unit): Runnable = {

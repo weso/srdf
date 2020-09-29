@@ -1,10 +1,8 @@
 package es.weso.rdf.operations
 import es.weso.rdf.nodes._
 import es.weso.rdf._
-//import cats.implicits._
-//import cats.data.EitherT
 import cats.effect._
-import fs2.Stream
+import fs2.{Pipe, Stream}
 import es.weso.rdf.triples.RDFTriple
 
 object Graph {
@@ -16,11 +14,7 @@ object Graph {
     * @param rdf RDFReader
     * @return list of visited nodes
     */
-  def traverse(node: RDFNode, rdf: RDFReader): Stream[IO,RDFNode] = 
-   Stream.raiseError[IO](RDFException.fromString("Not implemented traverse yet"))
-  
-/*  {
-    // println(s"Traversing from $node\nRDF:\n${rdf.serialize("TURTLE").getOrElse("")}")
+  def traverse(node: RDFNode, rdf: RDFReader): Stream[IO,RDFNode] = {
 
     def outgoing(node: RDFNode): Stream[IO,RDFNode] = 
      rdf.triplesWithSubject(node).map(_.obj)
@@ -37,20 +31,20 @@ object Graph {
             ): Stream[IO,RDFNode] = stack match {
       case Nil => Stream.emits(visited)
       case head :: tail => for {
-        onv <- outgoingNotVisited(head, visited)
+        onv <- Stream.eval(outgoingNotVisited(head, visited).compile.toList)
         rs <- loop(onv ++ tail, head :: visited)
       } yield rs
     }
     loop(List(node),List())
-  } */
+  }
 
+  def getTriples(rdf: RDFReader): Pipe[IO, RDFNode, RDFTriple] =
+    nodes => for {
+     node <- nodes
+     triple <- rdf.triplesWithSubject(node)
+    } yield triple
 
-  def traverseWithArcs(node: RDFNode, rdf: RDFReader): Stream[IO,(List[RDFNode], List[RDFTriple])] = 
-    Stream.raiseError[IO](RDFException.fromString(s"Not implemented traverseWithArcs from $node yet"))
-  
-/*  for {
-    nodes <- traverse(node,rdf)
-    triples <- sequenceU(nodes.map(rdf.triplesWithSubject(_))).map(_.flatten)
-  } yield (nodes, triples)
-*/
+  def traverseWithArcs(node: RDFNode, rdf: RDFReader): Stream[IO,RDFTriple] =
+    traverse(node,rdf).through(getTriples(rdf))
+
 }
