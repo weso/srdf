@@ -35,9 +35,11 @@ trait RDFBuilder extends RDFReader {
 
   def merge(other: RDFReader): RDFBuild[Rdf]
 
-  def extendImports(): RDFBuild[Rdf]
+  def extendImports: RDFBuild[Rdf]
 
-  def normalizeBNodes(): RDFBuild[RDFBuilder]
+  def normalizeBNodes: RDFBuild[RDFBuilder]
+
+  def fromString(str: String, format: String, base: Option[IRI]): Resource[IO, RDFBuilder]
 
 }
 
