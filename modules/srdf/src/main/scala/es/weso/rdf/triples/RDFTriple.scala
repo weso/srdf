@@ -34,9 +34,9 @@ case class RDFTriple(subj: RDFNode, pred: IRI, obj: RDFNode) {
       extractIRI(obj)
   }
 
-  override def toString: String = {
-    subj + " " + pred + " " + obj + " ."
-  }
+  override def toString: String =
+    s"${subj.toString} ${pred.toString} ${obj.toString}"
+
 }
 
 object RDFTriple {
@@ -81,7 +81,7 @@ object RDFTriple {
   def showTriples(triples: Set[RDFTriple]): String = {
     val str = new StringBuilder
     for { t <- triples } {
-      str ++= (t + "\n")
+      str ++= s"${t.toString}\n"
     }
     str.toString()
   }
