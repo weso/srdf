@@ -25,9 +25,9 @@ case class Compound(members: List[RDFReader])
   def availableParseFormats: List[String] = List()
   def availableSerializeFormats: List[String] = List()
 
-  override def getPrefixMap: PrefixMap = {
+  override def getPrefixMap: IO[PrefixMap] = {
     // TODO: Can we get more info about prefix maps from an endpoint?
-    PrefixMap(Map())
+    IO(PrefixMap(Map()))
   }
 
   val log = LoggerFactory.getLogger("Endpoint")

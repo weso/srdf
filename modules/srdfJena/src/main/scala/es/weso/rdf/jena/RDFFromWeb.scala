@@ -47,8 +47,8 @@ case class RDFFromWeb(
   def availableParseFormats: List[String] = List()
   def availableSerializeFormats: List[String] = List()
 
-  override def getPrefixMap: PrefixMap = {
-    prefixMap.getOrElse(PrefixMap.empty)
+  override def getPrefixMap: IO[PrefixMap] = {
+    IO(prefixMap.getOrElse(PrefixMap.empty))
   }
 
 /*  override def fromString(cs: CharSequence, format: String, base: Option[IRI]): RDFRead[Rdf] = {

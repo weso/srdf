@@ -70,7 +70,9 @@ class RDFAsJenaModelTest
             IRI("http://example.org#b"),
             IRI("c")))
           )
-          check <- fromES(checkIsomorphic(expected.model, rdf.model))
+          model1 <- expected.getModel
+          model2 <- rdf.getModel
+          check <- fromES(checkIsomorphic(model1, model2))
         } yield check
       })
       r.attempt.unsafeRunSync.fold(e => fail(s"Error: $e"),
@@ -87,7 +89,9 @@ class RDFAsJenaModelTest
         ).tupled.use {
         case (rdf,rdf2) => for {
           rdf1 <- rdf.addTriples(Set(RDFTriple(IRI(ex + "a"),IRI(ex + "b"),IntegerLiteral(1))))
-          _ <- fromES(checkIsomorphic(rdf1.model,rdf2.model))
+          model1 <- rdf1.getModel
+          model2 <- rdf2.getModel
+          _ <- fromES(checkIsomorphic(model1,model2))
         } yield ()
       }
 
@@ -169,8 +173,12 @@ class RDFAsJenaModelTest
       } yield (rdf1,rdf2)
       val r = resources.use(pair => {
         val (rdf1, rdf2) = pair
-        val merged = RDFAsJenaModel(rdf1.model.add(rdf2.model))
-        merged.serialize("TURTLE")
+        for {
+          model1 <- rdf1.getModel
+          model2 <- rdf2.getModel
+          merged <- RDFAsJenaModel.fromModel(model1.add(model2))
+          str <- merged.serialize("TURTLE")
+        } yield str
       })
       r.attempt.unsafeRunSync.fold(
         e => fail(s"Error: $e"),
@@ -195,8 +203,12 @@ class RDFAsJenaModelTest
       } yield (rdf1,rdf2)
       val r = resources.use(pair => {
         val (rdf1, rdf2) = pair
-        val merged = RDFAsJenaModel(rdf1.model.add(rdf2.model))
-        merged.serialize("TURTLE")
+        for {
+          model1 <- rdf1.getModel
+          model2 <- rdf2.getModel
+          merged <- RDFAsJenaModel.fromModel(model1.add(model2))
+          str <- merged.serialize("TURTLE")
+        } yield str
       })
       r.attempt.unsafeRunSync.fold(
         e => fail(s"Error: $e"),

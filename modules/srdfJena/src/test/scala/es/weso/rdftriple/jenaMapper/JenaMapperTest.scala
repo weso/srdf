@@ -1,5 +1,5 @@
 package es.weso.rdftriple.jenaMapper
-import org.apache.jena.rdf.model.{Model, ModelFactory}
+import org.apache.jena.rdf.model.ModelFactory
 import org.scalatest.matchers.should.Matchers
 import es.weso.rdf.nodes._
 import es.weso.rdf.jena.JenaMapper._
@@ -102,21 +102,21 @@ class JenaMapperTest
   describe("wellTypedDatatype") {
     it("Should check integer ok") {
       val node = IntegerLiteral(23,"23")
-      wellTypedDatatype(node, IRI("http://www.w3.org/2001/XMLSchema#integer")).attempt.unsafeRunSync match {
+      wellTypedDatatype(node, IRI("http://www.w3.org/2001/XMLSchema#integer")).attempt.unsafeRunSync() match {
         case Left(e) => fail(s"Should be integer: $e")
         case Right(node) => ()
       }
     }
     it("Should check string ok") {
       val node = StringLiteral("Pepe")
-      wellTypedDatatype(node, IRI("http://www.w3.org/2001/XMLSchema#string")).attempt.unsafeRunSync match {
+      wellTypedDatatype(node, IRI("http://www.w3.org/2001/XMLSchema#string")).attempt.unsafeRunSync() match {
         case Left(e) => fail(s"Should be string: $e")
         case Right(node) => ()
       }
     }
     it("Should check lang string ok") {
       val node = LangLiteral("Pepe", Lang("es"))
-      wellTypedDatatype(node, IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString")).attempt.unsafeRunSync match {
+      wellTypedDatatype(node, IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString")).attempt.unsafeRunSync() match {
         case Left(e) => fail(s"Should be lang string: $e")
         case Right(node) => ()
       }
@@ -137,7 +137,7 @@ class JenaMapperTest
     }
     it("Should check bad date") {
       val node = DatatypeLiteral("john", IRI("http://www.w3.org/2001/XMLSchema#date"))
-      wellTypedDatatype(node, IRI("http://www.w3.org/2001/XMLSchema#date")).attempt.unsafeRunSync match {
+      wellTypedDatatype(node, IRI("http://www.w3.org/2001/XMLSchema#date")).attempt.unsafeRunSync() match {
         case Left(e) => info(s"Fails as expected: $e")
         case Right(node) => fail(s"Should fail but passed $node")
       }
@@ -145,7 +145,7 @@ class JenaMapperTest
 
     it("Should fail checking single string with dateTime") {
       val node = StringLiteral("not_a_date")
-      wellTypedDatatype(node, IRI("http://www.w3.org/2001/XMLSchema#dateTime")).attempt.unsafeRunSync match {
+      wellTypedDatatype(node, IRI("http://www.w3.org/2001/XMLSchema#dateTime")).attempt.unsafeRunSync() match {
         case Right(false) => info(s"Fails as expected")
         case r => fail(s"Should return false but returned $r")
       }

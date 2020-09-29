@@ -39,9 +39,9 @@ case class Endpoint(endpointIRI: IRI)
   def availableParseFormats: List[String] = List()
   def availableSerializeFormats: List[String] = List()
 
-  override def getPrefixMap: PrefixMap = {
+  override def getPrefixMap: IO[PrefixMap] = {
     // TODO: Can we get more info about prefix maps from an endpoint?
-    PrefixMap(Map())
+    IO(PrefixMap(Map()))
   }
 
   val log = LoggerFactory.getLogger("Endpoint")
@@ -140,10 +140,15 @@ case class Endpoint(endpointIRI: IRI)
     JenaMapper.wellTypedDatatype(node, datatype)
 
 
-  override def rdfTriples(): RDFStream[RDFTriple] = Try {
-    val model = QueryExecutionFactory.sparqlService(endpoint, queryTriples).execConstruct()
-    model2triples(model)
-  }.fold(e => errStream(s"Exception obtaining rdfTriples of endpoint: $endpoint: $e"), streamFromIOs(_))
+  override def rdfTriples(): RDFStream[RDFTriple] = for {
+    ts <- Try {
+      val query = queryTriples
+      val model = QueryExecutionFactory.sparqlService(endpoint, query).execConstruct()
+      model2triples(model)
+    }.fold(
+      e => errStream(s"Exception obtaining rdfTriples of endpoint: $endpoint: $e"),
+      streamFromIOs(_))
+  } yield ts
 
   override def triplesWithSubjectPredicate(node: RDFNode,
                                            p: IRI
@@ -161,12 +166,16 @@ case class Endpoint(endpointIRI: IRI)
 
 
   def triplesWithSubject(node: RDFNode): RDFStream[RDFTriple] = node match {
-    case subj: IRI => Try {
-      val model = QueryExecutionFactory.sparqlService(endpoint, queryTriplesWithSubject(subj)).execConstruct()
-      model2triples(model)
-    }.fold(e => errStream(s"Error accessing endpoint ${endpoint} to obtain triples with subject $node: ${e.getMessage}"),
-      streamFromIOs(_)
-    )
+    case subj: IRI =>
+      for {
+        ts <- Try {
+          val query = queryTriplesWithSubject(subj)
+          val model = QueryExecutionFactory.sparqlService(endpoint, query).execConstruct()
+          model2triples(model)
+        }.fold(e => errStream(s"Error accessing endpoint ${endpoint} to obtain triples with subject $node: ${e.getMessage}"),
+          streamFromIOs(_)
+        )
+      } yield ts
     case _ => Stream.empty
   }
 
