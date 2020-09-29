@@ -135,6 +135,9 @@ case class RDFAsJenaModel(
     } yield ts)
   }
 
+  override def fromString(str: String, format: String, base: Option[IRI]): Resource[IO, Rdf] =
+    RDFAsJenaModel.fromString(str,format,base)
+
   /**
     * return the SHACL instances of a node `cls`
     * A node `node` is a shacl instance of `cls` if `node rdf:type/rdfs:subClassOf* cls`
