@@ -1,5 +1,5 @@
 package es.weso.rdf
-
+import cats.effect._
 import es.weso.rdf.triples._
 import es.weso.rdf.nodes._
 import PREFIXES._
@@ -7,32 +7,37 @@ import PREFIXES._
 trait RDFBuilder extends RDFReader {
 
   type Rdf <: RDFBuilder
+  type RDFBuild[A] = IO[A]
 
-  def addPrefixMap(pm: PrefixMap): Rdf
+  def addBase(iri: IRI): RDFBuild[Rdf]
+  
+  def addPrefixMap(pm: PrefixMap): RDFBuild[Rdf]
 
-  def addPrefix(alias: String, iri: IRI): Rdf
+  def addPrefix(alias: String, iri: IRI): RDFBuild[Rdf]
 
-  def createBNode: (RDFNode, Rdf)
+  def createBNode: RDFBuild[(RDFNode, Rdf)]
 
-  def mkBNode: Either[String, (RDFNode, Rdf)] = Right(createBNode)
+//  def mkBNode: RDFBuild[(RDFNode, Rdf)] = createBNode
 
-  def addTriples(triples: Set[RDFTriple]): Either[String,Rdf]
+  def addTriples(triples: Set[RDFTriple]): RDFBuild[Rdf]
 
-  def addTriple(triple: RDFTriple): Either[String,Rdf] = {
+  def addTriple(triple: RDFTriple): RDFBuild[Rdf] = {
     addTriples(Set(triple))
   }
 
-  def addType(node: RDFNode, typeNode: RDFNode): Either[String,Rdf] = {
+  def addType(node: RDFNode, typeNode: RDFNode): RDFBuild[Rdf] = {
     addTriple(RDFTriple(node, `rdf:type`, typeNode))
   }
 
-  def rmTriple(triple: RDFTriple): Either[String,Rdf]
+  def rmTriple(triple: RDFTriple): RDFBuild[Rdf]
 
-  def empty: Rdf
+  def empty: Resource[RDFBuild,Rdf]
 
-  def merge(other: RDFReader): Either[String, Rdf]
+  def merge(other: RDFReader): RDFBuild[Rdf]
 
-  def extendImports(): Either[String, Rdf]
+  def extendImports(): RDFBuild[Rdf]
+
+  def normalizeBNodes(): RDFBuild[RDFBuilder]
 
 }
 

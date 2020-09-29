@@ -1,6 +1,6 @@
 package es.weso.rdf.nodes
 
-case class DecimalLiteral(decimal: BigDecimal, repr: String = null) extends Literal {
+case class DecimalLiteral(decimal: BigDecimal, repr: String) extends Literal {
   val dataType = RDFNode.DecimalDatatypeIRI
   val lexicalForm = if (repr == null) decimal.toString else repr
 
@@ -26,4 +26,8 @@ case class DecimalLiteral(decimal: BigDecimal, repr: String = null) extends Lite
     case DoubleLiteral(d, _) => Right(decimal < d)
     case _ => Left(s"Type error comparing $this < $other which is non numeric")
   }
+}
+
+object DecimalLiteral {
+  def apply(decimal: BigDecimal): DecimalLiteral = DecimalLiteral(decimal,decimal.toString)
 }

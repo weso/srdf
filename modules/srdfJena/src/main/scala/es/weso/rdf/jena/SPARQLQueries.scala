@@ -3,10 +3,11 @@ package es.weso.rdf.jena
 import org.apache.jena.query._
 import es.weso.rdf.nodes._
 import es.weso.rdf.path.SHACLPath
+import cats.effect._
 
 object SPARQLQueries {
 
-  def queryTriples() = {
+  def queryTriples(): Query = {
     QueryFactory.create(
       s"""|construct {?x ?p ?y } where {
          |?x ?p ?y .
@@ -14,7 +15,7 @@ object SPARQLQueries {
          |""".stripMargin)
   }
 
-  def queryTriplesWithSubject(subj: IRI) = {
+  def queryTriplesWithSubject(subj: IRI): Query = {
     val s = subj.str
     QueryFactory.create(
       s"""|construct {<${s}> ?p ?y } where {
@@ -23,7 +24,7 @@ object SPARQLQueries {
          |""".stripMargin)
   }
 
-  def queryTriplesWithSubjectPredicate(subj: IRI, pred: IRI) = {
+  def queryTriplesWithSubjectPredicate(subj: IRI, pred: IRI): Query = {
     val s = subj.str
     val p = pred.str
     val query = QueryFactory.create(
@@ -35,7 +36,7 @@ object SPARQLQueries {
     query
   }
 
-  def queryTriplesWithObject(obj: IRI) = {
+  def queryTriplesWithObject(obj: IRI): Query = {
     val s = obj.str
     QueryFactory.create(
       s"""|construct {?x ?p <${s}> } where {
@@ -44,7 +45,7 @@ object SPARQLQueries {
          |""".stripMargin)
   }
 
-  def queryTriplesWithPredicate(obj: IRI) = {
+  def queryTriplesWithPredicate(obj: IRI): Query = {
     val s = obj.str
     QueryFactory.create(
       s"""|construct {?x <${s}> ?y } where {
@@ -53,7 +54,7 @@ object SPARQLQueries {
           |""".stripMargin)
   }
 
-  def queryTriplesWithPredicateObject(p: IRI, o: IRI) = {
+  def queryTriplesWithPredicateObject(p: IRI, o: IRI): Query = {
     QueryFactory.create(
       s"""|construct {?x <${p.str}> <${o.str}> } where {
           | ?x <${p.str}> <${o.str}> .
@@ -61,52 +62,52 @@ object SPARQLQueries {
           |""".stripMargin)
   }
 
-  lazy val findIRIs = QueryFactory.create(
+  lazy val findIRIs: Query = QueryFactory.create(
     """|select ?x where {
          | ?x ?p ?y .
          | filter (isIRI(?x))
        |}
          |""".stripMargin)
 
-  lazy val findClasses = QueryFactory.create(
+  lazy val findClasses: Query = QueryFactory.create(
     """|select ?c where {
        | ?s a ?c .
        |} LIMIT 100
        |""".stripMargin)
 
-  lazy val countStatements = QueryFactory.create(
+  lazy val countStatements: Query = QueryFactory.create(
     """|select (count(*) as ?c) where {
        | ?s ?p ?o .
        |}
        |""".stripMargin)
 
-  lazy val findRDFTriples = QueryFactory.create(
+  lazy val findRDFTriples: Query = QueryFactory.create(
     """|construct { ?x ?p ?y } where {
          | ?x ?p ?y .
        |}
          |""".stripMargin)
 
-  lazy val findSubjects = QueryFactory.create(
+  lazy val findSubjects: Query = QueryFactory.create(
     """|select ?x where {
          | ?x ?p ?y .
          | filter (isIRI(?x))
        |}
          |""".stripMargin)
 
-  lazy val findPredicates = QueryFactory.create(
+  lazy val findPredicates: Query = QueryFactory.create(
     """|select ?p where {
          | ?x ?p ?y .
          | filter (isIRI(?p))
        |}""".stripMargin)
 
-  lazy val findObjects = QueryFactory.create(
+  lazy val findObjects: Query = QueryFactory.create(
     """|select ?y where {
          | ?x ?p ?y .
          | filter (isIRI(?y))
        |}
          |""".stripMargin)
 
-  def queryShaclInstances(obj: IRI) = {
+  def queryShaclInstances(obj: IRI): Query = {
     val s = obj.str
     QueryFactory.create(
       s"""|prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -118,7 +119,7 @@ object SPARQLQueries {
           |""".stripMargin)
   }
 
-  def queryHasShaclClass(node: IRI, c: IRI) = {
+  def queryHasShaclClass(node: IRI, c: IRI): Query = {
     QueryFactory.create(
       s"""|prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
           |prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -129,7 +130,7 @@ object SPARQLQueries {
           |""".stripMargin)
   }
 
-  def queryPath(p: SHACLPath) = {
+  def queryPath(p: SHACLPath): Query = {
     QueryFactory.create(
       s"""|select ?x ?y {
           | ?x ${JenaMapper.shaclPath2JenaPath(p)} ?y .
@@ -137,7 +138,7 @@ object SPARQLQueries {
           |""".stripMargin)
   }
 
-  def querySubjectsWithPath(iri: IRI, p: SHACLPath) = {
+  def querySubjectsWithPath(iri: IRI, p: SHACLPath): Query = {
     QueryFactory.create(
       s"""|select ?x {
           | ?x ${JenaMapper.shaclPath2JenaPath(p)} <${iri.str}> .
@@ -145,7 +146,7 @@ object SPARQLQueries {
           |""".stripMargin)
   }
 
-  def queryObjectsWithPath(iri: IRI, p: SHACLPath) = {
+  def queryObjectsWithPath(iri: IRI, p: SHACLPath): Query = {
     QueryFactory.create(
       s"""|select ?x {
           | <${iri.str}> ${JenaMapper.shaclPath2JenaPath(p)} ?x .

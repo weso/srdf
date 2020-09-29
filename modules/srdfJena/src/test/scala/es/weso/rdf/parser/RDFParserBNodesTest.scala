@@ -1,10 +1,14 @@
 package es.weso.rdf.parser
 
 import es.weso.rdf.jena.RDFAsJenaModel
-import es.weso.rdf.nodes.{BNode, IRI}
+import es.weso.rdf.nodes._
 import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import cats.effect.IO
+import cats.MonadError
 
-class RDFParserBNodesTest extends FunSpec with Matchers with RDFParser with EitherValues {
+class RDFParserBNodesTest extends AnyFunSpec with Matchers with RDFParser with EitherValues {
 
   describe("RDFParser for BNodes") {
 
@@ -12,19 +16,17 @@ class RDFParserBNodesTest extends FunSpec with Matchers with RDFParser with Eith
         val cs = """|prefix : <http://example.org/>
                    |_:x :p _:y .
                    |_:y :q 1""".stripMargin
-        val eitherValue = for {
-          rdf <- RDFAsJenaModel.fromChars(cs, "TURTLE")
-        } yield (rdf)
-        eitherValue.fold(e => fail(s"Parse error: $e"), value => {
-        val rdf = value
-        rdf.triplesWithSubject(BNode("x")).right.value.map(_.obj).headOption.fold(
-          fail(s"No triples with subject _:x"))(
-          node => {
-            node should be(BNode("y"))
-            info(s"${rdf.triplesWithSubject(BNode("x"))}")
-            info(s"\nStatements with :p:\n ${rdf.triplesWithPredicate(IRI("http://example.org/p"))}")
-            info(s"\nParsed:\n${rdf.serialize("N-TRIPLES").getOrElse("")}")
-          })})
-      }
+        val r = RDFAsJenaModel.fromChars(cs, "TURTLE").use(rdf => for {
+          objs <- rdf.triplesWithSubject(BNode("x")).compile.toList
+        } yield objs)
+        val eitherValue = MonadError[IO,Throwable].attempt(r).unsafeRunSync
+        eitherValue.fold(e => fail(s"Parse error: $e"), objs => {
+          objs match {
+            case Nil => fail(s"No triples with subject _:x")
+            case node :: Nil => node.obj should be(BNode("y"))
+            case _ => fail(s"More than one triples with subject _:x: ${objs}") 
+          }
+        })
   }
+ }
 }

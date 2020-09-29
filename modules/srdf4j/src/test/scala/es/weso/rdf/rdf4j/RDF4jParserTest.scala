@@ -3,8 +3,7 @@ package es.weso.rdf.rdf4j
 import es.weso.rdf.{Prefix, PrefixMap}
 import es.weso.rdf.nodes._
 import org.scalatest._
-
-import scala.util._
+import cats.effect._
 
 class RDF4jParserTest extends FunSpec with Matchers with EitherValues with OptionValues {
 
@@ -15,11 +14,10 @@ class RDF4jParserTest extends FunSpec with Matchers with EitherValues with Optio
           |:x :p :y .
           |:y a 1 .
         """.stripMargin
-      val mayberdf = RDFAsRDF4jModel.fromChars(str,"Turtle",None).value.unsafeRunSync
-      mayberdf match {
-        case Left(str) => fail(s"Error parsing: $str")
-        case Right(rdf) => rdf.getNumberOfStatements().right.value should be(2)
-      }
+      val r = RDFAsRDF4jModel.fromChars(str,"Turtle",None).use(rdf => for {
+       number <- rdf.getNumberOfStatements()
+      } yield number)
+      r.unsafeRunSync() should be(2)
     }
   }
 
@@ -30,14 +28,10 @@ class RDF4jParserTest extends FunSpec with Matchers with EitherValues with Optio
           |:x :p :y .
           |:y a 1 .
         """.stripMargin
-      val mayberdf = RDFAsRDF4jModel.fromChars(str,"Turtle",None).value.unsafeRunSync
-      mayberdf match {
-        case Left(str) => fail(s"Error parsing: $str")
-        case Right(rdf) => {
-          val pm = rdf.getPrefixMap()
-          pm.getIRI("").value should be(IRI("http://example.org/"))
-        }
-      }
+      val r = RDFAsRDF4jModel.fromChars(str,"Turtle",None).use(rdf =>
+        rdf.getPrefixMap
+      )
+      r.unsafeRunSync.getIRI("").value should be(IRI("http://example.org/"))
     }
 
     it(s"Should be able to extend the prefix map") {
@@ -46,15 +40,13 @@ class RDF4jParserTest extends FunSpec with Matchers with EitherValues with Optio
           |:x :p :y .
           |:y a 1 .
         """.stripMargin
-      val mayberdf = RDFAsRDF4jModel.fromChars(str,"Turtle",None).value.unsafeRunSync
-      mayberdf match {
-        case Left(str) => fail(s"Error parsing: $str")
-        case Right(rdf) => {
-          rdf.addPrefixMap(PrefixMap(Map(Prefix("kiko") -> IRI("http://kiko.org"))))
-          rdf.getPrefixMap.getIRI("kiko").value should be(IRI("http://kiko.org"))
-          rdf.getPrefixMap.getIRI("pepe") should be(None)
-        }
-      }
+      val r = RDFAsRDF4jModel.fromChars(str,"Turtle",None).use(rdf => for {
+        rdf1 <- rdf.addPrefixMap(PrefixMap(Map(Prefix("kiko") -> IRI("http://kiko.org"))))
+        pm <- rdf1.getPrefixMap
+      } yield pm)
+      val pm = r.unsafeRunSync
+      pm.getIRI("kiko").value should be(IRI("http://kiko.org"))
+      pm.getIRI("pepe") should be(None)
     }
 
     it(s"Should be able to get subjects") {
@@ -63,15 +55,10 @@ class RDF4jParserTest extends FunSpec with Matchers with EitherValues with Optio
           |:x :p :y .
           |:y a 1 .
         """.stripMargin
-      val mayberdf = RDFAsRDF4jModel.fromChars(str,"Turtle",None).value.unsafeRunSync
-      mayberdf match {
-        case Left(str) => fail(s"Error parsing: $str")
-        case Right(rdf) => {
-          val ts = rdf.triplesWithSubject(IRI("http://example.org/x")).right.value
-          ts.size should be(1)
-        }
-      }
+      val r = RDFAsRDF4jModel.fromChars(str,"Turtle",None).use(rdf => for {
+        ts <- rdf.triplesWithSubject(IRI("http://example.org/x")).compile.toList
+      } yield ts)
+      r.unsafeRunSync.size should be(1)
     }
-
   }
 }

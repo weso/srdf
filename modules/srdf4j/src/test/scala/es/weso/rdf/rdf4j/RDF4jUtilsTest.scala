@@ -4,10 +4,11 @@ import java.io.InputStream
 
 import es.weso.rdf.nodes._
 import es.weso.rdf.path._
-import org.apache.commons.io.IOUtils
+import org.apache.commons.io._
 import org.scalatest._
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
+import java.nio.charset.Charset
 import RDF4jUtils._
 
 class RDF4jUtilsTest extends FunSpec with Matchers with EitherValues with OptionValues {
@@ -19,8 +20,7 @@ class RDF4jUtilsTest extends FunSpec with Matchers with EitherValues with Option
            |:x :p 1, :y .
            |:z :q :y .
            |
-      """.stripMargin
-      )
+      """.stripMargin, Charset.defaultCharset)
       val model = Rio.parse(input, "", RDFFormat.TURTLE)
       val prefix = IRI("http://example.org/")
       val x = prefix + "x"
@@ -30,7 +30,7 @@ class RDF4jUtilsTest extends FunSpec with Matchers with EitherValues with Option
       val q = prefix + "q"
       val path = AlternativePath(Seq(PredicatePath(p),PredicatePath(q)))
       val nodes = subjectsWithPath(y, path, model)
-      nodes should contain only(x, z)
+      nodes.unsafeRunSync should contain only(x, z)
     }
   }
 
@@ -41,8 +41,7 @@ class RDF4jUtilsTest extends FunSpec with Matchers with EitherValues with Option
            |:x :p :a, :y .
            |:y :p :z .
            |:x :q :r .
-      """.stripMargin
-      )
+      """.stripMargin, Charset.defaultCharset)
       val model = Rio.parse(input, "", RDFFormat.TURTLE)
       val prefix = IRI("http://example.org/")
       val x = prefix + "x"
@@ -58,7 +57,7 @@ class RDF4jUtilsTest extends FunSpec with Matchers with EitherValues with Option
         PredicatePath(q))
       )
       val nodes = objectsWithPath(x, path, model)
-      nodes should contain only(y, a, z, r)
+      nodes.unsafeRunSync should contain only(y, a, z, r)
     }
   }
 }
