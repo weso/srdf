@@ -28,24 +28,24 @@ class NormalizeBNodesTest extends AnyFunSpec with Matchers {
 
       val r = (
         RDFAsJenaModel.empty,
-        RDFAsJenaModel.fromChars(str,"TURTLE",None),
-        RDFAsJenaModel.fromChars(str,"TURTLE", None)
-        ).tupled.use{ case (empty,rdf1,rdf2) => for {
+        RDFAsJenaModel.fromChars(str, "TURTLE", None),
+        RDFAsJenaModel.fromChars(str, "TURTLE", None)
+        ).tupled.use { case (empty, rdf1, rdf2) => for {
         n1 <- normalizeBNodes(rdf1, empty)
-        n2 <- normalizeBNodes(rdf2,empty)
+        n2 <- normalizeBNodes(rdf2, empty)
         ss1 <- stream2io(n1.triplesWithSubject(BNode("0")))
         ss2 <- stream2io(n2.triplesWithSubject(BNode("0")))
-       } yield (ss1,ss2)
+      } yield (ss1, ss2)
       }
       r.attempt.unsafeRunSync.fold(e => fail(s"Error: $e"), pair => {
-        val (ss1,ss2) = pair
+        val (ss1, ss2) = pair
         val expected = List(
           RDFTriple(BNode("0"), iri("r"), iri("y")),
           RDFTriple(BNode("0"), iri("q"), iri("x")),
           RDFTriple(BNode("0"), iri("t"), BNode("1"))
-      )
-      ss1 should contain theSameElementsAs expected
-      ss2 should contain theSameElementsAs expected
+        )
+        ss1 should contain theSameElementsAs expected
+        ss2 should contain theSameElementsAs expected
       }
       )
     }
@@ -73,13 +73,15 @@ class NormalizeBNodesTest extends AnyFunSpec with Matchers {
                            ): Unit = {
 
     def showLog(rdf: RDFReader, tag: String, withLog: Boolean): IO[Unit] = if (withLog)
-    for {
-      str <- rdf.serialize("N-TRIPLES")
-      _ <- IO { pprint.log(str,tag) }
-    } yield ()
+      for {
+        str <- rdf.serialize("N-TRIPLES")
+        _ <- IO {
+          pprint.log(str, tag)
+        }
+      } yield ()
     else IO(())
 
-    it (s"should normalize BNodes of\n$rdfStr\nand obtain\n$expected\n") {
+    it(s"should normalize BNodes of\n$rdfStr\nand obtain\n$expected\n") {
       val cmp = (
         RDFAsJenaModel.fromString(rdfStr, "TURTLE"),
         RDFAsJenaModel.empty,
@@ -91,15 +93,15 @@ class NormalizeBNodesTest extends AnyFunSpec with Matchers {
         _ <- showLog(rdfExpected, "rdfExpected", withLog)
         normalizedNodes <- normalized.subjects().compile.toList
         expectedNodes <- rdfExpected.subjects().compile.toList
-       } yield (normalizedNodes, expectedNodes)
+      } yield (normalizedNodes, expectedNodes)
       }
       cmp.attempt.unsafeRunSync.fold(
         err => fail(s"Error: $err"),
         result => {
-          val (ns,es) = result
+          val (ns, es) = result
           pprint.log(ns)
           pprint.log(es)
-          ns should contain theSameElementsAs(es)
+          ns should contain theSameElementsAs (es)
         }
       )
     }

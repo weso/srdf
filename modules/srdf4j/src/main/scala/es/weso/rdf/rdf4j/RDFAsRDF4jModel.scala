@@ -165,11 +165,11 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
    } yield ts
    )
 
-  override def getPrefixMap: PrefixMap = {
-    PrefixMap {
+  override def getPrefixMap: IO[PrefixMap] = {
+    IO(PrefixMap {
       val nsSet: Set[Namespace] = model.getNamespaces.asScala.toSet
       nsSet.map(ns => (Prefix(ns.getPrefix), IRI(ns.getName))).toMap
-    }
+    })
   }
 
   override def addBase(iri: IRI): IO[Rdf] = {

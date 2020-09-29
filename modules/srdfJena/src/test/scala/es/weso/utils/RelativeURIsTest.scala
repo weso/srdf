@@ -17,23 +17,22 @@ class RelativeURIsTest extends AnyFunSpec with Matchers {
       val base = Some(IRI("internal://base/"))
       val r = RDFAsJenaModel.fromChars(str, "TURTLE", base).use(rdf => for {
         x <- fromES(IRI.fromString("x", base))
-        p <- fromES(IRI.fromString("p",base))
-        y <- fromES(IRI.fromString("y",base))
+        p <- fromES(IRI.fromString("p", base))
+        y <- fromES(IRI.fromString("y", base))
         ts <- rdf.triplesWithSubject(x).compile.toList
-        serialized <- rdf.serialize("TURTLE",base)
+        serialized <- rdf.serialize("TURTLE", base)
       } yield {
-        (ts,rdf,serialized,x,p,y)
+        (ts, rdf, serialized, x, p, y)
       })
-      val pairs = MonadError[IO,Throwable].attempt(r).unsafeRunSync 
-      
+      val pairs = MonadError[IO, Throwable].attempt(r).unsafeRunSync
+
       pairs.fold(e => fail(s"Error: $e"),
         pair => {
-          val (ts,rdf,str,x,p,y) = pair
+          val (ts, rdf, str, x, p, y) = pair
           println(str)
-          ts should contain theSameElementsAs(Set(RDFTriple(x,p,y)))
+          ts should contain theSameElementsAs (Set(RDFTriple(x, p, y)))
         }
       )
     }
   }
-
 }

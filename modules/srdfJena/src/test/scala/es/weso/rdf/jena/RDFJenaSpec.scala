@@ -29,7 +29,8 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
         rdf2 <- rdf1.addTriples(
           Set(RDFTriple(IRI("http://example.org#a"), IRI("http://example.org#b"), IRI("http://example.org#c")))
         )
-        iso <- IO.fromEither(checkIsomorphic(rdf2.model, m2).leftMap(e =>
+        model2 <- rdf2.getModel
+        iso <- IO.fromEither(checkIsomorphic(model2, m2).leftMap(e =>
           new RuntimeException(s"Models are not isomprphic:\n$e"))
         )
       } yield iso)
@@ -59,7 +60,8 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
             RDFTriple(BNode("b" + 2), IRI("http://foaf.org#name"), StringLiteral("pepe"))
           )
         )
-        iso <- IO.fromEither(checkIsomorphic(rdf2.model,m2).leftMap(e =>
+        model2 <- rdf2.getModel
+        iso <- IO.fromEither(checkIsomorphic(model2,m2).leftMap(e =>
           new RuntimeException(s"Models are not isomprphic:\n$e"))
         )
       } yield iso)
@@ -74,11 +76,10 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
                           |:a :b :c .
                           |""".stripMargin)
       val str_triples         = "<http://example.org#a> <http://example.org#b> <http://example.org#c> ."
-      val r: IO[Unit] = RDFAsJenaModel.fromString(str_triples, "NTRIPLES").use(rdf2 => {
-        val rdf: RDFAsJenaModel = RDFAsJenaModel(ModelFactory.createDefaultModel())
-        val m2 = RDFAsJenaModel.extractModel(rdf2)
-        fromES(checkIsomorphic(m1, m2))
-      })
+      val r: IO[Unit] = RDFAsJenaModel.fromString(str_triples, "NTRIPLES").use(rdf2 => for {
+        m2 <- rdf2.getModel
+        b <- fromES(checkIsomorphic(m1, m2))
+      } yield b)
       r.attempt.unsafeRunSync.fold(
         e => fail(s"Error: $e"),
         _ => info(s"Are isomorphic")

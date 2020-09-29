@@ -29,7 +29,7 @@ class RDF4jParserTest extends FunSpec with Matchers with EitherValues with Optio
           |:y a 1 .
         """.stripMargin
       val r = RDFAsRDF4jModel.fromChars(str,"Turtle",None).use(rdf =>
-        IO(rdf.getPrefixMap)
+        rdf.getPrefixMap
       )
       r.unsafeRunSync.getIRI("").value should be(IRI("http://example.org/"))
     }
@@ -42,10 +42,11 @@ class RDF4jParserTest extends FunSpec with Matchers with EitherValues with Optio
         """.stripMargin
       val r = RDFAsRDF4jModel.fromChars(str,"Turtle",None).use(rdf => for {
         rdf1 <- rdf.addPrefixMap(PrefixMap(Map(Prefix("kiko") -> IRI("http://kiko.org"))))
-      } yield rdf1)
-      val rdf = r.unsafeRunSync
-      rdf.getPrefixMap.getIRI("kiko").value should be(IRI("http://kiko.org"))
-      rdf.getPrefixMap.getIRI("pepe") should be(None)
+        pm <- rdf1.getPrefixMap
+      } yield pm)
+      val pm = r.unsafeRunSync
+      pm.getIRI("kiko").value should be(IRI("http://kiko.org"))
+      pm.getIRI("pepe") should be(None)
     }
 
     it(s"Should be able to get subjects") {

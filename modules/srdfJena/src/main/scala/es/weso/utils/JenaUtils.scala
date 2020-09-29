@@ -7,12 +7,15 @@ import org.apache.jena.rdf.model.{Literal, Model, ModelFactory, Property, RDFNod
 import org.apache.jena.sparql.syntax.ElementPathBlock
 import org.apache.jena.riot.system.IRIResolver
 import java.io.ByteArrayInputStream
+
 import org.apache.jena.query.{Query, QueryExecutionFactory, QueryFactory, ResultSet}
 import java.io.StringWriter
 import java.net.URI
 import java.net.URL
 import java.io.InputStream
 import java.io.FileOutputStream
+
+import es.weso.rdf.jena.SRDFJenaException.UnsupportedInference
 import org.apache.jena.atlas.AtlasException
 import org.apache.jena.riot.RiotException
 import es.weso.utils.internal.CollectionCompat.CollectionConverters._
@@ -459,7 +462,7 @@ object JenaUtils {
         val inf      = ModelFactory.createInfModel(reasoner, rdf)
         ok(inf)
       }
-      case _ => err(s"Unsupported inference $inference")
+      case _ => IO.raiseError(UnsupportedInference(inference))
     }
   }
 
