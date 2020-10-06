@@ -2,11 +2,12 @@ package es.weso.rdf.rdf4j
 
 import es.weso.rdf.nodes._
 import es.weso.rdf.triples._
-import scala.collection.JavaConverters._
+
+import scala.jdk.CollectionConverters._
 import org.eclipse.rdf4j.model.{BNode => BNode_RDF4j, IRI => IRI_RDF4j, Literal => Literal_RDF4j, _}
 import org.eclipse.rdf4j.model.impl.{SimpleValueFactory, BooleanLiteral => BooleanLiteral_RDF4j, DecimalLiteral => DecimalLiteral_RDF4j, IntegerLiteral => IntegerLiteral_RDF4j}
 import org.eclipse.rdf4j.model.util.ModelBuilder
-import org.eclipse.rdf4j.model.vocabulary.XMLSchema
+import org.eclipse.rdf4j.model.vocabulary.{XMLSchema, XSD}
 import cats.effect.IO
 import cats.implicits._
 import es.weso.utils.IOUtils._
@@ -22,11 +23,11 @@ object RDF4jMapper {
       case bl: BooleanLiteral_RDF4j => BooleanLiteral(bl.booleanValue())
       case il: IntegerLiteral_RDF4j => IntegerLiteral(il.intValue())
       case dl: DecimalLiteral_RDF4j => DecimalLiteral(dl.decimalValue())
-      case _ if (lit.getDatatype == XMLSchema.STRING) => StringLiteral(lit.stringValue())
-      case _ if (lit.getDatatype == XMLSchema.BOOLEAN) => BooleanLiteral(lit.booleanValue())
-      case _ if (lit.getDatatype == XMLSchema.INTEGER) => IntegerLiteral(lit.integerValue().intValue())
-      case _ if (lit.getDatatype == XMLSchema.DECIMAL) => DecimalLiteral(lit.decimalValue())
-      case _ if (lit.getDatatype == XMLSchema.DOUBLE) => DoubleLiteral(lit.doubleValue())
+      case _ if (lit.getDatatype == XSD.STRING) => StringLiteral(lit.stringValue())
+      case _ if (lit.getDatatype == XSD.BOOLEAN) => BooleanLiteral(lit.booleanValue())
+      case _ if (lit.getDatatype == XSD.INTEGER) => IntegerLiteral(lit.integerValue().intValue())
+      case _ if (lit.getDatatype == XSD.DECIMAL) => DecimalLiteral(lit.decimalValue())
+      case _ if (lit.getDatatype == XSD.DOUBLE) => DoubleLiteral(lit.doubleValue())
       case _ if (lit.getLanguage.isPresent) => LangLiteral(lit.stringValue, Lang(lit.getLanguage.get()))
       case _ => DatatypeLiteral(lit.stringValue(), iri2iri(lit.getDatatype))
     }
@@ -73,9 +74,9 @@ object RDF4jMapper {
    case bnode: BNode => valueFactory.createBNode(bnode.id)
    case StringLiteral(str) => valueFactory.createLiteral(str)
    case BooleanLiteral(b) => valueFactory.createLiteral(b)
-   case IntegerLiteral(i, repr) => valueFactory.createLiteral(repr)
-   case DecimalLiteral(d, repr) => valueFactory.createLiteral(repr)
-   case DoubleLiteral(d, repr) => valueFactory.createLiteral(repr)
+   case IntegerLiteral(_, repr) => valueFactory.createLiteral(repr)
+   case DecimalLiteral(_, repr) => valueFactory.createLiteral(repr)
+   case DoubleLiteral(_, repr) => valueFactory.createLiteral(repr)
    case DatatypeLiteral(l,d) => valueFactory.createLiteral(l,iri2Property((d)))
    case LangLiteral(l,Lang(lang)) => valueFactory.createLiteral(l,lang)
  }
@@ -83,7 +84,7 @@ object RDF4jMapper {
  def newBNode(): BNode_RDF4j = valueFactory.createBNode()
 
  def statements2RDFTriples(statements: Set[Statement]): IO[List[RDFTriple]] = {
-    statements.toList.map(statement2RDFTriple(_)).sequence
+    statements.toList.map(statement2RDFTriple).sequence
   }
 
   private[rdf4j] def triplesSubject(resource: Resource, model: Model): IO[Set[Statement]] = IO {
@@ -103,7 +104,7 @@ object RDF4jMapper {
   }
 
   private[rdf4j] def rdfTriples2Model(triples: Set[RDFTriple]): IO[Model] = for {
-    ss <- triples.map(rdfTriple2Statement(_)).toList.sequence
+    ss <- triples.map(rdfTriple2Statement).toList.sequence
   } yield {
     val builder: ModelBuilder = new ModelBuilder
     ss.foreach(s => builder.add(s.getSubject, s.getPredicate, s.getObject))
@@ -126,9 +127,7 @@ object RDF4jMapper {
       // val x = rdf4jLiteral.getLabel
       rdf4jLiteral.getDatatype
     } match {
-      case Success(iri) => {
-        ok(iri.stringValue == expectedDatatype.str)
-      }
+      case Success(iri) => ok(iri.stringValue == expectedDatatype.str)
       case Failure(e) => err(e.getMessage)
     }
     // case DatatypeLiteral(_,dt) => Right(dt == expectedDatatype)

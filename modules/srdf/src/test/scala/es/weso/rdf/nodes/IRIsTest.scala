@@ -1,8 +1,11 @@
 package es.weso.rdf.nodes
 
 import org.scalatest._
+import funspec.AnyFunSpec
+import matchers.should.Matchers
 
-class IRIsTest extends FunSpec with Matchers with TryValues {
+
+class IRIsTest extends AnyFunSpec with Matchers with TryValues {
 
   describe("IRIsTest") {
     it("can add string to an IRI") {

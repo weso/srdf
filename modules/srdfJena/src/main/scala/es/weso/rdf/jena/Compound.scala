@@ -25,18 +25,18 @@ case class Compound(members: List[RDFReader])
   def availableParseFormats: List[String] = List()
   def availableSerializeFormats: List[String] = List()
 
-  override def getPrefixMap: PrefixMap = {
+  override def getPrefixMap: IO[PrefixMap] = {
     // TODO: Can we get more info about prefix maps from an endpoint?
-    PrefixMap(Map())
+    IO(PrefixMap(Map()))
   }
 
   val log = LoggerFactory.getLogger("Endpoint")
 
-  override def fromString(cs: CharSequence,
+/*  override def fromString(cs: CharSequence,
                           format: String,
                           base: Option[IRI]): RDFRead[Compound] = {
     err("Cannot parse into a compound")
-  }
+  } */
 
   override def serialize(format: String, base: Option[IRI]): RDFRead[String] = {
     err(s"Endpoint cannot be serialized to $format")

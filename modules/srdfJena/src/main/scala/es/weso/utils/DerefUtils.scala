@@ -35,13 +35,17 @@ object DerefUtils {
     IO.pure(_)
   )
 
-  def derefRDF(iri: IRI, client: Client[IO]): IO[RDFReader] = for {
-    uri <- iri2uri(iri)
-    str <- derefIRI(uri, client)
-    rdf <- RDFAsJenaModel.fromString(str,"TURTLE")
-  } yield rdf
+  def derefRDF(iri: IRI, client: Client[IO]): Resource[IO,RDFReader] = {
+    /*
+    for {
+      uri <- iri2uri(iri)
+      str <- derefIRI(uri, client)
+      rdf <- RDFAsJenaModel.fromString(str,"TURTLE")
+    } yield rdf */
+    ???
+  }
 
-  def derefRDFJava(iri: IRI): IO[RDFReader] = for {
+  def derefRDFJava(iri: IRI): IO[RDFReader] = /* for {
     str <- IO {
       val client = HttpClient.newBuilder().followRedirects(Redirect.ALWAYS).build()
       val request: HttpRequest = HttpRequest.newBuilder()
@@ -54,6 +58,7 @@ object DerefUtils {
       response.body()
     }
     rdf <- RDFAsJenaModel.fromString(str,"TURTLE")
-  } yield rdf
+  } yield rdf */
+  ???
 
 }
