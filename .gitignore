@@ -24,6 +24,7 @@ settings.json
 .ensime_cache
 .ensime
 .idea
+project/.bloop
 
 node_modules/
 .grunt
