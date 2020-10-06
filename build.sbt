@@ -1,23 +1,23 @@
-lazy val scala212 = "2.12.11"
-lazy val scala213 = "2.13.1"
+lazy val scala212 = "2.12.12"
+lazy val scala213 = "2.13.3"
 lazy val supportedScalaVersions = List(scala212, scala213)
 
 lazy val utilsVersion         = "0.1.69"
 
 // Dependency versions
-lazy val catsVersion           = "2.1.1"
-lazy val catsEffectVersion     = "2.1.2"
-lazy val circeVersion          = "0.12.3"
-lazy val fs2Version            = "2.2.1"
+lazy val catsVersion           = "2.2.0"
+lazy val catsEffectVersion     = "2.2.0"
+lazy val circeVersion          = "0.14.0-M1"
+lazy val fs2Version            = "2.4.4"
 lazy val http4sVersion         = "0.21.3"
-lazy val jenaVersion           = "3.13.1"
+lazy val jenaVersion           = "3.16.0"
 lazy val logbackVersion        = "1.2.3"
 lazy val loggingVersion        = "3.9.2"
-lazy val rdf4jVersion          = "3.0.0"
+lazy val rdf4jVersion          = "3.4.2"
 lazy val scalacheckVersion     = "1.14.0"
-lazy val scalacticVersion      = "3.0.8"
-lazy val scalaTestVersion      = "3.1.1"
-lazy val scalatagsVersion      = "0.6.7"
+lazy val scalacticVersion      = "3.2.0"
+lazy val scalaTestVersion      = "3.2.0"
+//lazy val scalatagsVersion      = "0.6.7"
 lazy val scallopVersion        = "3.3.1"
 lazy val typesafeConfigVersion = "1.4.0"
 
@@ -32,7 +32,7 @@ lazy val utils             = "es.weso"                    %% "utils"            
 
 lazy val catsCore          = "org.typelevel"              %% "cats-core"           % catsVersion
 lazy val catsKernel        = "org.typelevel"              %% "cats-kernel"         % catsVersion
-lazy val catsMacros        = "org.typelevel"              %% "cats-macros"         % catsVersion
+// lazy val catsMacros        = "org.typelevel"              %% "cats-macros"         % catsVersion
 lazy val catsEffect        = "org.typelevel"              %% "cats-effect"         % catsEffectVersion
 lazy val circeCore         = "io.circe"                   %% "circe-core"          % circeVersion
 lazy val circeGeneric      = "io.circe"                   %% "circe-generic"       % circeVersion
@@ -49,7 +49,7 @@ lazy val scalactic         = "org.scalactic"              %% "scalactic"        
 lazy val scalacheck        = "org.scalacheck"             %% "scalacheck"          % scalacheckVersion
 lazy val scalaCollCompat   = "org.scala-lang.modules"     %% "scala-collection-compat" % scalaCollCompatVersion
 lazy val scalaTest         = "org.scalatest"              %% "scalatest"           % scalaTestVersion
-lazy val scalatags         = "com.lihaoyi"                %% "scalatags"           % scalatagsVersion
+//lazy val scalatags         = "com.lihaoyi"                %% "scalatags"           % scalatagsVersion
 lazy val typesafeConfig    = "com.typesafe"               % "config"               % typesafeConfigVersion
 
 def priorTo2_13(scalaVersion: String): Boolean =
@@ -93,7 +93,7 @@ lazy val srdf = project
     libraryDependencies ++= Seq(
       catsCore,
       catsKernel,
-      catsMacros,
+      // catsMacros,
       catsEffect,
       circeCore,
       circeGeneric,
@@ -121,7 +121,7 @@ lazy val srdf = project
       jenaArq,
       catsCore,
       catsKernel,
-      catsMacros,
+      // catsMacros,
       catsEffect,
       fs2Core,
       http4sBlazeClient
@@ -142,7 +142,7 @@ lazy val srdf4j = project
       rdf4j_runtime,
       catsCore,
       catsKernel,
-      catsMacros,
+      // catsMacros,
       catsEffect,
       fs2Core
     )

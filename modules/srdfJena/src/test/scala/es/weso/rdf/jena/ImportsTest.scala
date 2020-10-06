@@ -2,7 +2,7 @@ package es.weso.rdf.jena
 
 import cats.effect._
 import java.nio.file.Paths
-import es.weso.utils.IOUtils._
+// import es.weso.utils.IOUtils._
 import com.typesafe.config.{Config, ConfigFactory}
 import es.weso.rdf.nodes._
 import org.scalatest._
@@ -20,26 +20,26 @@ class ImportsTest extends AnyFunSpec with JenaBased with Matchers with EitherVal
 
     it(s"Should read merged file") {
     val r = RDFAsJenaModel.fromIRI(rdfFolder + "/merged.ttl").use(rdf1 => for {
-      iris <- rdf1.iris.compile.toList
+      iris <- rdf1.iris().compile.toList
     } yield (rdf1,iris))
 
     r.attempt.unsafeRunSync.fold(
       e => fail(s"Error: $e"), t => {
       val (rdf,iris) = t
-      info(s"RDF read: ${iris}")
+      info(s"RDF read: $iris")
       iris.size should be(1)
     })
     } 
 
     it(s"Should read m1") {
       val r = RDFAsJenaModel.fromIRI(rdfFolder + "/m1.ttl").use(rdf1 => for {
-        iris <- rdf1.iris.compile.toList
+        iris <- rdf1.iris().compile.toList
       } yield (rdf1,iris))
   
       r.attempt.unsafeRunSync.fold(
         e => fail(s"Error: $e"), t => {
         val (rdf,iris) = t
-        info(s"IRIs from m1: ${iris}")
+        info(s"IRIs from m1: $iris")
         iris.size should be(1)
       })
       } 
@@ -84,7 +84,7 @@ class ImportsTest extends AnyFunSpec with JenaBased with Matchers with EitherVal
        for {
          str <- rdf1.serialize("TURTLE")
          _ <- IO { println(s"RDF1:\n${str}") }
-         extended <- rdf1.extendImports
+         extended <- rdf1.extendImports()
          extendedStr <- extended.serialize("TURTLE")
          _ <- IO { println(s"Extended:\n${extendedStr}") }
          x = IRI("http://example.org/x")
@@ -103,8 +103,8 @@ class ImportsTest extends AnyFunSpec with JenaBased with Matchers with EitherVal
       val r = RDFAsJenaModel.fromIRI(rdfFolder + "/testImportWithLoop.ttl").use(rdf1 =>
        for {
         extended <- rdf1.extendImports()
-        ts <- rdf1.rdfTriples.compile.toList
-        tse <- extended.rdfTriples.compile.toList
+        ts <- rdf1.rdfTriples().compile.toList
+        tse <- extended.rdfTriples().compile.toList
        } yield (rdf1,extended,ts,tse)
       )
 

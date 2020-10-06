@@ -1,17 +1,18 @@
 package es.weso.rdf.rdf4j
 
 import java.io.InputStream
-
 import es.weso.rdf.nodes._
 import es.weso.rdf.path._
 import org.apache.commons.io._
 import org.scalatest._
+import funspec.AnyFunSpec
+import matchers.should.Matchers
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
 import java.nio.charset.Charset
 import RDF4jUtils._
 
-class RDF4jUtilsTest extends FunSpec with Matchers with EitherValues with OptionValues {
+class RDF4jUtilsTest extends AnyFunSpec with Matchers with EitherValues with OptionValues {
 
   describe(s"subjectsFromPath") {
     it(s"Should check happy path") {
