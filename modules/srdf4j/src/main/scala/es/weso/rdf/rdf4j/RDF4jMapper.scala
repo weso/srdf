@@ -2,11 +2,12 @@ package es.weso.rdf.rdf4j
 
 import es.weso.rdf.nodes._
 import es.weso.rdf.triples._
+
 import scala.jdk.CollectionConverters._
 import org.eclipse.rdf4j.model.{BNode => BNode_RDF4j, IRI => IRI_RDF4j, Literal => Literal_RDF4j, _}
 import org.eclipse.rdf4j.model.impl.{SimpleValueFactory, BooleanLiteral => BooleanLiteral_RDF4j, DecimalLiteral => DecimalLiteral_RDF4j, IntegerLiteral => IntegerLiteral_RDF4j}
 import org.eclipse.rdf4j.model.util.ModelBuilder
-import org.eclipse.rdf4j.model.vocabulary.XMLSchema
+import org.eclipse.rdf4j.model.vocabulary.{XMLSchema, XSD}
 import cats.effect.IO
 import cats.implicits._
 import es.weso.utils.IOUtils._
@@ -22,11 +23,11 @@ object RDF4jMapper {
       case bl: BooleanLiteral_RDF4j => BooleanLiteral(bl.booleanValue())
       case il: IntegerLiteral_RDF4j => IntegerLiteral(il.intValue())
       case dl: DecimalLiteral_RDF4j => DecimalLiteral(dl.decimalValue())
-      case _ if (lit.getDatatype == XMLSchema.STRING) => StringLiteral(lit.stringValue())
-      case _ if (lit.getDatatype == XMLSchema.BOOLEAN) => BooleanLiteral(lit.booleanValue())
-      case _ if (lit.getDatatype == XMLSchema.INTEGER) => IntegerLiteral(lit.integerValue().intValue())
-      case _ if (lit.getDatatype == XMLSchema.DECIMAL) => DecimalLiteral(lit.decimalValue())
-      case _ if (lit.getDatatype == XMLSchema.DOUBLE) => DoubleLiteral(lit.doubleValue())
+      case _ if (lit.getDatatype == XSD.STRING) => StringLiteral(lit.stringValue())
+      case _ if (lit.getDatatype == XSD.BOOLEAN) => BooleanLiteral(lit.booleanValue())
+      case _ if (lit.getDatatype == XSD.INTEGER) => IntegerLiteral(lit.integerValue().intValue())
+      case _ if (lit.getDatatype == XSD.DECIMAL) => DecimalLiteral(lit.decimalValue())
+      case _ if (lit.getDatatype == XSD.DOUBLE) => DoubleLiteral(lit.doubleValue())
       case _ if (lit.getLanguage.isPresent) => LangLiteral(lit.stringValue, Lang(lit.getLanguage.get()))
       case _ => DatatypeLiteral(lit.stringValue(), iri2iri(lit.getDatatype))
     }

@@ -1,14 +1,15 @@
 package es.weso.rdf
 
-sealed abstract class RDFException extends Exception
+import scala.util.control._
 
-case class MsgRDFException(msg: String) extends RDFException {
-    final override def getMessage: String = msg
-}
+abstract class RDFException protected (val msg: String)
+ extends Exception(msg)
+   with NoStackTrace
+   with Product
+   with Serializable
 
-case class ThrownException(msg: String, e: Throwable) extends RDFException {
-    final override def getMessage: String = msg
-}
+case class MsgRDFException(message: String) extends RDFException(message)
+case class ThrownException(message: String, e: Throwable) extends RDFException(message)
 
 object RDFException {
     def fromString(msg: String): MsgRDFException = MsgRDFException(msg)

@@ -3,8 +3,10 @@ package es.weso.rdf.rdf4j
 import es.weso.rdf.nodes._
 import es.weso.rdf.triples.RDFTriple
 import org.scalatest._
+import funspec.AnyFunSpec
+import matchers.should.Matchers
 
-class RDF4jMapperTest extends FunSpec with Matchers with EitherValues with OptionValues {
+class RDF4jMapperTest extends AnyFunSpec with Matchers with EitherValues with OptionValues {
 
   describe(s"rdfTriples2Model") {
     it(s"Should create model from triples") {

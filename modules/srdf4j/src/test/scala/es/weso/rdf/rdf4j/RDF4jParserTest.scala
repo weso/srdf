@@ -3,9 +3,11 @@ package es.weso.rdf.rdf4j
 import es.weso.rdf.{Prefix, PrefixMap}
 import es.weso.rdf.nodes._
 import org.scalatest._
+import funspec.AnyFunSpec
+import matchers.should.Matchers
 import cats.effect._
 
-class RDF4jParserTest extends FunSpec with Matchers with EitherValues with OptionValues {
+class RDF4jParserTest extends AnyFunSpec with Matchers with EitherValues with OptionValues {
 
   describe("RDF4jParser") {
     it(s"Should parse simple Turtle string") {

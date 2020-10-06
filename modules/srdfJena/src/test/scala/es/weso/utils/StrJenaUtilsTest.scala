@@ -2,8 +2,11 @@ package es.weso.utils
 
 import org.scalatest._
 import StrJenaUtils._
+import funspec.AnyFunSpec
+import matchers.should.Matchers
 
-class StrJenaUtilsTest extends FunSpec with Matchers {
+
+class StrJenaUtilsTest extends AnyFunSpec with Matchers {
   describe("StrUtils unicodeUnscape") {
     shouldUnescape("\\tpepe", "\tpepe")
     shouldUnescape("pepe\\u0031", "pepe1")

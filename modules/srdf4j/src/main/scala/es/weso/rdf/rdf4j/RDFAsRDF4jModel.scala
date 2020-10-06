@@ -272,7 +272,7 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
     }
   }
 
-  override def extendImports(): IO[Rdf] =
+  override def extendImports: IO[Rdf] =
     for {
       imports <- getImports
       newRdf  <- extendImports(this, imports, List(IRI("")))
@@ -307,9 +307,11 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
   override def rdfReaderName: String = s"RDF4j"
 
   // TODO: This method is not implemented yet
-  override def normalizeBNodes(): IO[RDFBuilder] =
+  override def normalizeBNodes: IO[RDFBuilder] =
     IO(this)
 
+  override def fromString(str: String, format: String, base: Option[IRI]): Resource[IO, Rdf] =
+    RDFAsRDF4jModel.fromChars(str,format,base)
 }
 
 object RDFAsRDF4jModel {

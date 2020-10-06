@@ -4,11 +4,12 @@ import es.weso.rdf.jena.RDFAsJenaModel
 import es.weso.rdf.nodes.IRI
 import es.weso.rdf.triples.RDFTriple
 import org.scalatest._
+import funspec.AnyFunSpec
+import matchers.should.Matchers
+
 import cats._
 import cats.effect._
 import es.weso.utils.IOUtils._
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.funspec.AnyFunSpec
 
 class RelativeURIsTest extends AnyFunSpec with Matchers {
   describe("Relative URIs") {
