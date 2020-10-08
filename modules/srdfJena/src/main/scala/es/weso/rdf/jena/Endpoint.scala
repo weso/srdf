@@ -142,7 +142,7 @@ case class Endpoint(endpointIRI: IRI)
 
   override def rdfTriples(): RDFStream[RDFTriple] = for {
     ts <- Try {
-      val query = queryTriples
+      val query = queryTriples()
       val model = QueryExecutionFactory.sparqlService(endpoint, query).execConstruct()
       model2triples(model)
     }.fold(

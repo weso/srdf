@@ -214,7 +214,9 @@ object JenaMapper {
   def triplesSubject(resource: JenaResource, model: JenaModel): IO[Set[Statement]] =
   Try {
     model.listStatements(resource, null, null).toSet.asScala.toSet
-  }.fold(e => err(s"triplesSubject: Error obtaining statements from $resource"), ok(_))
+  }.fold(e => 
+     err(s"triplesSubject: Error obtaining statements from $resource: ${e.getLocalizedMessage()}"
+     ), ok(_))
 
   def triplesSubjectPredicate(resource: JenaResource,
                               pred: IRI,
@@ -222,7 +224,9 @@ object JenaMapper {
                               base: Option[IRI]
                              ): IO[Set[Statement]] = Try {
     model.listStatements(resource, createProperty(model,pred,base), null).toSet.asScala.toSet
-  }.fold(e => err(s"triplesSubjectPredicate: Error obtaining triples from $resource"), ok(_))
+  }.fold(e => 
+      err(s"triplesSubjectPredicate: Error obtaining triples from $resource: ${e.getLocalizedMessage()}"
+      ), ok(_))
 
   def triplesPredicateObject(pred: IRI,
                              obj: JenaRDFNode,
@@ -235,19 +239,26 @@ object JenaMapper {
   def triplesPredicate(pred: Property, model: JenaModel): IO[Set[Statement]] =
   Try {
     model.listStatements(null, pred, null).toSet.asScala.toSet
-  }.fold(e => err(e.getMessage), ok(_))
+  }.fold(e => 
+    err(s"triplesPredicateObject: Error obtaining triples from predicate ${pred}: ${e.getLocalizedMessage()}"), 
+    ok(_))
 
-  def triplesObject(obj: JenaRDFNode, model: JenaModel): IO[Set[Statement]] =
+  def triplesObject(pred: JenaRDFNode, model: JenaModel): IO[Set[Statement]] =
   Try {
-    model.listStatements(null, null, obj).toSet.asScala.toSet
-  }.fold(e => err(e.getMessage), ok(_))
+    model.listStatements(null, null, pred).toSet.asScala.toSet
+  }.fold(e => 
+      err(s"triplesObject: Error obtaining triples with object ${pred}: ${e.getLocalizedMessage()}"), 
+      ok(_)
+  )
 
   def triplesPredicateObject(property: Property,
                              obj: JenaRDFNode,
                              model: JenaModel
                             ): IO[Set[Statement]] = Try {
     model.listStatements(null, property, obj).toSet.asScala.toSet
-  }.fold(e => err(e.getMessage), ok(_))
+  }.fold(
+    e => err(s"triplesPredicateObject: Error obtaining triples with predicate: ${property} and object ${obj}: ${e.getLocalizedMessage()}"), 
+    ok(_))
 
   // TODO: Return Either[String,Path]
   def path2JenaPath(path: SHACLPath, model: JenaModel, base: Option[IRI]): IO[Path] = {

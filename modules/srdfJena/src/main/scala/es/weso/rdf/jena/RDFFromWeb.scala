@@ -20,7 +20,7 @@ import io.circe.Json
 import cats.effect._
 import fs2.Stream
 // import es.weso.utils.internal.CollectionCompat.CollectionConverters
-import es.weso.utils.IOUtils._
+// import es.weso.utils.IOUtils._
 // import JenaMapper._
 import org.http4s.client._
 import es.weso.utils.DerefUtils._
