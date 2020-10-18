@@ -4,8 +4,8 @@ import org.scalatest._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import es.weso.rdf.triples.RDFTriple
-import es.weso.rdf.nodes._
-import org.apache.jena.rdf.model.ModelFactory
+//import es.weso.rdf.nodes._
+//import org.apache.jena.rdf.model.ModelFactory
 import cats.implicits._
 import es.weso.rdf._
 import es.weso.rdf.PREFIXES._
@@ -24,7 +24,7 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
                             |:a :b :c .
                             |""".stripMargin)
 
-      val r = RDFAsJenaModel.empty.use(empty => for {
+      val r = RDFAsJenaModel.empty.flatMap(_.use(empty => for {
         rdf1  <- empty.addPrefixMap(pm)
         rdf2 <- rdf1.addTriples(
           Set(RDFTriple(IRI("http://example.org#a"), IRI("http://example.org#b"), IRI("http://example.org#c")))
@@ -33,8 +33,8 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
         iso <- IO.fromEither(checkIsomorphic(model2, m2).leftMap(e =>
           new RuntimeException(s"Models are not isomprphic:\n$e"))
         )
-      } yield iso)
-      r.attempt.unsafeRunSync.fold(
+      } yield iso))
+      r.attempt.unsafeRunSync().fold(
         s => s"Error: ${s.getMessage()}",
         iso => info(s"RDFs are isomorphic")
       )
@@ -51,7 +51,7 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
                             |_:y foaf:name "pepe" .
                             |""".stripMargin)
 
-      val r = RDFAsJenaModel.empty.use(empty => for {
+      val r = RDFAsJenaModel.empty.flatMap(_.use(empty => for {
         rdf1  <- empty.addPrefixMap(pm)
         rdf2 <- rdf1.addTriples(
           Set(
@@ -64,7 +64,7 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
         iso <- IO.fromEither(checkIsomorphic(model2,m2).leftMap(e =>
           new RuntimeException(s"Models are not isomprphic:\n$e"))
         )
-      } yield iso)
+      } yield iso))
       r.attempt.unsafeRunSync.fold(s => s"Error: ${s.getMessage}",
         _ => info(s"Models are isomorphic"))
     }
@@ -76,11 +76,11 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
                           |:a :b :c .
                           |""".stripMargin)
       val str_triples         = "<http://example.org#a> <http://example.org#b> <http://example.org#c> ."
-      val r: IO[Unit] = RDFAsJenaModel.fromString(str_triples, "NTRIPLES").use(rdf2 => for {
+      val r: IO[Unit] = RDFAsJenaModel.fromString(str_triples, "NTRIPLES").flatMap(_.use(rdf2 => for {
         m2 <- rdf2.getModel
         b <- fromES(checkIsomorphic(m1, m2))
-      } yield b)
-      r.attempt.unsafeRunSync.fold(
+      } yield b))
+      r.attempt.unsafeRunSync().fold(
         e => fail(s"Error: $e"),
         _ => info(s"Are isomorphic")
       )
@@ -94,14 +94,14 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
                    |:b a :C, :D .
                    |""".stripMargin
       val typeC = IRI("http://example.org#C")
-      val r = RDFAsJenaModel.fromString(str, "TURTLE").use(rdf => for {
+      val r = RDFAsJenaModel.fromString(str, "TURTLE").flatMap(_.use(rdf => for {
         triples <- rdf.triplesWithType(typeC).compile.toList
-      } yield triples)
+      } yield triples))
       val a  = IRI("http://example.org#a")
       val b  = IRI("http://example.org#b")
       val t1 = RDFTriple(a, `rdf:type`, typeC)
       val t2 = RDFTriple(b, `rdf:type`, typeC)
-      r.attempt.unsafeRunSync.fold(s => s"Error$s", triples => triples should contain theSameElementsAs (Set(t1, t2)))
+      r.attempt.unsafeRunSync().fold(s => s"Error$s", triples => triples should contain theSameElementsAs (Set(t1, t2)))
     }
 
     it("Should be able to get subjects") {
@@ -113,12 +113,12 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
       val a     = IRI("http://example.org#a")
       val p     = IRI("http://example.org#p")
       val typeC = IRI("http://example.org#C")
-      val r = RDFAsJenaModel.fromString(str, "TURTLE").use(rdf => for {
+      val r = RDFAsJenaModel.fromString(str, "TURTLE").flatMap(_.use(rdf => for {
         triples <- rdf.triplesWithSubject(a).compile.toList
-      } yield triples)
+      } yield triples))
       val t1 = RDFTriple(a, `rdf:type`, typeC)
       val t2 = RDFTriple(a, p, IntegerLiteral(1, "1"))
-      r.attempt.unsafeRunSync
+      r.attempt.unsafeRunSync()
         .fold(s => s"Error: ${s}", triples => triples should contain theSameElementsAs (Set(t1, t2)))
     }
 
@@ -128,13 +128,13 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
                    |:a :date "25/10/2015"^^xsd:date .
                    |""".stripMargin
       val a   = IRI("http://example.org#a")
-      val r = RDFAsJenaModel.fromString(str, "TURTLE").use(rdf => for {
+      val r = RDFAsJenaModel.fromString(str, "TURTLE").flatMap(_.use(rdf => for {
         triples <- rdf.triplesWithSubject(a).compile.toList
-      } yield triples)
+      } yield triples))
       val date  = IRI("http://example.org#date")
       val value = DatatypeLiteral("25/10/2015", IRI("http://www.w3.org/2001/XMLSchema#date"))
       val t1    = RDFTriple(a, date, value)
-      r.attempt.unsafeRunSync
+      r.attempt.unsafeRunSync()
         .fold(s => s"Error: ${s.getMessage}", triples => triples should contain theSameElementsAs (Set(t1)))
     }
 
@@ -147,8 +147,8 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
       val age   = IRI("http://example.org#age")
       val value = IntegerLiteral(15, "15")
       val t1    = RDFTriple(a, age, value)
-      val r = RDFAsJenaModel.fromString(str, "TURTLE").use(_.triplesWithSubject(a).compile.toList)
-      r.attempt.unsafeRunSync
+      val r = RDFAsJenaModel.fromString(str, "TURTLE").flatMap(_.use(_.triplesWithSubject(a).compile.toList))
+      r.attempt.unsafeRunSync()
         .fold(s => s"Error: ${s.getMessage}", triples => triples should contain theSameElementsAs (Set(t1)))
     }
 
@@ -161,10 +161,10 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
       val age   = IRI("http://example.org#age")
       val value = DatatypeLiteral("15", IRI("http://example.org#xxx"))
       val t1    = RDFTriple(a, age, value)
-      val r = RDFAsJenaModel.fromString(str, "TURTLE").use(
+      val r = RDFAsJenaModel.fromString(str, "TURTLE").flatMap(_.use(
         _.triplesWithSubject(a).compile.toList
-      )
-      r.attempt.unsafeRunSync.fold(s => s"Error: ${s.getMessage()}", _ should contain theSameElementsAs (Set(t1)))
+      ))
+      r.attempt.unsafeRunSync().fold(s => s"Error: ${s.getMessage()}", _ should contain theSameElementsAs (Set(t1)))
     }
 
     it("Should be able to get subjects with lang literal") {
@@ -176,8 +176,8 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
       val age   = IRI("http://example.org#age")
       val value = LangLiteral("hi", Lang("en"))
       val t1    = RDFTriple(a, age, value)
-      val r = RDFAsJenaModel.fromString(str, "TURTLE").use(_.triplesWithSubject(a).compile.toList)
-      r.attempt.unsafeRunSync.fold(s => s"Error: ${s.getMessage()}", _ should contain theSameElementsAs (Set(t1)))
+      val r = RDFAsJenaModel.fromString(str, "TURTLE").flatMap(_.use(_.triplesWithSubject(a).compile.toList))
+      r.attempt.unsafeRunSync().fold(s => s"Error: ${s.getMessage()}", _ should contain theSameElementsAs (Set(t1)))
     }
 
   }
@@ -206,7 +206,7 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
       val _Dog               = e + "Dog"
       val _Any               = e + "Any"
 
-      val r = RDFAsJenaModel.fromString(rdfStr, "TURTLE").use(model => for {
+      val r = RDFAsJenaModel.fromString(rdfStr, "TURTLE").flatMap(_.use(model => for {
         _     <- check(model.hasSHACLClass(person1, _Person), true, "person1 a Person")
         _     <- check(model.hasSHACLClass(person1, _Teacher), false, "person1 a Teacher")
         _     <- check(model.hasSHACLClass(person1, _UniversityTeacher), false, "person1 a UniversityTeacher")
@@ -226,8 +226,8 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
         _     <- check(model.hasSHACLClass(any, _Dog), false, "any a Dog")
         _     <- check(model.hasSHACLClass(any, _Any), false, "any a Any")
         _     <- check(model.hasSHACLClass(dog1, _Any), false, "dog1 a Any")
-      } yield ())
-      r.attempt.unsafeRunSync.fold(s => fail(s"Error: ${s.getMessage}"), _ => info(s"End"))
+      } yield ()))
+      r.attempt.unsafeRunSync().fold(s => fail(s"Error: ${s.getMessage}"), _ => info(s"End"))
 
     }
   }
@@ -259,14 +259,14 @@ class RDFJenaSpec extends AnyFunSpec with JenaBased with Matchers with EitherVal
         def compare(a: RDFNode, b: RDFNode) = a.getLexicalForm compare b.getLexicalForm
      }
 
-     val r = RDFAsJenaModel.fromString(rdfStr, "TURTLE").use(model => for {
+     val r = RDFAsJenaModel.fromString(rdfStr, "TURTLE").flatMap(_.use(model => for {
         _ <- checkLs(model.getSHACLInstances(_Person), List(person1, teacher1, teacher2), "person <- person1, teacher1, teacher2")
         _ <- checkLs(model.getSHACLInstances(_Teacher), List(teacher1, teacher2), "teacher <- teacher1 teacher2")
         _ <- checkLs(model.getSHACLInstances(_UniversityTeacher), List(teacher2), "univTeacher <- teacher2")
         _ <- checkLs(model.getSHACLInstances(_Dog), List(dog1),"Dog <- dog1")
         _ <- checkLs(model.getSHACLInstances(_Any), List(),"Any <- none")
-      } yield ())
-      r.attempt.unsafeRunSync.fold(s => fail(s"Error: ${s.getMessage}"), _ => info(s"End"))
+      } yield ()))
+      r.attempt.unsafeRunSync().fold(s => fail(s"Error: ${s.getMessage}"), _ => info(s"End"))
     }
   }
 

@@ -38,7 +38,7 @@ class EndpointTest
       server.stop()
     }
   }
-  val server: Resource[IO,(FusekiServer, Dataset)] = Resource.make(acquireServer)(releaseServer)
+  val server: IO[Resource[IO,(FusekiServer, Dataset)]] = IO(Resource.make(acquireServer)(releaseServer))
 
   val endpoint = Endpoint(IRI(endpointName))
   val endpointUpdate = s"http://host:3330/${dataset}/update"
@@ -90,16 +90,19 @@ class EndpointTest
 
     def withEndpoint[A](data: String,
                         action: Endpoint => IO[A]
-                       ): IO[A] =
-      (server,RDFAsJenaModel.fromChars(data, "Turtle")).tupled.use { case (server,rdf) => for {
-        model <- rdf.getModel
-        result <- {
+                       ): IO[A] = for {
+                         resServer <- server
+                         resRdf <- RDFAsJenaModel.fromChars(data, "Turtle")
+                         v <- (resServer,resRdf).tupled.use { 
+                           case (server,rdf) => for {
+                             model <- rdf.getModel
+                             result <- {
           val (_,ds) = server
           Txn.executeWrite(ds, execute(ds.setDefaultModel(model)))
           action(endpoint)
         }
-      } yield result
-    }
+      } yield result 
+    } } yield v
 
     def shouldObtainShaclInstances(data: String, node: IRI, expected: Seq[RDFNode]): Unit = {
       val either = io2ES(withEndpoint(data, _.getSHACLInstances(node).compile.toList))
@@ -110,20 +113,25 @@ class EndpointTest
     }
 
     def shouldQueryData(data: String, queryStr: String, expected: List[Map[String, RDFNode]]): Unit = {
-      val r: IO[List[Map[String,RDFNode]]] =
-        (server,RDFAsJenaModel.fromChars(data,"Turtle")).tupled.use{ case (pair,rdf) => for {
-        model <- rdf.getModel
-        rm <- Try {
-          val (_,ds) = pair
-          Txn.executeWrite(ds, execute(ds.setDefaultModel(model)))
-          val query = QueryFactory.create(queryStr)
-          val rs = QueryExecutionFactory.sparqlService(endpointName, query).execSelect()
+      val r: IO[List[Map[String,RDFNode]]] = 
+       for {
+        rs <- server 
+        resRdf <- RDFAsJenaModel.fromChars(data,"Turtle")
+        v <- (rs,resRdf).tupled.use{ case (pair,rdf) => 
+          for {
+           model <- rdf.getModel
+           rm <- Try {
+            val (_,ds) = pair
+             Txn.executeWrite(ds, execute(ds.setDefaultModel(model)))
+             val query = QueryFactory.create(queryStr)
+             val rs = QueryExecutionFactory.sparqlService(endpointName, query).execSelect()
           JenaMapper.resultSet2Map(rs)
-        }.fold(
+          }.fold(
           e => IO.raiseError(e),
           maybeRM => maybeRM.fold(e => IO.raiseError(new RuntimeException(e)), rm => IO(rm))
         )
       } yield rm}
+    } yield v
       r.attempt.unsafeRunSync().fold(
         e => fail(s"Error: $e"),
         rm => shouldCompareListMaps(rm, expected))

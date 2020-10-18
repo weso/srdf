@@ -16,7 +16,7 @@ class RelativeURIsTest extends AnyFunSpec with Matchers {
     it(s"Should parse Turtle with relative URIs") {
       val str = """<x> <p> <y>"""
       val base = Some(IRI("internal://base/"))
-      val r = RDFAsJenaModel.fromChars(str, "TURTLE", base).use(rdf => for {
+      val r = RDFAsJenaModel.fromChars(str, "TURTLE", base).flatMap(_.use(rdf => for {
         x <- fromES(IRI.fromString("x", base))
         p <- fromES(IRI.fromString("p", base))
         y <- fromES(IRI.fromString("y", base))
@@ -24,7 +24,7 @@ class RelativeURIsTest extends AnyFunSpec with Matchers {
         serialized <- rdf.serialize("TURTLE", base)
       } yield {
         (ts, rdf, serialized, x, p, y)
-      })
+      }))
       val pairs = MonadError[IO, Throwable].attempt(r).unsafeRunSync
 
       pairs.fold(e => fail(s"Error: $e"),

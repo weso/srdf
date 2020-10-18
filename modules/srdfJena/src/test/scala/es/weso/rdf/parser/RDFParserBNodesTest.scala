@@ -16,10 +16,10 @@ class RDFParserBNodesTest extends AnyFunSpec with Matchers with RDFParser with E
         val cs = """|prefix : <http://example.org/>
                    |_:x :p _:y .
                    |_:y :q 1""".stripMargin
-        val r = RDFAsJenaModel.fromChars(cs, "TURTLE").use(rdf => for {
+        val r = RDFAsJenaModel.fromChars(cs, "TURTLE").flatMap(_.use(rdf => for {
           objs <- rdf.triplesWithSubject(BNode("x")).compile.toList
-        } yield objs)
-        val eitherValue = MonadError[IO,Throwable].attempt(r).unsafeRunSync
+        } yield objs))
+        val eitherValue = MonadError[IO,Throwable].attempt(r).unsafeRunSync()
         eitherValue.fold(e => fail(s"Parse error: $e"), objs => {
           objs match {
             case Nil => fail(s"No triples with subject _:x")

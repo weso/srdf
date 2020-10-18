@@ -26,18 +26,18 @@ class NormalizeBNodesTest extends AnyFunSpec with Matchers {
 
       def iri(x: String) = IRI(s"http://e.com/" + x)
 
-      val r = (
-        RDFAsJenaModel.empty,
-        RDFAsJenaModel.fromChars(str, "TURTLE", None),
-        RDFAsJenaModel.fromChars(str, "TURTLE", None)
-        ).tupled.use { case (empty, rdf1, rdf2) => for {
-        n1 <- normalizeBNodes(rdf1, empty)
-        n2 <- normalizeBNodes(rdf2, empty)
-        ss1 <- stream2io(n1.triplesWithSubject(BNode("0")))
-        ss2 <- stream2io(n2.triplesWithSubject(BNode("0")))
-      } yield (ss1, ss2)
-      }
-      r.attempt.unsafeRunSync.fold(e => fail(s"Error: $e"), pair => {
+      val r = for {
+        res1 <- RDFAsJenaModel.empty
+        res2 <- RDFAsJenaModel.fromChars(str, "TURTLE", None)
+        res3 <- RDFAsJenaModel.fromChars(str, "TURTLE", None)
+        v <- (res1,res2,res3).tupled.use { case (empty, rdf1, rdf2) => for {
+         n1 <- normalizeBNodes(rdf1, empty)
+         n2 <- normalizeBNodes(rdf2, empty)
+         ss1 <- stream2io(n1.triplesWithSubject(BNode("0")))
+         ss2 <- stream2io(n2.triplesWithSubject(BNode("0")))
+         } yield (ss1, ss2) } 
+       } yield v
+      r.attempt.unsafeRunSync().fold(e => fail(s"Error: $e"), pair => {
         val (ss1, ss2) = pair
         val expected = List(
           RDFTriple(BNode("0"), iri("r"), iri("y")),
@@ -82,20 +82,20 @@ class NormalizeBNodesTest extends AnyFunSpec with Matchers {
     else IO(())
 
     it(s"should normalize BNodes of\n$rdfStr\nand obtain\n$expected\n") {
-      val cmp = (
-        RDFAsJenaModel.fromString(rdfStr, "TURTLE"),
-        RDFAsJenaModel.empty,
-        RDFAsJenaModel.fromString(expected, "TURTLE")
-        ).tupled.use { case (rdf, builder, rdfExpected) => for {
+      val cmp = for {
+        res1 <- RDFAsJenaModel.fromString(rdfStr, "TURTLE")
+        res2 <- RDFAsJenaModel.empty
+        res3 <- RDFAsJenaModel.fromString(expected, "TURTLE")
+        v <- (res1,res2,res3).tupled.use { case (rdf, builder, rdfExpected) => for {
         _ <- showLog(rdf, "rdf", withLog)
         normalized <- NormalizeBNodes.normalizeBNodes(rdf, builder)
         _ <- showLog(normalized, "normalized", withLog)
         _ <- showLog(rdfExpected, "rdfExpected", withLog)
         normalizedNodes <- normalized.subjects().compile.toList
         expectedNodes <- rdfExpected.subjects().compile.toList
-      } yield (normalizedNodes, expectedNodes)
-      }
-      cmp.attempt.unsafeRunSync.fold(
+      } yield (normalizedNodes, expectedNodes) }
+      } yield v
+      cmp.attempt.unsafeRunSync().fold(
         err => fail(s"Error: $err"),
         result => {
           val (ns, es) = result

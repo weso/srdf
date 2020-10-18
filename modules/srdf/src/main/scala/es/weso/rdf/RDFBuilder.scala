@@ -31,7 +31,7 @@ trait RDFBuilder extends RDFReader {
 
   def rmTriple(triple: RDFTriple): RDFBuild[Rdf]
 
-  def empty: Resource[RDFBuild,Rdf]
+  def empty: RDFBuild[Resource[RDFBuild,Rdf]]
 
   def merge(other: RDFReader): RDFBuild[Rdf]
 
@@ -39,7 +39,7 @@ trait RDFBuilder extends RDFReader {
 
   def normalizeBNodes: RDFBuild[RDFBuilder]
 
-  def fromString(str: String, format: String, base: Option[IRI]): Resource[IO, RDFBuilder]
+  def fromString(str: String, format: String, base: Option[IRI]): IO[Resource[IO, RDFBuilder]]
 
 }
 

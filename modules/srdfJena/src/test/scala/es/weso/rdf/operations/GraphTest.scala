@@ -88,14 +88,14 @@ class GraphTest extends AnyFunSpec with Matchers with EitherValues {
                        expected: LazyList[RDFNode],
                        withLog: Boolean = false): Unit = {
       it(s"shouldTraverse(${node.show} in graph\n${str}\n and return\n$expected") {
-        val r = RDFAsJenaModel.fromChars(str, "TURTLE", None).use(rdf => for {
+        val r = RDFAsJenaModel.fromChars(str, "TURTLE", None).flatMap(res => res.use(rdf => for {
           _ <- showLog(rdf, "RDF", withLog)
           traversed <- stream2io(Graph.traverse(node, rdf))
           _ <- IO {
             pprint.log(traversed.toList)
           }
-        } yield traversed)
-        r.attempt.unsafeRunSync.fold(
+        } yield traversed))
+        r.attempt.unsafeRunSync().fold(
           e => fail(s"Error: $e"),
           t => {
             t.toList should contain theSameElementsAs expected.toList
@@ -138,10 +138,10 @@ class GraphTest extends AnyFunSpec with Matchers with EitherValues {
                                str: String,
                                expected: List[RDFTriple]): Unit = {
       it(s"shouldTraverseWithArcs(${node.show} in graph ${str}) and return $expected") {
-        val r = RDFAsJenaModel.fromChars(str, "TURTLE", None).use(rdf => for {
+        val r = RDFAsJenaModel.fromChars(str, "TURTLE", None).flatMap(_.use(rdf => for {
           triples <- stream2io(Graph.traverseWithArcs(node, rdf))
-        } yield triples)
-        r.attempt.unsafeRunSync.fold(
+        } yield triples))
+        r.attempt.unsafeRunSync().fold(
           e => fail(s"Error: $e"),
           triples => triples.toList should contain theSameElementsAs expected
         )

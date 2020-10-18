@@ -135,7 +135,7 @@ case class RDFAsJenaModel(
     } yield ts)
   }
 
-  override def fromString(str: String, format: String, base: Option[IRI]): Resource[IO, Rdf] =
+  override def fromString(str: String, format: String, base: Option[IRI]): IO[Resource[IO, Rdf]] =
     RDFAsJenaModel.fromString(str,format,base)
 
   /**
@@ -283,7 +283,7 @@ case class RDFAsJenaModel(
     IRI(model.expandPrefix(str))
   } */
 
-  override def empty: Resource[RDFRead,Rdf] = {
+  override def empty: RDFRead[Resource[RDFRead,Rdf]] = {
     RDFAsJenaModel.empty
   }
 
@@ -484,10 +484,10 @@ object RDFAsJenaModel {
     model <- m.getModel
   } yield model.close()
 
-  def empty: Resource[IO,RDFAsJenaModel] = {
+  def empty: IO[Resource[IO,RDFAsJenaModel]] = {
     val acquire: IO[RDFAsJenaModel] =
       RDFAsJenaModel.fromModel(ModelFactory.createDefaultModel)
-    Resource.make(acquire)(closeJenaModel)
+    IO(Resource.make(acquire)(closeJenaModel))
   }
 
   def fromIRI(iri: IRI): Resource[IO,RDFAsJenaModel] = {
@@ -558,7 +558,7 @@ object RDFAsJenaModel {
                  format: String,
                  base: Option[IRI] = None,
                  useBNodeLabels: Boolean = true
-                ): Resource[IO,RDFAsJenaModel] = {
+                ): IO[Resource[IO,RDFAsJenaModel]] = {
     val acquire = Try {
       val m               = ModelFactory.createDefaultModel
       val str_reader      = new StringReader(str)
@@ -581,12 +581,12 @@ object RDFAsJenaModel {
       e => IO.raiseError(FromStringException(str,e)),
       m => RDFAsJenaModel.fromModel(m,base)
     )
-    Resource.make(acquire)(closeJenaModel)
+    IO(Resource.make(acquire)(closeJenaModel))
   }
 
   def fromChars(cs: CharSequence,
                 format: String,
-                base: Option[IRI] = None): Resource[IO,RDFAsJenaModel] = {
+                base: Option[IRI] = None): IO[Resource[IO,RDFAsJenaModel]] = {
     /*for {
       empty  <- RDFAsJenaModel.empty
       newRdf <- empty.fromString(cs, format, base)

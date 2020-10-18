@@ -23,8 +23,8 @@ class RDFAsJenaModelTest
                  |:p :q "2019-04-08T00:00:00Z"^^xsd:dateTime .
                  |:q :q 1 .
                  |""".stripMargin
-     val r = RDFAsJenaModel.fromString(str, "TURTLE").use(_.serialize("TURTLE"))
-     r.attempt.unsafeRunSync.fold(err => fail(s"Error parsing $err"), str => info(s"Serialized as\n$str"))
+     val r = RDFAsJenaModel.fromString(str, "TURTLE").flatMap(_.use(_.serialize("TURTLE")))
+     r.attempt.unsafeRunSync().fold(err => fail(s"Error parsing $err"), str => info(s"Serialized as\n$str"))
   }
 
   it(s"Parses a negative number") {
@@ -34,10 +34,10 @@ class RDFAsJenaModelTest
                  |:p :q "-1"^^xsd:integer .
                  |:r :q -1 .
                  |""".stripMargin
-     val r = RDFAsJenaModel.fromString(str, "TURTLE").use(
+     val r = RDFAsJenaModel.fromString(str, "TURTLE").flatMap(_.use(
        _.serialize("TURTLE")
-     )
-     r.attempt.unsafeRunSync.fold(err => fail(s"Error parsing $err"), str => info(s"Serialized as\n$str"))
+     ))
+     r.attempt.unsafeRunSync().fold(err => fail(s"Error parsing $err"), str => info(s"Serialized as\n$str"))
   }
 
   }
@@ -55,14 +55,12 @@ class RDFAsJenaModelTest
            |:a :b <c> .
            |""".stripMargin
 
-      val resources = for {
+      val r: IO[Unit] = for {
         e <- RDFAsJenaModel.empty
-        rdf <- RDFAsJenaModel.fromChars(str, "TURTLE", Some(IRI("http://example.org/base/")))
-      } yield (e, rdf)
-
-      val r: IO[Unit] = resources.use(pair => {
-        val (e, rdf) = pair
-        for {
+        rdf <- RDFAsJenaModel.fromChars(str, "TURTLE", Some(IRI("http://example.org/base/"))) 
+        v <- (e,rdf).tupled.use(pair => {
+         val (e, rdf) = pair
+         for {
           e1 <- e.addPrefixMap(pm)
           e2 <- e1.addBase(IRI("http://example.org/base/"))
           expected <- e2.addTriples(Set(RDFTriple(
@@ -74,8 +72,9 @@ class RDFAsJenaModelTest
           model2 <- rdf.getModel
           check <- fromES(checkIsomorphic(model1, model2))
         } yield check
-      })
-      r.attempt.unsafeRunSync.fold(e => fail(s"Error: $e"),
+       })
+      } yield v
+      r.attempt.unsafeRunSync().fold(e => fail(s"Error: $e"),
         _ => info(s"Models are isomorphic"))
     }
     it("should be able to parse RDF with relative URIs") {
@@ -83,17 +82,17 @@ class RDFAsJenaModelTest
         """|<a> <b> 1 .
            |""".stripMargin
       val ex = "http://example.org/"
-      val r =
-        ( RDFAsJenaModel.empty,
-          RDFAsJenaModel.fromChars(str, "TURTLE", Some(IRI(ex)))
-        ).tupled.use {
-        case (rdf,rdf2) => for {
+      val r = for {
+        res1 <- RDFAsJenaModel.empty
+        res2 <- RDFAsJenaModel.fromChars(str, "TURTLE", Some(IRI(ex)))
+        v <- (res1 ,res2).tupled.use {
+         case (rdf,rdf2) => for {
           rdf1 <- rdf.addTriples(Set(RDFTriple(IRI(ex + "a"),IRI(ex + "b"),IntegerLiteral(1))))
           model1 <- rdf1.getModel
           model2 <- rdf2.getModel
           _ <- fromES(checkIsomorphic(model1,model2))
-        } yield ()
-      }
+        } yield ()} 
+      } yield v
 
       // val m = ModelFactory.createDefaultModel
       r.attempt.unsafeRunSync.fold(
@@ -120,12 +119,12 @@ class RDFAsJenaModelTest
 
    def triplesWithSubject(strRdf: String, node: RDFNode, expected: List[RDFTriple]): Unit = {
      it(s"Should calculate triplesWithSubject($node) for ${strRdf} and get ${expected}") {
-     val r = RDFAsJenaModel.fromString(strRdf,"TURTLE").use(
+     val r = RDFAsJenaModel.fromString(strRdf,"TURTLE").flatMap(_.use(
        rdf => for {
            ts <- stream2io(rdf.triplesWithSubject(node))
          } yield ts
-     )
-     r.attempt.unsafeRunSync.fold(
+     ))
+     r.attempt.unsafeRunSync().fold(
        e => fail(s"Error: $e"),
        ts => ts should contain theSameElementsAs(expected)
      )
@@ -148,10 +147,10 @@ class RDFAsJenaModelTest
 
    def triplesWithObject(strRdf: String, node: RDFNode, expected: List[RDFTriple]): Unit = {
      it(s"Should calculate triplesWithObject($node) for ${strRdf} and get ${expected}") {
-     val r = RDFAsJenaModel.fromString(strRdf,"TURTLE").use(rdf => for {
+     val r = RDFAsJenaModel.fromString(strRdf,"TURTLE").flatMap(_.use(rdf => for {
        ts <- stream2io(rdf.triplesWithObject(node))
-     } yield ts)
-     r.attempt.unsafeRunSync.fold(e => fail(s"Error: $e"), 
+     } yield ts))
+     r.attempt.unsafeRunSync().fold(e => fail(s"Error: $e"), 
       ts => ts should contain theSameElementsAs(expected)
      )
     }
@@ -167,11 +166,10 @@ class RDFAsJenaModelTest
                   |_:1 :q :r .
                   |""".stripMargin 
     it(s"Merges with BNodes") {
-      val resources: Resource[IO, (RDFAsJenaModel, RDFAsJenaModel)] = for {
-        rdf1 <- RDFAsJenaModel.fromString(str1, "TURTLE", None, false)
-        rdf2 <- RDFAsJenaModel.fromString(str2, "TURTLE", None, false)
-      } yield (rdf1,rdf2)
-      val r = resources.use(pair => {
+      val r = for {
+        res1 <- RDFAsJenaModel.fromString(str1, "TURTLE", None, false)
+        res2 <- RDFAsJenaModel.fromString(str2, "TURTLE", None, false)
+        v <- (res1,res2).tupled.use(pair => {
         val (rdf1, rdf2) = pair
         for {
           model1 <- rdf1.getModel
@@ -180,7 +178,8 @@ class RDFAsJenaModelTest
           str <- merged.serialize("TURTLE")
         } yield str
       })
-      r.attempt.unsafeRunSync.fold(
+      } yield v 
+      r.attempt.unsafeRunSync().fold(
         e => fail(s"Error: $e"),
         str => info(s"Merged: $str")
       )
@@ -197,11 +196,10 @@ class RDFAsJenaModelTest
                   |_:1 :q :r .
                   |""".stripMargin 
     it(s"Merges with BNodes") {
-      val resources = for {
+      val r = for {
         rdf1 <- RDFAsJenaModel.fromString(str1,"TURTLE", None,true)
         rdf2 <- RDFAsJenaModel.fromString(str2,"TURTLE", None,true)
-      } yield (rdf1,rdf2)
-      val r = resources.use(pair => {
+        v <- (rdf1,rdf2).tupled.use(pair => {
         val (rdf1, rdf2) = pair
         for {
           model1 <- rdf1.getModel
@@ -209,8 +207,9 @@ class RDFAsJenaModelTest
           merged <- RDFAsJenaModel.fromModel(model1.add(model2))
           str <- merged.serialize("TURTLE")
         } yield str
-      })
-      r.attempt.unsafeRunSync.fold(
+       })
+      } yield v
+      r.attempt.unsafeRunSync().fold(
         e => fail(s"Error: $e"),
         str => info(s"Merged: $str"))
     }

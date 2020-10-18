@@ -42,15 +42,16 @@ class SPARQLQueriesTest
 
  def shouldQuery(query: Query, rdfStr: String, expected: String): Unit = {
    ignore(s"Should query $query on $rdfStr and obtain $expected") {
-   val queryExecution: Resource[IO,QueryExecution] =
-     Resource.make(IO { QueryExecutionFactory.create(query) })(qe => IO(qe.close()))
-   val r: IO[Unit] = (
-     RDFAsJenaModel.fromString(rdfStr, "TURTLE"),
-     queryExecution
-     ).tupled.use {
+   val queryExecution: IO[Resource[IO,QueryExecution]] =
+     IO(Resource.make(IO { QueryExecutionFactory.create(query) })(qe => IO(qe.close())))
+   val r: IO[Unit] = for {
+     res1 <- RDFAsJenaModel.fromString(rdfStr, "TURTLE")
+     res2 <- queryExecution
+    v <- (res1,res2).tupled.use {
        _ => IO(())
      }
-   r.attempt.unsafeRunSync.fold(e => fail(s"Error: $e"), v => info(s"$v"))
+    } yield v
+   r.attempt.unsafeRunSync().fold(e => fail(s"Error: $e"), v => info(s"$v"))
   }
  }
 

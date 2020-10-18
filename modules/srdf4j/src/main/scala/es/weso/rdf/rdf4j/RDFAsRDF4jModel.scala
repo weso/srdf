@@ -208,9 +208,9 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
     this
   }
 
-  override def empty: Resource[IO,Rdf] = {
+  override def empty: IO[Resource[IO,Rdf]] = {
     // TODO: Refactor to avoid unsafeRunSync
-    RDFAsRDF4jModel.empty
+    IO(RDFAsRDF4jModel.empty)
   }
 
   override def checkDatatype(node: RDFNode, datatype: IRI): IO[Boolean] =
@@ -310,8 +310,8 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
   override def normalizeBNodes: IO[RDFBuilder] =
     IO(this)
 
-  override def fromString(str: String, format: String, base: Option[IRI]): Resource[IO, Rdf] =
-    RDFAsRDF4jModel.fromChars(str,format,base)
+  override def fromString(str: String, format: String, base: Option[IRI]): IO[Resource[IO, Rdf]] =
+    IO(RDFAsRDF4jModel.fromChars(str,format,base))
 }
 
 object RDFAsRDF4jModel {
