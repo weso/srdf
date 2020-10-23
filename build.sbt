@@ -19,7 +19,7 @@ lazy val scalacticVersion      = "3.2.0"
 lazy val scalaTestVersion      = "3.2.0"
 //lazy val scalatagsVersion      = "0.6.7"
 lazy val scallopVersion        = "3.3.1"
-lazy val typesafeConfigVersion = "1.4.0"
+lazy val typesafeConfigVersion = "1.4.1"
 
 // Compiler plugin dependency versions
 lazy val simulacrumVersion       = "1.0.0"
