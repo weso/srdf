@@ -5,9 +5,9 @@ trait RDFReasoner extends RDFReader {
 
   type Rdf <: RDFReasoner
 
-  def applyInference(inference: String): IO[RDFReasoner]
+  def applyInference(inference: InferenceEngine): IO[RDFReasoner]
 
-  def availableInferenceEngines: List[String]
+  def availableInferenceEngines: List[InferenceEngine]
 
 }
 

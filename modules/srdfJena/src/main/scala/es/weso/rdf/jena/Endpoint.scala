@@ -211,14 +211,14 @@ case class Endpoint(endpointIRI: IRI)
     v2 <- getVar(qs,y)
   } yield (v1,v2)
 
-  override def applyInference(inference: String): RDFRead[Rdf] = {
-    inference.toUpperCase match {
-      case "NONE" => ok(this)
+  override def applyInference(inference: InferenceEngine): RDFRead[Rdf] = {
+    inference match {
+      case NONE => ok(this)
       case other => err(s"Unsupported inference $other for endpoint $endpoint")
     }
   }
 
-  override def availableInferenceEngines: List[String] = List("NONE")
+  override def availableInferenceEngines: List[InferenceEngine] = List(NONE)
 
   override def querySelect(queryStr: String): RDFStream[Map[String,RDFNode]] = {
     Try {

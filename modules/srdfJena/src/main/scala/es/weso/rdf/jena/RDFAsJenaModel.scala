@@ -11,10 +11,8 @@ import org.slf4j._
 import org.apache.jena.riot._
 import org.apache.jena.rdf.model.ModelFactory
 import org.apache.jena.riot.lang._
-
 import scala.util._
 import java.io._
-
 import cats.effect.concurrent.Ref
 import org.apache.jena.riot.RDFLanguages._
 import es.weso.rdf.jena.JenaMapper._
@@ -296,29 +294,24 @@ case class RDFAsJenaModel(
       iri => Right(IRI(iri))
     )
   }*/
-  private val NONE = "NONE"
-  private val RDFS = "RDFS"
-  private val OWL  = "OWL"
 
-  override def applyInference(inference: String): IO[Rdf] = {
-    inference.toUpperCase match {
-      case `NONE` => ok(this)
-      case `RDFS` => for {
+  override def applyInference(inference: InferenceEngine): IO[Rdf] = {
+    inference match {
+      case NONE => ok(this)
+      case RDFS => for {
         model <- getModel
-        newModel <- JenaUtils.inference(model, RDFS)
+        newModel <- JenaUtils.inference(model, inference.name)
         rdf <- RDFAsJenaModel.fromModel(newModel)
       } yield rdf
 
-      case `OWL`  => for {
+      case OWL  => for {
         model <- getModel
-        newModel <- JenaUtils.inference(model, OWL)
+        newModel <- JenaUtils.inference(model, inference.name)
         rdf <- RDFAsJenaModel.fromModel(newModel)
       } yield rdf
-      case other  => err(s"Unsupported inference $other")
+      case other  => err(s"Unsupported inference ${other.name}")
     }
   }
-
-  def availableInferenceEngines: List[String] = List(NONE, RDFS, OWL)
 
   override def querySelect(queryStr: String): RDFStream[Map[String, RDFNode]] = for {
     model <- Stream.eval(getModel)
@@ -468,6 +461,8 @@ case class RDFAsJenaModel(
     }
   }
 
+  override def availableInferenceEngines: List[InferenceEngine] = List(NONE,RDFS,OWL)
+
 }
 
 object RDFAsJenaModel {
@@ -480,30 +475,37 @@ object RDFAsJenaModel {
   } yield RDFAsJenaModel(ref,base,sourceIRI)
 
 
-  private def closeJenaModel(m: RDFAsJenaModel): IO[Unit] = for {
+  private def acquireRDF: IO[RDFAsJenaModel] = for {
+      model <- IO(ModelFactory.createDefaultModel)
+      rdf <- RDFAsJenaModel.fromModel(model)
+  } yield rdf
+
+  private def closeRDF(m: RDFAsJenaModel): IO[Unit] = for {
     model <- m.getModel
   } yield model.close()
 
+
   def empty: IO[Resource[IO,RDFAsJenaModel]] = {
-    val acquire: IO[RDFAsJenaModel] =
-      RDFAsJenaModel.fromModel(ModelFactory.createDefaultModel)
-    IO(Resource.make(acquire)(closeJenaModel))
+    IO(Resource.make(acquireRDF)(closeRDF))
   }
 
   def fromIRI(iri: IRI): Resource[IO,RDFAsJenaModel] = {
-    val acquire: IO[RDFAsJenaModel] = {
-      val m = ModelFactory.createDefaultModel()
-      val g: Graph        = m.getGraph
-      val dest: StreamRDF = StreamRDFLib.graph(g)
-      val ctx: Context    = null
-      RDFParser.create
+    val acquire: IO[RDFAsJenaModel] = for {
+      model <- IO { 
+        val m: Model = ModelFactory.createDefaultModel()
+        val g: Graph        = m.getGraph
+        val dest: StreamRDF = StreamRDFLib.graph(g)
+        val ctx: Context    = null
+        RDFParser.create
         .source(iri.str)
         .labelToNode(LabelToNode.createUseLabelEncoded)
         .context(ctx)
-        .parse(dest)
-      RDFAsJenaModel.fromModel(m)
-    }
-    Resource.make(acquire)(closeJenaModel)
+        .parse(dest) 
+        m
+      }
+      rdf <- RDFAsJenaModel.fromModel(model)
+    } yield rdf
+    Resource.make(acquire)(closeRDF)
   }
 
   def fromURI(uri: String,
@@ -529,7 +531,7 @@ object RDFAsJenaModel {
       err => IO.raiseError(FromUriException(uri,err)),
       m => RDFAsJenaModel.fromModel(m, base, Some(IRI(uri)))
     )
-    Resource.make(acquire)(closeJenaModel)
+    Resource.make(acquire)(closeRDF)
   }
 
   def fromFile(file: File, format: String, base: Option[IRI] = None): Resource[IO,RDFAsJenaModel] = {
@@ -551,7 +553,7 @@ object RDFAsJenaModel {
       e => IO.raiseError(FromFileException(file,e)),
       m => RDFAsJenaModel.fromModel(m,base, Some(IRI(file.toURI)))
     )
-    Resource.make(acquire)(closeJenaModel)
+    Resource.make(acquire)(closeRDF)
   }
 
   def fromString(str: String,
@@ -559,6 +561,7 @@ object RDFAsJenaModel {
                  base: Option[IRI] = None,
                  useBNodeLabels: Boolean = true
                 ): IO[Resource[IO,RDFAsJenaModel]] = {
+                  
     val acquire = Try {
       val m               = ModelFactory.createDefaultModel
       val str_reader      = new StringReader(str)
@@ -581,7 +584,7 @@ object RDFAsJenaModel {
       e => IO.raiseError(FromStringException(str,e)),
       m => RDFAsJenaModel.fromModel(m,base)
     )
-    IO(Resource.make(acquire)(closeJenaModel))
+    IO(Resource.make(acquire)(closeRDF))
   }
 
   def fromChars(cs: CharSequence,
@@ -605,4 +608,7 @@ object RDFAsJenaModel {
     RDFLanguages.getRegisteredLanguages().asScala.map(_.getName).toList.distinct
   }
 
+
 }
+
+

@@ -96,14 +96,14 @@ case class Compound(members: List[RDFReader])
     mkSeq(members, (e:RDFReader) => e.triplesWithPredicateObject(p,o))
   }
 
-  override def applyInference(inference: String): RDFRead[Rdf] = {
-    inference.toUpperCase match {
-      case "NONE" => ok(this)
+  override def applyInference(inference: InferenceEngine): RDFRead[Rdf] = {
+    inference match {
+      case NONE => ok(this)
       case other => err(s"Unsupported inference $other for compound model")
     }
   }
 
-  override def availableInferenceEngines: List[String] = List("NONE")
+  override def availableInferenceEngines: List[InferenceEngine] = List(NONE)
 
   override def querySelect(queryStr: String): RDFStream[Map[String,RDFNode]] = 
      Stream.raiseError[IO](new RuntimeException("Not implemented querySelect for Compound"))
