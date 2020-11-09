@@ -200,7 +200,7 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
     } yield this
 
   override def createBNode: IO[(RDFNode, Rdf)] = IO {
-    (BNode(newBNode.getID), this)
+    (BNode(newBNode().getID), this)
   }
 
   override def addPrefix(alias: String, iri: IRI): IO[Rdf] = IO {
@@ -222,23 +222,13 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
       iri => Right(IRI(iri))
     )
   }*/
-  private val NONE = "NONE"
-  private val RDFS = "RDFS"
-  private val OWL  = "OWL"
 
-  override def applyInference(inference: String): IO[Rdf] = {
-    ok(this) // TODO (as it is doesn't apply inference)
-    /*
-    inference.toUpperCase match {
-      case `NONE` => Right(this)
-      case `RDFS` => JenaUtils.inference(model, RDFS).map(RDFAsJenaModel(_))
-      case `OWL` => JenaUtils.inference(model, OWL).map(RDFAsJenaModel(_))
-      case other => Left(s"Unsupported inference $other")
-    }
-   */
+  override def applyInference(inference: InferenceEngine): IO[Rdf] = inference match {
+    case NONE => ok(this)
+    case _ => IO.raiseError(new RuntimeException(s"Unsupported inference ${inference.name}"))
   }
 
-  override def availableInferenceEngines: List[String] = List(NONE, RDFS, OWL)
+  override def availableInferenceEngines: List[InferenceEngine] = List(NONE)
 
   override def querySelect(queryStr: String): RDFStream[Map[String, RDFNode]] =
         Stream.raiseError[IO](new RuntimeException(s"Not implemented querySelect for RDf4j yet"))
@@ -266,7 +256,7 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
         } yield rdf2
 
       for {
-        ts  <- other.rdfTriples.compile.toList
+        ts  <- other.rdfTriples().compile.toList
         rdf <- ts.foldLeft(zero)(cmb)
       } yield rdf
     }
