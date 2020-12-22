@@ -4,7 +4,6 @@ import cats.implicits._
 import java.net.{URI, URISyntaxException}
 
 import cats.Show
-
 import scala.util.Try
 import scala.util.matching.Regex
 

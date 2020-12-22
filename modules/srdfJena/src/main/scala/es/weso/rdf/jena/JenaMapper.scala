@@ -17,6 +17,10 @@ import org.apache.jena.query._
 import cats.effect._
 import es.weso.utils.IOUtils._
 import cats.implicits._
+import org.apache.jena.graph.Node
+import es.weso.rdf.RDFException
+import es.weso.rdf.MsgRDFException
+
 
 object JenaMapper {
 
@@ -50,6 +54,25 @@ object JenaMapper {
   } yield
     RDFTriple(subj, pred, obj)
 
+  def jenaTriple2Triple(subj: Node, pred: Node, obj: Node): IO[RDFTriple] = for {
+    subj <- node2RDFNode(subj)
+    pred <- node2IRI(pred)
+    obj <- node2RDFNode(obj)
+  } yield
+    RDFTriple(subj, pred, obj)
+
+  def node2RDFNode(node: Node): IO[RDFNode] = node match {
+    case _ if node.isURI() => IO(IRI(node.getURI()))
+    case _ if node.isLiteral() => IO(DatatypeLiteral(node.getLiteralLexicalForm(), IRI(node.getLiteralDatatypeURI())))
+    case _ if node.isBlank() => IO(BNode(node.getBlankNodeLabel()))
+    case _ => IO.raiseError(MsgRDFException(s"node2RDFNode: Unknown value: ${node}"))
+  }
+
+  def node2IRI(node: Node): IO[IRI] = node match {
+    case _ if node.isURI() => IO(IRI(node.getURI()))
+    case _ => IO.raiseError(MsgRDFException(s"node2IRI: Unknown value: ${node}"))
+  }
+
   private def resolve(iri: IRI, base: Option[IRI]): String = base match {
     case None => iri.str
     case Some(baseIri) => baseIri.resolve(iri).str
@@ -70,9 +93,9 @@ object JenaMapper {
                        base: Option[IRI]): IO[JenaResource] = {
     n match {
       case i: IRI => ok(m.getResource(resolve(i,base)))
-      case BNode(id) => {
+      case b: BNode => {
         // Creates the BNode if it doesn't exist
-        ok(m.createResource(new AnonId(id)))
+        ok(m.createResource(new AnonId(b.id)))
       }
       case _ => err(s"rdfNode2Resource: $n is not a resource")
     }
@@ -163,7 +186,7 @@ object JenaMapper {
 
   def createResource(m: JenaModel, node: RDFNode, base: Option[IRI]): JenaResource = {
     node match {
-      case BNode(id) => m.createResource(new AnonId(id.toString))
+      case b: BNode => m.createResource(new AnonId(b.id.toString))
       case i: IRI => m.createResource(resolve(i,base))
       case _ => throw new Exception("Cannot create a resource from " + node)
     }
@@ -179,8 +202,8 @@ object JenaMapper {
     val xsdboolean = xsd + "boolean"
 
     node match {
-      case BNode(id) =>
-        m.createResource(new AnonId(id.toString))
+      case b: BNode =>
+        m.createResource(new AnonId(b.id.toString))
       case i: IRI =>
         m.createResource(resolve(i,base))
       case StringLiteral(str) =>
