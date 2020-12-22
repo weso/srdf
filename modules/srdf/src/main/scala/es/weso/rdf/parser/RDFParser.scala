@@ -439,11 +439,11 @@ trait RDFParser {
 
 
   def subjectsFromTriples(triples: Set[RDFTriple]): Set[RDFNode] = {
-    triples.map { case RDFTriple(s, _, _) => s }
+    triples.map(_.subj) // { case t: RDFTriple => t.subj }
   }
 
   def objectsFromTriples(triples: Set[RDFTriple]): Set[RDFNode] = {
-    triples.map { case RDFTriple(_, _, o) => o }
+    triples.map(_.obj) // { case t: RDFTriple => t.obj }
   }
 
   def getIntegerLiteral(t: RDFTriple): RDFParser[Int] = {

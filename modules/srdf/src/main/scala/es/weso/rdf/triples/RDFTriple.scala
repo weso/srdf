@@ -3,7 +3,11 @@ package es.weso.rdf.triples
 import scala.collection.Set
 import es.weso.rdf.nodes._
 
-case class RDFTriple(subj: RDFNode, pred: IRI, obj: RDFNode) {
+case class RDFTriple(
+  subj: RDFNode, 
+  pred: IRI, 
+  obj: RDFNode
+ ) {
 
   def hasSubject(node: RDFNode): Boolean = subj == node
   def hasObject(node: RDFNode): Boolean = obj == node
@@ -11,7 +15,7 @@ case class RDFTriple(subj: RDFNode, pred: IRI, obj: RDFNode) {
 
   def extractBNode(node: RDFNode): Set[BNode] = {
     node match {
-      case b @ BNode(_) => Set(b)
+      case b : BNode => Set(b)
       case _ => Set()
     }
   }

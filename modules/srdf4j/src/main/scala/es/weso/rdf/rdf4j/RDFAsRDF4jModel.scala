@@ -91,13 +91,15 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
     streamFromIOs(model.asScala.toSet.map(statement2RDFTriple(_)).toList.sequence)
   }
 
-  override def triplesWithSubject(node: RDFNode): RDFStream[RDFTriple] =
-    streamFromIOs(for {
+  override def triplesWithSubject(node: RDFNode): RDFStream[RDFTriple] = node match {
+    case n if n.isLiteral => Stream.empty
+    case _ => streamFromIOs(for {
       resource <- rdfNode2Resource(node)
       statements <- triplesSubject(resource, model)
       triples <- statements2RDFTriples(statements)
     } yield triples
     )
+  }
 
   /**
     * return the SHACL instances of a node `cls`

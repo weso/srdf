@@ -1,5 +1,4 @@
 package es.weso.rdf.nodes
-
 import cats.Show
 
 case class BNode(id: String) extends RDFNode {
@@ -21,12 +20,12 @@ case class BNode(id: String) extends RDFNode {
   override def getLexicalForm = id
 
   def isEqualTo(other: RDFNode): Either[String,Boolean] = other match {
-    case BNode(i) => Right(i == id)
+    case b : BNode => Right(b.id == id)
     case _ => Left(s"Type error comaring $this with $other")
   }
 
   def lessThan(other: RDFNode): Either[String,Boolean] = other match {
-    case BNode(idOther) => Right(id < idOther)
+    case b: BNode => Right(id < b.id)
     case _ => Left(s"Type error comaring $this with $other")
   }
 

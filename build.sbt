@@ -2,12 +2,12 @@ lazy val scala212 = "2.12.12"
 lazy val scala213 = "2.13.3"
 lazy val supportedScalaVersions = List(scala212, scala213)
 
-lazy val utilsVersion         = "0.1.70"
+lazy val utilsVersion         = "0.1.73"
 
 // Dependency versions
-lazy val catsVersion           = "2.2.0"
-lazy val catsEffectVersion     = "2.2.0"
-lazy val circeVersion          = "0.14.0-M2"
+lazy val catsVersion           = "2.3.0"
+lazy val catsEffectVersion     = "2.3.0"
+lazy val circeVersion          = "0.14.0-M1"
 lazy val fs2Version            = "2.4.4"
 lazy val http4sVersion         = "0.21.3"
 lazy val jenaVersion           = "3.16.0"
@@ -28,11 +28,10 @@ lazy val scalaCollCompatVersion  = "2.2.0"
 
 // Dependency modules
 
-lazy val utils             = "es.weso"                    %% "utils"              % utilsVersion
+lazy val utils             = "es.weso"                    %% "utils"               % utilsVersion
 
 lazy val catsCore          = "org.typelevel"              %% "cats-core"           % catsVersion
 lazy val catsKernel        = "org.typelevel"              %% "cats-kernel"         % catsVersion
-// lazy val catsMacros        = "org.typelevel"              %% "cats-macros"         % catsVersion
 lazy val catsEffect        = "org.typelevel"              %% "cats-effect"         % catsEffectVersion
 lazy val circeCore         = "io.circe"                   %% "circe-core"          % circeVersion
 lazy val circeGeneric      = "io.circe"                   %% "circe-generic"       % circeVersion
@@ -49,7 +48,6 @@ lazy val scalactic         = "org.scalactic"              %% "scalactic"        
 lazy val scalacheck        = "org.scalacheck"             %% "scalacheck"          % scalacheckVersion
 lazy val scalaCollCompat   = "org.scala-lang.modules"     %% "scala-collection-compat" % scalaCollCompatVersion
 lazy val scalaTest         = "org.scalatest"              %% "scalatest"           % scalaTestVersion
-//lazy val scalatags         = "com.lihaoyi"                %% "scalatags"           % scalatagsVersion
 lazy val typesafeConfig    = "com.typesafe"               % "config"               % typesafeConfigVersion
 
 def priorTo2_13(scalaVersion: String): Boolean =
