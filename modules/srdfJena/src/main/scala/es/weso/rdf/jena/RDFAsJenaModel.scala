@@ -41,6 +41,7 @@ import org.apache.jena.riot.system.IRIResolver
 import org.apache.jena.riot.system.PrefixMapFactory
 import org.apache.jena.riot.tokens.Token
 import es.weso.rdf.locations._
+import java.net.URL
 
 case class RDFAsJenaModel(modelRef: Ref[IO,Model],
                           base: Option[IRI],
@@ -386,10 +387,11 @@ case class RDFAsJenaModel(modelRef: Ref[IO,Model],
     * Apply owl:imports closure to an RDF source
     * @return new RDFReader
     */
-  override def extendImports(): RDFBuild[Rdf] =
+  override def extendImports: RDFBuild[Rdf] =
     for {
       imports <- getImports
-      newRdf  <- extendImports(this, imports, List(IRI("")))
+      // _ <- IO { println(s"Imports: ${imports}") }
+      newRdf  <- extendImports(this, imports, List(IRI("")), base)
     } yield newRdf
 
   private lazy val owlImports = IRI("http://www.w3.org/2002/07/owl#imports")
@@ -402,18 +404,21 @@ case class RDFAsJenaModel(modelRef: Ref[IO,Model],
 
   private def extendImports(rdf: Rdf,
                             imports: List[IRI],
-                            visited: List[IRI]
+                            visited: List[IRI],
+                            base: Option[IRI]
                            ): RDFBuild[Rdf] = {
     imports match {
       case Nil => ok(rdf)
       case iri :: rest =>
         if (visited contains iri)
-          extendImports(rdf, rest, visited)
-        else
-          RDFAsJenaModel.fromIRI(iri).use(newRdf => for {
+          extendImports(rdf, rest, visited, base)
+        else for {
+          res <- RDFAsJenaModel.fromIRI(iri, base = base)
+          rdf <- res.use(newRdf => for {
               merged  <- merge(newRdf)
-              restRdf <- extendImports(merged, rest, iri :: visited)
+              restRdf <- extendImports(merged, rest, iri :: visited, base)
             } yield restRdf)
+        } yield rdf
     }
   }
 
@@ -481,71 +486,26 @@ object RDFAsJenaModel {
     IO(Resource.make(acquireRDF)(closeRDF))
   }
 
-  def fromIRI(iri: IRI): Resource[IO,RDFAsJenaModel] = {
-    val acquire: IO[RDFAsJenaModel] = for {
-      model <- IO { 
-        val m: Model = ModelFactory.createDefaultModel()
-        val g: Graph        = m.getGraph
-        val dest: StreamRDF = StreamRDFLib.graph(g)
-        val ctx: Context    = null
-        RDFParser.create
-        .source(iri.str)
-        .labelToNode(LabelToNode.createUseLabelEncoded)
-        .context(ctx)
-        .parse(dest) 
-        m
-      }
-      rdf <- RDFAsJenaModel.fromModel(model)
-    } yield rdf
-    Resource.make(acquire)(closeRDF)
+  def fromIRI(iri: IRI, format: String = "TURTLE", base: Option[IRI] = None): IO[Resource[IO,RDFAsJenaModel]] = {
+    // println(s"fromIRI: ${iri}")
+    fromURI(iri.str, format,base)
   }
 
   def fromURI(uri: String,
               format: String = "TURTLE",
-              base: Option[IRI] = None): Resource[IO,RDFAsJenaModel] = {
+              base: Option[IRI] = None): IO[Resource[IO,RDFAsJenaModel]] = {
     val baseURI = base.getOrElse(IRI(FileUtils.currentFolderURL))
-
-    // TODO: Capture exceptions in a Try?
-    val acquire = Try {
-      val m = ModelFactory.createDefaultModel()
-      val g: Graph = m.getGraph
-      val dest: StreamRDF = StreamRDFLib.graph(g)
-      val ctx: Context = null
-      RDFParser.create
-        .source(uri)
-        .base(baseURI.str)
-        .labelToNode(LabelToNode.createUseLabelEncoded())
-        .lang(shortnameToLang(format))
-        .context(ctx)
-        .parse(dest)
-      m
-    }.fold(
-      err => IO.raiseError(FromUriException(uri,err)),
-      m => RDFAsJenaModel.fromModel(m, base, Some(IRI(uri)))
-    )
-    Resource.make(acquire)(closeRDF)
+    // println(s"fromURI: ${uri}\nCurrent folder: ${FileUtils.currentFolderURL}")              
+    val url: URL = new URL(uri)
+    val urlReader: Reader = new InputStreamReader(url.openStream())
+    fromReader(urlReader, format, Some(baseURI))
   }
 
-  def fromFile(file: File, format: String, base: Option[IRI] = None): Resource[IO,RDFAsJenaModel] = {
-    val baseURI = base.getOrElse(IRI(""))
-    val acquire: IO[RDFAsJenaModel] = Try {
-      val m               = ModelFactory.createDefaultModel()
-      val is: InputStream = new FileInputStream(file)
-      val g: Graph        = m.getGraph
-      val dest: StreamRDF = StreamRDFLib.graph(g)
-      val ctx: Context    = null
-      RDFParser.create
-        .source(is)
-        .base(baseURI.str)
-        .labelToNode(LabelToNode.createUseLabelEncoded())
-        .lang(shortnameToLang(format))
-        .context(ctx)
-        .parse(dest)
-      m}.fold(
-      e => IO.raiseError(FromFileException(file,e)),
-      m => RDFAsJenaModel.fromModel(m,base, Some(IRI(file.toURI)))
-    )
-    Resource.make(acquire)(closeRDF)
+  def fromFile(file: File, format: String, base: Option[IRI] = None): 
+    IO[Resource[IO,RDFAsJenaModel]] = {
+    val is: InputStream = new FileInputStream(file)
+    val fileReader: Reader = new InputStreamReader(is)
+    fromReader(fileReader,format,base)
   }
 
   def fromString(str: String,
@@ -553,13 +513,23 @@ object RDFAsJenaModel {
                  base: Option[IRI] = None,
                  useBNodeLabels: Boolean = true
                 ): IO[Resource[IO,RDFAsJenaModel]] = {
+   val str_reader = new StringReader(str)  
+   // println(s"fromString BASE:${base}")                
+   fromReader(str_reader, format, base, useBNodeLabels)              
+  }
+
+  def fromReader(reader: Reader,
+                 format: String,
+                 base: Option[IRI] = None,
+                 useBNodeLabels: Boolean = true
+                ): IO[Resource[IO,RDFAsJenaModel]] = {
 
     var nodeLocations = Map[RDFNode,Set[Location]]()  
     var tripleLocations =  Map[RDFTriple,Set[Location]]()
+    // println(s"fromReader BASE=${base}")                
+
   
     def profile(baseUri: String, labelToNode: LabelToNode): ParserProfile = {
-    
-
      def addNodeLocation(node: RDFNode, location: Location): Unit = {
       nodeLocations = nodeLocations.updatedWith(node) {
         case None => Some(Set(location))
@@ -585,7 +555,7 @@ object RDFAsJenaModel {
         val rdfTriple: RDFTriple = JenaMapper.jenaTriple2Triple(subject,predicate,obj).unsafeRunSync()
         val location = Location(line, col, "TRIPLE")
         addTripleLocation(rdfTriple, location) 
-        println(s"Adding triple location: ${rdfTriple}@${location}\nMap ${tripleLocations}")
+        // println(s"Adding triple location: ${rdfTriple}@${location}\nMap ${tripleLocations}")
         triple
       }
       override def create(currentGraph: Node, token: Token): Node = {
@@ -596,7 +566,7 @@ object RDFAsJenaModel {
         val location : Location = Location(line,col,t)
         val rdfNode: RDFNode = node2RDFNode(node).unsafeRunSync()
         addNodeLocation(rdfNode,location)
-        println(s"Adding node location: ${rdfNode}@${location}\nMap ${nodeLocations}")
+        // println(s"Adding node location: ${rdfNode}@${location}. Node: ${node}")
         node
       }
      }
@@ -604,7 +574,6 @@ object RDFAsJenaModel {
 
     val acquire = Try {
       val m               = ModelFactory.createDefaultModel
-      val str_reader      = new StringReader(str)
       val baseURI         = base.getOrElse(IRI(""))
       val g: Graph        = m.getGraph
       val dest: StreamRDF = StreamRDFLib.graph(g)
@@ -612,14 +581,7 @@ object RDFAsJenaModel {
       val labelToNodePolicy = 
         if (useBNodeLabels) LabelToNode.createUseLabelEncoded()
         else SyntaxLabels.createLabelToNode()
-        
-/*      RDFParser.create
-        .source(str_reader)
-        .base(baseURI.str)
-        .labelToNode(labelToNodePolicy)
-        .lang(shortnameToLang(format))
-        .context(ctx)
-        .parse(dest) */
+
       val parser: ReaderRIOT = 
           RDFParserRegistry
           .getFactory(shortnameToLang(format))
@@ -627,14 +589,10 @@ object RDFAsJenaModel {
             shortnameToLang(format), 
             profile(baseURI.str, labelToNodePolicy)
           )
-        println(s"Before parsing: \nNodeLocations\n${nodeLocations}")
-        println(s"TripleLocations\n${tripleLocations}")
-        parser.read(str_reader, baseURI.str, null, dest,ctx)  
-        println(s"After parsing: \nNodeLocations\n${nodeLocations}")
-        println(s"TripleLocations\n${tripleLocations}")
+        parser.read(reader, baseURI.str, null, dest,ctx)  
         m 
       }.fold(
-      e => IO.raiseError(FromStringException(str,e)),
+      e => IO.raiseError(FromStringException(s"Error parsing RDF: ${e.getMessage()}\nReader: ${reader}",e)),
       m => RDFAsJenaModel.fromModel(m,base,None,nodeLocations.toMap, tripleLocations.toMap) 
     )
     IO(Resource.make(acquire)(closeRDF))
@@ -649,13 +607,6 @@ object RDFAsJenaModel {
     } yield newRdf*/
     fromString(cs.toString, format, base)
   }
-
-/*  def extractModel(rdf: RDFAsJenaModel): IO[Model] = {
-    rdf match {
-      case rdfJena: RDFAsJenaModel => rdfJena.getModel
-      case _                       => IO.raiseError(new RuntimeException("Cannot extract Model from rdf:" + rdf))
-    }
-  } */
 
   def availableFormats: List[String] = {
     RDFLanguages.getRegisteredLanguages().asScala.map(_.getName).toList.distinct
