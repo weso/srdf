@@ -7,7 +7,7 @@ lazy val utilsVersion         = "0.1.73"
 // Dependency versions
 lazy val catsVersion           = "2.3.0"
 lazy val catsEffectVersion     = "2.3.0"
-lazy val circeVersion          = "0.14.0-M1"
+lazy val circeVersion          = "0.14.0-M3"
 lazy val fs2Version            = "2.4.4"
 lazy val http4sVersion         = "0.21.3"
 lazy val jenaVersion           = "3.16.0"
