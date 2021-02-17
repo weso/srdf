@@ -24,7 +24,7 @@ lazy val typesafeConfigVersion = "1.4.0"
 // Compiler plugin dependency versions
 lazy val simulacrumVersion       = "1.0.0"
 lazy val scalaMacrosVersion      = "2.1.1"
-lazy val scalaCollCompatVersion  = "2.2.0"
+lazy val scalaCollCompatVersion  = "2.4.2"
 
 // Dependency modules
 
