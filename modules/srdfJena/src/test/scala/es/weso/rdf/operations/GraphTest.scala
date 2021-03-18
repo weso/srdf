@@ -4,16 +4,14 @@ import cats.syntax.show._
 import es.weso.rdf.jena.RDFAsJenaModel
 import es.weso.rdf.nodes._
 import es.weso.rdf.triples.RDFTriple
-import org.scalatest._
-import org.scalatest.matchers.should._
-import org.scalatest.funspec._
 import es.weso.utils.IOUtils._
 import cats.effect.IO
 import es.weso.rdf.RDFReader
 // import org.scalatest.matchers.should.Matchers._
 import es.weso.utils.internal.CollectionCompat._
+import munit.CatsEffectSuite
 
-class GraphTest extends AnyFunSpec with Matchers with EitherValues {
+class GraphTest extends CatsEffectSuite {
 
   def ex: IRI = IRI("http://example.org/")
 
@@ -23,9 +21,7 @@ class GraphTest extends AnyFunSpec with Matchers with EitherValues {
 
   def int(n: Int): IntegerLiteral = IntegerLiteral(n, n.toString)
 
-  describe("Graph Traverse") {
-
-    shouldTraverse(
+  shouldTraverse(
       iri("x"),
       """|prefix : <http://example.org/>
          |:x :p :y .
@@ -87,7 +83,7 @@ class GraphTest extends AnyFunSpec with Matchers with EitherValues {
                        str: String,
                        expected: LazyList[RDFNode],
                        withLog: Boolean = false): Unit = {
-      it(s"shouldTraverse(${node.show} in graph\n${str}\n and return\n$expected") {
+      test(s"shouldTraverse(${node.show} in graph\n${str}\n and return\n$expected") {
         val r = RDFAsJenaModel.fromChars(str, "TURTLE", None).flatMap(res => res.use(rdf => for {
           _ <- showLog(rdf, "RDF", withLog)
           traversed <- stream2io(Graph.traverse(node, rdf))
@@ -95,16 +91,12 @@ class GraphTest extends AnyFunSpec with Matchers with EitherValues {
             pprint.log(traversed.toList)
           }
         } yield traversed))
-        r.attempt.unsafeRunSync().fold(
-          e => fail(s"Error: $e"),
-          t => {
-            t.toList should contain theSameElementsAs expected.toList
-          })
+        r.map(ls => assertEquals(ls.sorted, expected.sorted))
       }
     }
-  }
 
-  describe("Graph Traverse") {
+
+
     shouldTraverseWithArcs(
       iri("x"),
       """|prefix : <http://example.org/>
@@ -117,8 +109,7 @@ class GraphTest extends AnyFunSpec with Matchers with EitherValues {
       )
     )
 
-    describe("Graph Traverse") {
-      shouldTraverseWithArcs(
+    shouldTraverseWithArcs(
         iri("x"),
         """|prefix : <http://example.org/>
            |:x :p :x, :y .
@@ -131,23 +122,17 @@ class GraphTest extends AnyFunSpec with Matchers with EitherValues {
           RDFTriple(iri("y"), iri("q"), iri("r"))
         )
       )
-    }
-
 
     def shouldTraverseWithArcs(node: RDFNode,
                                str: String,
                                expected: List[RDFTriple]): Unit = {
-      it(s"shouldTraverseWithArcs(${node.show} in graph ${str}) and return $expected") {
+      test(s"shouldTraverseWithArcs(${node.show} in graph ${str}) and return $expected") {
         val r = RDFAsJenaModel.fromChars(str, "TURTLE", None).flatMap(_.use(rdf => for {
           triples <- stream2io(Graph.traverseWithArcs(node, rdf))
         } yield triples))
-        r.attempt.unsafeRunSync().fold(
-          e => fail(s"Error: $e"),
-          triples => triples.toList should contain theSameElementsAs expected
-        )
+        r.map(triples => assertEquals(triples.toList.sorted,expected.sorted))
       }
     }
-  }
 
   def showLog(rdf: RDFReader, tag: String, withLog: Boolean): IO[Unit] = if (withLog)
     for {

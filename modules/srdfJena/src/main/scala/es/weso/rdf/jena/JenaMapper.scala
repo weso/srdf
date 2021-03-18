@@ -61,17 +61,30 @@ object JenaMapper {
   } yield
     RDFTriple(subj, pred, obj)
 
-  def node2RDFNode(node: Node): IO[RDFNode] = node match {
-    case _ if node.isURI() => IO(IRI(node.getURI()))
-    case _ if node.isLiteral() => IO(DatatypeLiteral(node.getLiteralLexicalForm(), IRI(node.getLiteralDatatypeURI())))
-    case _ if node.isBlank() => IO(BNode(node.getBlankNodeLabel()))
-    case _ => IO.raiseError(MsgRDFException(s"node2RDFNode: Unknown value: ${node}"))
+  def unsafeJenaTriple2Triple(subj: Node, pred: Node, obj: Node): RDFTriple = {
+    val s = unsafeNode2RDFNode(subj)
+    val p = unsafeNode2IRI(pred)
+    val o = unsafeNode2RDFNode(obj)
+    RDFTriple(s, p, o)  
   }
 
-  def node2IRI(node: Node): IO[IRI] = node match {
-    case _ if node.isURI() => IO(IRI(node.getURI()))
-    case _ => IO.raiseError(MsgRDFException(s"node2IRI: Unknown value: ${node}"))
+  def node2RDFNode(node: Node): IO[RDFNode] = IO(unsafeNode2RDFNode(node)
+  ) 
+
+  def unsafeNode2RDFNode(node: Node): RDFNode = node match {
+    case _ if node.isURI() => IRI(node.getURI())
+    case _ if node.isLiteral() => DatatypeLiteral(node.getLiteralLexicalForm(), IRI(node.getLiteralDatatypeURI()))
+    case _ if node.isBlank() => BNode(node.getBlankNodeLabel())
+    case _ => throw new MsgRDFException(s"node2RDFNode: Unknown value: ${node}")
   }
+
+  def node2IRI(node: Node): IO[IRI] = IO(unsafeNode2IRI(node))
+
+  def unsafeNode2IRI(node: Node): IRI = node match {
+    case _ if node.isURI() => IRI(node.getURI())
+    case _ => throw new MsgRDFException(s"node2IRI: Unknown value: ${node}")
+  }
+
 
   private def resolve(iri: IRI, base: Option[IRI]): String = base match {
     case None => iri.str

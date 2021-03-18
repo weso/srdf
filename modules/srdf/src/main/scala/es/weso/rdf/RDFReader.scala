@@ -8,9 +8,11 @@ import cats.implicits._
 import cats.effect._
 import fs2.Stream
 import es.weso.utils.internal.CollectionCompat._
+import es.weso.rdf.locations._
 
 /**
  * RDFReader can read RDF data from several sources like an in-memory model or a SPARQL endpoint
+ * 
  */
 
 trait RDFReader {
@@ -18,8 +20,12 @@ trait RDFReader {
   type Rdf <: RDFReader
   type RDFRead[A] = IO[A]
   type RDFStream[A] = Stream[IO,A]
-
+  
   val id: String
+
+  val nodeLocations: Map[RDFNode,Set[Location]] = Map()
+  val tripleLocations: Map[RDFTriple,Set[Location]] = Map()
+  
 
   /**
     * @return List of available formats that this RDFReader supports
@@ -144,7 +150,7 @@ trait RDFReader {
 
   def hasPredicateWithSubject(n: RDFNode, p: IRI): RDFRead[Boolean] 
 
-  def mkStream[A,B,F[_]:Effect](vs: List[A], f: A => Stream[F,B]): Stream[F,B] = {
+  def mkStream[A,B](vs: List[A], f: A => Stream[IO,B]): Stream[IO,B] = {
     vs.traverse(f).map(Stream.emits(_)).flatten
   }
   /*for {

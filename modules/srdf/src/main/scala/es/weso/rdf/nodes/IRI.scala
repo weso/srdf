@@ -118,4 +118,6 @@ object IRI {
 
   implicit val iriShow = Show.show[IRI] { _.toString }
 
+  implicit val iriOrdering: Ordering[IRI] = (iri1: IRI, iri2: IRI) => iri1.uri.compareTo(iri2.uri)
+
 }

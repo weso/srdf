@@ -90,5 +90,18 @@ object RDFTriple {
     str.toString()
   }
 
+  implicit val orderingRDFTriple: Ordering[RDFTriple] = 
+   (x: RDFTriple, y: RDFTriple) => {
+      Ordering[RDFNode].compare(x.subj, y.subj) <||>
+      Ordering[IRI].compare(x.pred, y.pred) <||>
+      Ordering[RDFNode].compare(x.obj, y.obj)
+    }
+
+  // Inspired by: https://alexn.org/blog/2020/11/17/best-practice-for-ordering-comparable.html
+  private implicit class IntExtensions(val num: Int) extends AnyVal {
+    def `<||>`(other: => Int): Int = 
+      if (num == 0) other else num
+  }
+
 }
 
