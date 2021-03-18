@@ -7,6 +7,8 @@ lazy val supportedScalaVersions = List(
 //  scala3
 )
 
+val Java11 = "adopt@1.11"  
+
 lazy val utilsVersion         = "0.1.78"
 
 // Dependency versions
@@ -63,12 +65,15 @@ lazy val scalaCollCompat   = "org.scala-lang.modules"     %% "scala-collection-c
 lazy val scalaTest         = "org.scalatest"              %% "scalatest"           % scalaTestVersion
 lazy val typesafeConfig    = "com.typesafe"               % "config"               % typesafeConfigVersion
 
+
+ThisBuild / githubWorkflowJavaVersions := Seq(Java11)
+
+
 def priorTo2_13(scalaVersion: String): Boolean =
   CrossVersion.partialVersion(scalaVersion) match {
     case Some((2, minor)) if minor < 13 => true
     case _                              => false
   }
-
 
 lazy val srdfMain = project
   .in(file("."))
@@ -90,7 +95,6 @@ lazy val srdfMain = project
       scallop,
       decline, declineEffect
     ),
-
     publish / skip := true,
     ThisBuild / turbo := true
   )
