@@ -8,7 +8,6 @@ import org.apache.jena.datatypes.xsd.XSDDatatype
 import es.weso.rdf.triples.RDFTriple
 
 import es.weso.utils.internal.CollectionCompat.CollectionConverters._
-import com.typesafe.scalalogging._
 import es.weso.rdf.path._
 import es.weso.utils.EitherUtils
 import org.apache.jena.sparql.path._
@@ -18,13 +17,13 @@ import cats.effect._
 import es.weso.utils.IOUtils._
 import cats.implicits._
 import org.apache.jena.graph.Node
-import es.weso.rdf.RDFException
+// import es.weso.rdf.RDFException
 import es.weso.rdf.MsgRDFException
 
 
 object JenaMapper {
 
-  val logger = Logger("JenaMapper")
+//   val logger = Logger("JenaMapper")
 
   lazy val emptyModel = ModelFactory.createDefaultModel()
 

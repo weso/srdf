@@ -9,6 +9,7 @@ import cats.effect.IO
 import es.weso.rdf.RDFReader
 import cats.implicits._
 import munit._
+import es.weso.utils.internal.CollectionCompat.LazyList
 
 class NormalizeBNodesTest extends CatsEffectSuite {
   

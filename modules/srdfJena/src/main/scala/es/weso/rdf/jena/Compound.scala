@@ -1,5 +1,5 @@
 package es.weso.rdf.jena
-import com.typesafe.scalalogging.LazyLogging
+// import com.typesafe.scalalogging.LazyLogging
 import es.weso.rdf._
 import es.weso.rdf.nodes.{RDFNode, _}
 import es.weso.rdf.path.SHACLPath
@@ -15,8 +15,7 @@ import es.weso.utils.IOUtils._
 
 case class Compound(members: List[RDFReader])
   extends RDFReader
-     with RDFReasoner
-     with LazyLogging {
+     with RDFReasoner {
 
   type Rdf = Compound
 
