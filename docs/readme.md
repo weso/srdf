@@ -4,4 +4,6 @@ title: Readme
 ---
 # SRDF module
 
-The SRDF module provides a Simple RDF interface
+SRDF contains a minimal interface to handle RDF. 
+It contains several implementations: 
+

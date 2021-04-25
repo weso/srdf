@@ -147,7 +147,7 @@ lazy val docs = project
    )
   .dependsOn(
     srdf, 
-//    srdfJena, 
+    srdfJena, 
 //    srdf4j
     )
   .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
@@ -169,7 +169,7 @@ lazy val mdocSettings = Seq(
   ScalaUnidoc / unidoc / scalacOptions ++= Seq(
     "-doc-source-url", s"https://github.com/weso/srdf/tree/v${(ThisBuild / version).value}€{FILE_PATH}.scala",
     "-sourcepath", (LocalRootProject / baseDirectory).value.getAbsolutePath,
-    "-doc-title", "Utils",
+    "-doc-title", "SRDF",
     "-doc-version", s"v${(ThisBuild / version).value}"
   )
 )
