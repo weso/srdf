@@ -9,7 +9,7 @@ lazy val supportedScalaVersions = List(
 
 val Java11 = "adopt@1.11"  
 
-lazy val utilsVersion         = "0.1.85"
+lazy val utilsVersion         = "0.1.87"
 
 // Dependency versions
 lazy val catsVersion           = "2.5.0"
@@ -49,7 +49,7 @@ lazy val jenaArq           = "org.apache.jena"            % "jena-arq"          
 lazy val jenaFuseki        = "org.apache.jena"            % "jena-fuseki-main"     % jenaVersion
 lazy val munit             = "org.scalameta"              %% "munit"               % munitVersion
 lazy val munitEffects      = "org.typelevel"              %% "munit-cats-effect-3" % munitEffectVersion
-lazy val rdf4j_runtime     = "org.eclipse.rdf4j"          % "rdf4j-runtime"        % rdf4jVersion
+lazy val rdf4j_runtime     = "org.eclipse.rdf4j"          % "rdf4j-runtime"        % rdf4jVersion pomOnly()
 lazy val scalacheck        = "org.scalacheck"             %% "scalacheck"          % scalacheckVersion
 lazy val scalaCollCompat   = "org.scala-lang.modules"     %% "scala-collection-compat" % scalaCollCompatVersion
 // lazy val typesafeConfig    = "com.typesafe"               % "config"               % typesafeConfigVersion
