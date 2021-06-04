@@ -2,14 +2,14 @@ lazy val scala212 = "2.12.13"
 lazy val scala213 = "2.13.5"
 lazy val scala3 = "3.0.0-RC2"
 lazy val supportedScalaVersions = List(
-  scala213, 
-  scala212, 
+  scala213,
+  scala212,
   // scala3
 )
 
-val Java11 = "adopt@1.11"  
+val Java11 = "adopt@1.11"
 
-lazy val utilsVersion         = "0.1.87"
+lazy val utilsVersion         = "0.1.88"
 
 // Dependency versions
 lazy val catsVersion           = "2.5.0"
@@ -42,7 +42,7 @@ lazy val circeCore         = "io.circe"                   %% "circe-core"       
 lazy val circeGeneric      = "io.circe"                   %% "circe-generic"       % circeVersion
 lazy val circeParser       = "io.circe"                   %% "circe-parser"        % circeVersion
 lazy val decline           = "com.monovore"               %% "decline"             % declineVersion
-lazy val declineEffect     = "com.monovore"               %% "decline-effect"      % declineVersion 
+lazy val declineEffect     = "com.monovore"               %% "decline-effect"      % declineVersion
 lazy val fs2Core           = "co.fs2"                     %% "fs2-core"            % fs2Version
 lazy val http4sEmberClient = "org.http4s"                 %% "http4s-ember-client" % http4sVersion
 lazy val jenaArq           = "org.apache.jena"            % "jena-arq"             % jenaVersion
@@ -55,9 +55,6 @@ lazy val scalaCollCompat   = "org.scala-lang.modules"     %% "scala-collection-c
 // lazy val typesafeConfig    = "com.typesafe"               % "config"               % typesafeConfigVersion
 
 
-ThisBuild / githubWorkflowJavaVersions := Seq(Java11)
-
-
 def priorTo2_13(scalaVersion: String): Boolean =
   CrossVersion.partialVersion(scalaVersion) match {
     case Some((2, minor)) if minor < 13 => true
@@ -67,7 +64,7 @@ def priorTo2_13(scalaVersion: String): Boolean =
 lazy val srdfMain = project
   .in(file("."))
   .settings(
-    commonSettings, 
+    commonSettings,
     publishSettings
   )
   .aggregate(srdfJena, srdf4j, srdf, docs)
@@ -99,7 +96,7 @@ lazy val srdf = project
 //      scalaCollCompat,
     )
     )
-    
+
   lazy val srdfJena = project
   .in(file("modules/srdfJena"))
   .dependsOn(srdf)
@@ -138,16 +135,16 @@ lazy val srdf4j = project
     )
   )
 
-lazy val docs = project   
-  .in(file("srdf-docs")) 
+lazy val docs = project
+  .in(file("srdf-docs"))
   .settings(
     noPublishSettings,
     mdocSettings,
     ScalaUnidoc / unidoc / unidocProjectFilter := inAnyProject -- inProjects(noDocProjects: _*)
    )
   .dependsOn(
-    srdf, 
-    srdfJena, 
+    srdf,
+    srdfJena,
 //    srdf4j
     )
   .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
@@ -205,23 +202,28 @@ lazy val compilationSettings = Seq(
 
 lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
   organization := "es.weso",
-  resolvers ++= Seq(Resolver.githubPackages("weso")), 
   coverageHighlighting := priorTo2_13(scalaVersion.value),
-  githubOwner := "weso",
-  githubRepository := "srdf"
  )
 
 lazy val publishSettings = Seq(
-  homepage        := Some(url("https://github.com/weso/srdf")),
-  licenses        := Seq("MIT" -> url("http://opensource.org/licenses/MIT")),
-  scmInfo         := Some(ScmInfo(url("https://github.com/weso/srdf"), "scm:git:git@github.com:weso/srdf.git")),
-  autoAPIMappings := true,
-  pomExtra        := <developers>
+  homepage            := Some(url("https://github.com/weso/srdf")),
+  publishMavenStyle   := true,
+  licenses            := Seq("MIT" -> url("http://opensource.org/licenses/MIT")),
+  homepage            := Some(url("https://github.com/weso/srdf")),
+  scmInfo             := Some(ScmInfo(url("https://github.com/weso/srdf"), "scm:git:git@github.com:weso/srdf.git")),
+  autoAPIMappings     := true,
+  pomExtra            := <developers>
                        <developer>
                          <id>labra</id>
                          <name>Jose Emilio Labra Gayo</name>
                          <url>https://github.com/labra/</url>
                        </developer>
                      </developers>,
-  publishMavenStyle              := true,
+ ThisBuild / publishTo := {
+   val nexus = "https://oss.sonatype.org/"
+   if (isSnapshot.value)
+     Some("snapshots" at nexus + "content/repositories/snapshots")
+   else
+     Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+ }
 )
