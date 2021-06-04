@@ -54,6 +54,7 @@ lazy val scalacheck        = "org.scalacheck"             %% "scalacheck"       
 lazy val scalaCollCompat   = "org.scala-lang.modules"     %% "scala-collection-compat" % scalaCollCompatVersion
 // lazy val typesafeConfig    = "com.typesafe"               % "config"               % typesafeConfigVersion
 
+ThisBuild / githubWorkflowJavaVersions := Seq(Java11)
 
 def priorTo2_13(scalaVersion: String): Boolean =
   CrossVersion.partialVersion(scalaVersion) match {
