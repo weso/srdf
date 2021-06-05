@@ -65,8 +65,7 @@ def priorTo2_13(scalaVersion: String): Boolean =
 lazy val srdfMain = project
   .in(file("."))
   .settings(
-    commonSettings,
-    publishSettings
+    commonSettings
   )
   .aggregate(srdfJena, srdf4j, srdf, docs)
   .dependsOn(srdfJena)
@@ -80,7 +79,7 @@ lazy val srdfMain = project
 
 lazy val srdf = project
   .in(file("modules/srdf"))
-  .settings(commonSettings, publishSettings)
+  .settings(commonSettings)
   .settings(
     crossScalaVersions := supportedScalaVersions,
     libraryDependencies ++= Seq(
@@ -101,7 +100,7 @@ lazy val srdf = project
   lazy val srdfJena = project
   .in(file("modules/srdfJena"))
   .dependsOn(srdf)
-  .settings(commonSettings, publishSettings)
+  .settings(commonSettings)
   .settings(
     crossScalaVersions := supportedScalaVersions,
     libraryDependencies ++= Seq(
@@ -122,7 +121,7 @@ lazy val srdf = project
 lazy val srdf4j = project
   .in(file("modules/srdf4j"))
   .dependsOn(srdf)
-  .settings(commonSettings, publishSettings)
+  .settings(commonSettings)
   .settings(
     crossScalaVersions := supportedScalaVersions,
     libraryDependencies ++= Seq(
