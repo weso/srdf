@@ -7,7 +7,7 @@ jobs:
   publish:
     strategy:
       matrix:
-        os: ubuntu-20.04
+        os: [ubuntu-latest]
         scala: [2.12.13]
         java: [adopt@1.11]
     runs-on: ${{ matrix.os }}
