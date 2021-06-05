@@ -9,7 +9,7 @@ lazy val supportedScalaVersions = List(
 
 val Java11 = "adopt@1.11"
 
-lazy val utilsVersion         = "0.1.88"
+lazy val utilsVersion         = "0.1.94"
 
 // Dependency versions
 lazy val catsVersion           = "2.5.0"
@@ -201,9 +201,8 @@ lazy val compilationSettings = Seq(
   // format: on
 )
 
-lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
+/*lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
   organization := "es.weso",
-  coverageHighlighting := priorTo2_13(scalaVersion.value),
  )
 
 lazy val publishSettings = Seq(
@@ -227,4 +226,23 @@ lazy val publishSettings = Seq(
    else
      Some("releases"  at nexus + "service/local/staging/deploy/maven2")
  }
+)*/
+
+lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
+  coverageHighlighting := priorTo2_13(scalaVersion.value),
+  organization := "es.weso",
+  sonatypeProfileName := ("es.weso"),
+  homepage            := Some(url("https://github.com/weso/srdf")),
+  licenses            := Seq("MIT" -> url("http://opensource.org/licenses/MIT")),
+  scmInfo             := Some(ScmInfo(url("https://github.com/weso/srdf"), "scm:git:git@github.com:weso/srdf.git")),
+  autoAPIMappings     := true,
+  apiURL              := Some(url("http://weso.github.io/utils/latest/api/")),
+  autoAPIMappings     := true,
+  developers := List(
+    Developer(
+      id="labra",
+      name="Jose Emilio Labra Gayo",
+      email="jelabra@gmail.com",
+      url=url("https://weso.labra.es")
+    ))
 )
