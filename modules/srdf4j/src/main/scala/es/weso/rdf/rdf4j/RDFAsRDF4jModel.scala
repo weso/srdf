@@ -275,8 +275,13 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
   private def getImports: IO[List[IRI]] =
     for {
       ts <- triplesWithPredicate(owlImports).compile.toList
-      is <- fromES(ts.map(_.obj).map(_.toIRI).toList.sequence)
+      is <- fromES(objects2iris(ts))
     } yield is
+
+  def objects2iris(ts: List[RDFTriple]): Either[String, List[IRI]] = {
+    type E[A] = Either[String,A]
+    ts.map(_.obj).map(_.toIRI).sequence[E,IRI]
+  }
 
   private def extendImports(rdf: Rdf, imports: List[IRI], visited: List[IRI]): IO[Rdf] = {
     imports match {

@@ -54,6 +54,8 @@ lazy val scalacheck        = "org.scalacheck"             %% "scalacheck"       
 lazy val scalaCollCompat   = "org.scala-lang.modules"     %% "scala-collection-compat" % scalaCollCompatVersion
 // lazy val typesafeConfig    = "com.typesafe"               % "config"               % typesafeConfigVersion
 
+addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.0" cross CrossVersion.full)
+
 ThisBuild / githubWorkflowJavaVersions := Seq(Java11)
 
 def priorTo2_13(scalaVersion: String): Boolean =
@@ -67,8 +69,8 @@ lazy val srdfMain = project
   .settings(
     commonSettings
   )
-  .aggregate(srdfJena, srdf4j, srdf, docs)
-  .dependsOn(srdfJena)
+  .aggregate(srdf, srdfJena, srdf4j, docs)
+  .dependsOn(srdf, srdfJena)
   .settings(
     libraryDependencies ++= Seq(
       decline, declineEffect

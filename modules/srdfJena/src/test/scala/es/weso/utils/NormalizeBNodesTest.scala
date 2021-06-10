@@ -5,7 +5,7 @@ import es.weso.rdf.nodes.{BNode, IRI}
 import es.weso.rdf.triples.RDFTriple
 import es.weso.utils.NormalizeBNodes._
 import es.weso.utils.IOUtils._
-import cats.effect.IO
+import cats.effect._
 import es.weso.rdf.RDFReader
 import cats.implicits._
 import munit._
@@ -24,6 +24,7 @@ class NormalizeBNodesTest extends CatsEffectSuite {
         """.stripMargin
 
       def iri(x: String) = IRI(s"http://e.com/" + x)
+
 
       val r = for {
         res1 <- RDFAsJenaModel.empty
