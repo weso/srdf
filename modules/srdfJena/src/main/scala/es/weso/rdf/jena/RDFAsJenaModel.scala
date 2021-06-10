@@ -401,10 +401,12 @@ case class RDFAsJenaModel(modelRef: Ref[IO,Model],
 
   private lazy val owlImports = IRI("http://www.w3.org/2002/07/owl#imports")
 
+  type E[A] = Either[String,A]
+
   private def getImports: RDFBuild[List[IRI]] =
     for {
       ts <- triplesWithPredicate(owlImports).compile.toList
-      os <- fromES(ts.map(_.obj.toIRI).sequence)
+      os <- fromES(ts.map(_.obj.toIRI).sequence[E,IRI])
     } yield os
 
   private def extendImports(rdf: Rdf,

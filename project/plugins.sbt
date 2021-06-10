@@ -7,3 +7,6 @@ addSbtPlugin("org.scoverage"     % "sbt-scoverage"       % "1.8.2")
 addSbtPlugin("com.typesafe.sbt"  % "sbt-git"             % "1.0.0")
 // addSbtPlugin("org.lyranthe.sbt"  % "partial-unification" % "1.1.2")
 addSbtPlugin("com.geirsson"      % "sbt-ci-release"      % "1.5.7")
+
+addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.0" cross CrossVersion.full)
+

@@ -28,7 +28,7 @@ case class IRI(uri: URI) extends RDFNode {
     "<" + uri.parseServerAuthority.toString + ">"
   }
 
-  implicit def minOrd = new Ordering[IRI] {
+  implicit def minOrd: Ordering[IRI] = new Ordering[IRI] {
     def compare(a: IRI, b: IRI) = a.uri.compareTo(b.uri)
   }
 
@@ -116,7 +116,7 @@ object IRI {
         Left(s"$str doesn't match IRI regex $iriRegex")
     }
 
-  implicit val iriShow = Show.show[IRI] { _.toString }
+  implicit val iriShow: Show[IRI] = Show.show[IRI] { _.toString }
 
   implicit val iriOrdering: Ordering[IRI] = (iri1: IRI, iri2: IRI) => iri1.uri.compareTo(iri2.uri)
 

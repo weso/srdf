@@ -6,7 +6,7 @@ import org.apache.jena.rdf.model.Model
 import java.io.InputStream
 
 
-trait JenaBased extends {
+trait JenaBased {
 
   def checkIsomorphic(m1: Model, m2: Model): Either[String,Unit] = {
     val b = m1.isIsomorphicWith(m2)

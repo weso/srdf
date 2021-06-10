@@ -150,9 +150,10 @@ trait RDFReader {
 
   def hasPredicateWithSubject(n: RDFNode, p: IRI): RDFRead[Boolean] 
 
+  type S[A] = Stream[IO,A]
+
   def mkStream[A,B](vs: List[A], f: A => Stream[IO,B]): Stream[IO,B] = {
-    ???
-    // vs.traverse(f).map(Stream.emits(_)).flatten
+    vs.traverse[S,B](f).map(Stream.emits(_)).flatten
   }
   /*for {
     bs <- vs.map(f).sequence
