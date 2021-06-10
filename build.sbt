@@ -1,26 +1,26 @@
-lazy val scala212 = "2.12.13"
-lazy val scala213 = "2.13.5"
-lazy val scala3 = "3.0.0-RC2"
+lazy val scala212 = "2.12.14"
+lazy val scala213 = "2.13.6"
+lazy val scala3   = "3.0.0"
 lazy val supportedScalaVersions = List(
   scala213,
   scala212,
-  // scala3
+  scala3
 )
 
 val Java11 = "adopt@1.11"
 
-lazy val utilsVersion         = "0.1.94"
+lazy val utilsVersion         = "0.1.97-SNAPSHOT"
 
 // Dependency versions
-lazy val catsVersion           = "2.5.0"
-lazy val catsEffectVersion     = "3.0.2"
-lazy val circeVersion          = "0.14.0-M5"
-lazy val declineVersion        = "2.0.0-RC1"
-lazy val fs2Version            = "3.0.1"
-lazy val http4sVersion         = "1.0.0-M21"
+lazy val catsVersion           = "2.6.1"
+lazy val catsEffectVersion     = "3.1.1"
+lazy val circeVersion          = "0.14.1"
+lazy val declineVersion        = "2.0.0"
+lazy val fs2Version            = "3.0.4"
+lazy val http4sVersion         = "1.0.0-M23"
 lazy val jenaVersion           = "3.16.0"
-lazy val munitVersion          = "0.7.23"
-lazy val munitEffectVersion    = "1.0.1"
+lazy val munitVersion          = "0.7.26"
+lazy val munitEffectVersion    = "1.0.3"
 
 lazy val rdf4jVersion          = "3.4.2"
 lazy val scalacheckVersion     = "1.14.0"
@@ -29,7 +29,7 @@ lazy val scalacheckVersion     = "1.14.0"
 // Compiler plugin dependency versions
 lazy val simulacrumVersion       = "1.0.0"
 lazy val scalaMacrosVersion      = "2.1.1"
-lazy val scalaCollCompatVersion  = "2.4.3"
+lazy val scalaCollCompatVersion  = "2.4.4"
 
 // Dependency modules
 
@@ -243,5 +243,6 @@ lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
       name="Jose Emilio Labra Gayo",
       email="jelabra@gmail.com",
       url=url("https://weso.labra.es")
-    ))
+    )),
+  resolvers += Resolver.sonatypeRepo("public")  
 )

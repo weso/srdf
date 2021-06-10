@@ -673,11 +673,11 @@ trait RDFParser {
   def ok[A](x: A): RDFParser[A] = 
     parseOk(x)
 
-  def parseFail[A](str: String): RDFParser[A] =
-    EitherT(ReaderT.pure(Left(RDFException.fromString(str))))
+  def parseFail[A](str: String): RDFParser[A] = 
+    EitherT[R,Err,A](ReaderT.pure(Left(RDFException.fromString(str))))
 
   def parseException[A](e: Throwable): RDFParser[A] =
-    EitherT(ReaderT.pure(Left(RDFException.fromException(e))))
+    EitherT[R,Err,A](ReaderT.pure(Left(RDFException.fromException(e))))
 
 
   def parseOk[A](x: A): RDFParser[A] =
