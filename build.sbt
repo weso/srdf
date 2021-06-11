@@ -22,7 +22,7 @@ lazy val jenaVersion           = "3.16.0"
 lazy val munitVersion          = "0.7.26"
 lazy val munitEffectVersion    = "1.0.3"
 
-lazy val rdf4jVersion          = "3.4.2"
+lazy val rdf4jVersion          = "3.4.4"
 lazy val scalacheckVersion     = "1.14.0"
 // lazy val typesafeConfigVersion = "1.4.0"
 
