@@ -39,7 +39,6 @@ case class RDFFromWeb(
 
   type Rdf = RDFFromWeb
   
-  implicit val contextShift: ContextShift[IO] = IO.contextShift(global)  
 
   val id = "RDFFromWeb"
   val log = LoggerFactory.getLogger("RDFFromWeb")

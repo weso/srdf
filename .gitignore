@@ -1,3 +1,8 @@
+/website/build/
+/website/node_modules/
+/website/static/api/
+/website/variables.js
+/website/yarn.lock
 *.class
 *.log
 
@@ -10,6 +15,7 @@ project/boot/
 project/plugins/project/
 
 # Scala-IDE specific
+.bsp
 .metals
 .bloop
 .scala_dependencies

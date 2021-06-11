@@ -1,5 +1,5 @@
 package es.weso.rdf.jena
-import com.typesafe.scalalogging.LazyLogging
+// import com.typesafe.scalalogging.LazyLogging
 import es.weso.rdf._
 import es.weso.rdf.nodes.{RDFNode, _}
 import es.weso.rdf.path.SHACLPath
@@ -15,8 +15,7 @@ import es.weso.utils.IOUtils._
 
 case class Compound(members: List[RDFReader])
   extends RDFReader
-     with RDFReasoner
-     with LazyLogging {
+     with RDFReasoner {
 
   type Rdf = Compound
 
@@ -43,19 +42,19 @@ case class Compound(members: List[RDFReader])
   }
 
   override def iris(): RDFStream[IRI] =
-    mkSeq(members, (e:RDFReader) => e.iris())
+    mkStream(members, (e:RDFReader) => e.iris())
 
   override def subjects(): RDFStream[RDFNode] =
-    mkSeq(members, (e:RDFReader) => e.subjects())
+    mkStream(members, (e:RDFReader) => e.subjects())
 
   override def predicates(): RDFStream[IRI] =
-    mkSeq(members, (e:RDFReader) => e.predicates())
+    mkStream(members, (e:RDFReader) => e.predicates())
 
   override def iriObjects(): RDFStream[IRI] =
-    mkSeq(members, (e:RDFReader) => e.iriObjects())
+    mkStream(members, (e:RDFReader) => e.iriObjects())
 
   override def getSHACLInstances(c: RDFNode): RDFStream[RDFNode] =
-    mkSeq(members,
+    mkStream(members,
       (e:RDFReader) => e.getSHACLInstances(c))
 
   private def someTrue(xs: Set[Boolean]): Boolean = xs.exists(_ == true)
@@ -66,34 +65,34 @@ case class Compound(members: List[RDFReader])
   }
 
   override def nodesWithPath(path: SHACLPath): RDFStream[(RDFNode, RDFNode)] =
-    mkSeq(members, (e:RDFReader) => e.nodesWithPath(path))
+    mkStream(members, (e:RDFReader) => e.nodesWithPath(path))
 
 
   override def subjectsWithPath(path: SHACLPath, obj: RDFNode): RDFStream[RDFNode] =
-    mkSeq(members, (e:RDFReader) => e.subjectsWithPath(path,obj))
+    mkStream(members, (e:RDFReader) => e.subjectsWithPath(path,obj))
 
   override def objectsWithPath(subj: RDFNode, path: SHACLPath): RDFStream[RDFNode] =
-    mkSeq(members, (e:RDFReader) => e.objectsWithPath(subj,path))
+    mkStream(members, (e:RDFReader) => e.objectsWithPath(subj,path))
 
   override def checkDatatype(node: RDFNode, datatype: IRI): RDFRead[Boolean] =
     JenaMapper.wellTypedDatatype(node, datatype)
 
   override def rdfTriples(): RDFStream[RDFTriple] =
-    mkSeq(members, (e:RDFReader) => e.rdfTriples())
+    mkStream(members, (e:RDFReader) => e.rdfTriples())
 
   def triplesWithSubject(node: RDFNode): RDFStream[RDFTriple] =
-    mkSeq(members, (e:RDFReader) => e.triplesWithSubject(node))
+    mkStream(members, (e:RDFReader) => e.triplesWithSubject(node))
 
   def triplesWithPredicate(p: IRI): RDFStream[RDFTriple] = {
-    mkSeq(members, (e:RDFReader) => e.triplesWithPredicate(p))
+    mkStream(members, (e:RDFReader) => e.triplesWithPredicate(p))
   }
 
   def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] = {
-    mkSeq(members, (e:RDFReader) => e.triplesWithObject(node))
+    mkStream(members, (e:RDFReader) => e.triplesWithObject(node))
   }
 
   def triplesWithPredicateObject(p: IRI, o: RDFNode): RDFStream[RDFTriple] = {
-    mkSeq(members, (e:RDFReader) => e.triplesWithPredicateObject(p,o))
+    mkStream(members, (e:RDFReader) => e.triplesWithPredicateObject(p,o))
   }
 
   override def applyInference(inference: InferenceEngine): RDFRead[Rdf] = {

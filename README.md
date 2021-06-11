@@ -12,12 +12,27 @@ This interface is being used by SHACLEX.
 [![Build Status](https://travis-ci.org/weso/srdf.svg?branch=master)](https://travis-ci.org/weso/srdf)
 [![codecov](https://codecov.io/gh/weso/srdf/branch/master/graph/badge.svg)](https://codecov.io/gh/weso/srdf)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/67e1af0627934936b1b58796069d2a55)](https://www.codacy.com/gh/weso/srdf?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=weso/srdf&amp;utm_campaign=Badge_Grade)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/es.weso/srdf_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/es.weso/srdf_2.13)
 
 ## Installation and compilation
 
 The project uses [sbt](http://www.scala-sbt.org/) for compilation as well as Java 1.8.
 
 * `sbt test` compiles and runs the tests
+
+## Publishing to OSS-Sonatype
+
+This project uses [the sbt ci release](https://github.com/olafurpg/sbt-ci-release) plugin for publishing to [OSS Sonatype](https://oss.sonatype.org/).
+
+##### SNAPSHOT Releases
+Open a PR and merge it to watch the CI release a -SNAPSHOT version
+
+##### Full Library Releases
+1. Push a tag and watch the CI do a regular release
+2. `git tag -a v0.1.0 -m "v0.1.0"`
+3. `git push origin v0.1.0`
+_Note that the tag version MUST start with v._
+
 
 ## Author & contributors
 

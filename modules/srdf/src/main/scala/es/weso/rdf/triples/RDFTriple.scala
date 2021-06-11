@@ -3,7 +3,11 @@ package es.weso.rdf.triples
 import scala.collection.Set
 import es.weso.rdf.nodes._
 
-case class RDFTriple(subj: RDFNode, pred: IRI, obj: RDFNode) {
+case class RDFTriple(
+  subj: RDFNode, 
+  pred: IRI, 
+  obj: RDFNode
+ ) {
 
   def hasSubject(node: RDFNode): Boolean = subj == node
   def hasObject(node: RDFNode): Boolean = obj == node
@@ -11,7 +15,7 @@ case class RDFTriple(subj: RDFNode, pred: IRI, obj: RDFNode) {
 
   def extractBNode(node: RDFNode): Set[BNode] = {
     node match {
-      case b @ BNode(_) => Set(b)
+      case b : BNode => Set(b)
       case _ => Set()
     }
   }
@@ -84,6 +88,19 @@ object RDFTriple {
       str ++= s"${t.toString}\n"
     }
     str.toString()
+  }
+
+  implicit val orderingRDFTriple: Ordering[RDFTriple] = 
+   (x: RDFTriple, y: RDFTriple) => {
+      Ordering[RDFNode].compare(x.subj, y.subj) <||>
+      Ordering[IRI].compare(x.pred, y.pred) <||>
+      Ordering[RDFNode].compare(x.obj, y.obj)
+    }
+
+  // Inspired by: https://alexn.org/blog/2020/11/17/best-practice-for-ordering-comparable.html
+  private implicit class IntExtensions(val num: Int) extends AnyVal {
+    def `<||>`(other: => Int): Int = 
+      if (num == 0) other else num
   }
 
 }
