@@ -20,7 +20,6 @@ import io.circe.Json
 import io.circe.parser.parse
 import org.apache.jena.rdf.model.{RDFNode => JenaRDFNode}
 import cats.implicits._
-import com.typesafe.scalalogging.LazyLogging
 import es.weso.rdf.jena.JenaMapper._
 import es.weso.utils.IOUtils._
 import cats.effect._
@@ -29,8 +28,7 @@ import es.weso.utils.StreamUtils._
 
 case class Endpoint(endpointIRI: IRI)
   extends RDFReader
-     with RDFReasoner
-     with LazyLogging {
+     with RDFReasoner {
   type Rdf = Endpoint
 
   val endpoint = endpointIRI.str
@@ -83,6 +81,7 @@ case class Endpoint(endpointIRI: IRI)
     IO(s.toList)
   }.fold(e => errStream(s"iriObjects exception: ${e.getMessage}"), streamFromIOs(_))
 
+
   override def getSHACLInstances(c: RDFNode): RDFStream[RDFNode] = {
     c match {
       case iri: IRI => try {
@@ -94,7 +93,9 @@ case class Endpoint(endpointIRI: IRI)
             node.asRight
           }
         }).toList
-        rs.sequence.fold(errStream(_), Stream.emits(_))
+        type E[A] = Either[String,A] // Needed to annotate sequence
+        val es: Either[String,List[RDFNode]] = rs.sequence[E,RDFNode]
+        es.fold(errStream(_), Stream.emits(_))
       } catch {
         case e: Exception => errStream(s"getSHACLInstances: ${e.getMessage}")
       }

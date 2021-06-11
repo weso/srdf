@@ -3,12 +3,12 @@ package es.weso.rdf
 import es.weso.rdf.nodes._
 
 import scala.collection.immutable.Map
-import com.typesafe.scalalogging.LazyLogging
+// import com.typesafe.scalalogging.LazyLogging
 
 /**
  * PrefixMap representation
  */
-case class PrefixMap(pm: Map[Prefix, IRI]) extends LazyLogging {
+case class PrefixMap(pm: Map[Prefix, IRI]) {
 
   def isEmpty: Boolean = pm.isEmpty
 
@@ -30,7 +30,7 @@ case class PrefixMap(pm: Map[Prefix, IRI]) extends LazyLogging {
       case n => {
         val (alias, colonLocalname) = str.splitAt(n)
         val localname = colonLocalname.drop(1)
-        logger.debug(s"Alias: '$alias', localName: '$localname'")
+        // logger.debug(s"Alias: '$alias', localName: '$localname'")
         getIRI(alias).map(iri => iri.add(localname))
       }
     }

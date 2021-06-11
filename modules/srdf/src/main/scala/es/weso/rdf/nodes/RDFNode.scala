@@ -57,6 +57,31 @@ object RDFNode {
     final def show(n: RDFNode): String = n.toString
   }
 
+  /**
+    * The order assumes that:
+    *  IRIs > BNode > Literal
+    * TODO: Review if there is already some convention about the ordering
+    */
+  implicit val orderingRDFNode: Ordering[RDFNode] = (x: RDFNode, y: RDFNode) => {
+    val Bigger = 1
+    val Lower = -1
+    (x,y) match {
+    case (iri1: IRI, iri2: IRI) => Ordering[IRI].compare(iri1,iri2)
+    case (iri: IRI, _) => Bigger
+    case (bnode: BNode, iri: IRI) => Lower
+    case (bnode1: BNode, bnode2: BNode) => 
+     Ordering[String].compare(bnode1.getLexicalForm,bnode2.getLexicalForm)
+    case (bnode: BNode, lit: Literal) => Bigger
+    case (lit: Literal, _) => Lower
+    case (lit1: Literal, lit2: Literal) => 
+     if (lit1.dataType == lit2.dataType)
+      Ordering[String].compare(lit1.getLexicalForm, lit2.getLexicalForm) 
+     else 
+      Ordering[IRI].compare(lit1.dataType,lit2.dataType)
+    }
+  }
+   
+
   def fromString(s: String): Either[String, RDFNode] = {
     val iriRegex = raw"<(.*)>".r
     val bNodeRegex = raw"_:(.*)".r

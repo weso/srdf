@@ -1,13 +1,11 @@
 package es.weso.rdf
 
 import es.weso.rdf.nodes._
-import org.scalatest._
-import org.scalatest.funspec._
-import org.scalatest.matchers.should._
+import munit._
 
-class PrefixMapTest extends AnyFunSpec with Matchers with TryValues {
+class PrefixMapTest extends FunSuite {
 
-  describe("qualify") {
+  {
       val pm = PrefixMap.empty.
         addPrefix("e",IRI("http://example.org/")).
         addPrefix("ep",IRI("http://example.org/p/"))
@@ -19,12 +17,12 @@ class PrefixMapTest extends AnyFunSpec with Matchers with TryValues {
     }
 
    def qualifyTest(iri:IRI, pm:PrefixMap, expected: String): Unit = {
-     it(s"should qualify $iri to obtain $expected") {
-       pm.qualify(iri) should be(expected)
+     test(s"should qualify $iri to obtain $expected") {
+       assertEquals(pm.qualify(iri), expected)
      }
   }
 
-  describe(s"getPrefixLocalName") {
+  {
 
     testGetPrefixLocalName(IRI("http://example.org/foo"),
       PrefixMap(Map(
@@ -42,11 +40,11 @@ class PrefixMapTest extends AnyFunSpec with Matchers with TryValues {
 
 
     def testGetPrefixLocalName(iri: IRI, pm: PrefixMap, expectedPrefix: Prefix, expectedLocalName: String): Unit = {
-      it(s"Should getPrefixLocalName($iri) and obtain ($expectedPrefix, $expectedLocalName)") {
+      test(s"Should getPrefixLocalName($iri) and obtain ($expectedPrefix, $expectedLocalName)") {
         pm.getPrefixLocalName(iri).fold(e => fail(s"Error $e"), values => {
           val (prefix, iri, str) = values
-          prefix should be(expectedPrefix)
-          str should be(expectedLocalName)
+          assertEquals(prefix, expectedPrefix)
+          assertEquals(str, expectedLocalName)
          }
         )
       }

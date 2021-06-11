@@ -1,0 +1,76 @@
+package es.weso.rdf.jena
+
+import cats.effect._
+import munit.FunSuite 
+import es.weso.rdf.nodes._
+import es.weso.rdf.locations.Location
+
+class LocationsTest
+  extends FunSuite
+  with JenaBased {
+
+  test(s"Get locations") {
+
+    val ex = "http://example.org#"
+    val str =s"""|@prefix : <${ex}> .
+                 |@prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+                 |:p :q _:1 .
+                 |_:1 :q 1 .
+                 |""".stripMargin
+     val p = IRI(ex) + "p"            
+     val r = for {
+       r <- RDFAsJenaModel.fromString(str, "TURTLE")
+       ps <- r.use(rdf => IO((rdf.nodeLocations, rdf.tripleLocations)))
+     } yield ps
+     r.attempt.unsafeRunSync().fold(
+       err => fail(s"Error parsing $err"), 
+       ms => {
+         val (nls, tls) = ms
+         nls.get(p) match {
+           case None => fail(s"Not found location for p. Locations = ${nls}")
+           case Some(ls) => assertEquals(ls, 
+            Set(Location(line = 3, col = 1, tokenType = "PREFIXED_NAME",source = None)
+           ))
+         }
+       }
+     )
+  }
+
+  test(s"Get bnodes".only) {
+
+    val ex = "http://example.org#"
+    val str =s"""|@prefix : <${ex}> .
+                 |@prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+                 |:x :p _:kiko .
+                 |:v :p 1 .
+                 |:y :p [] .
+                 |:z :p [ :q :a ] .
+                 |""".stripMargin
+     val p = IRI(ex) + "p"            
+     val r = for {
+       r <- RDFAsJenaModel.fromString(str, "TURTLE")
+       ps <- r.use(rdf => 
+         for {
+           str <- rdf.serialize("N-TRIPLES")
+           model <- rdf.modelRef.get
+           _ <- IO { println(s"RDF Model: ${model}")}
+         } yield (rdf.nodeLocations, rdf.tripleLocations, str))
+     } yield ps
+     r.attempt.unsafeRunSync().fold(
+       err => fail(s"Error parsing $err"), 
+       ms => {
+         val (nls, tls, str) = ms
+         nls.get(p) match {
+           case None => fail(s"Not found location for p. Locations = ${nls}")
+           case Some(ls) => 
+            println(s"${str}")
+            println(s"Node locations: ${nls}")
+            assertEquals(1, 1) 
+         }
+       }
+     )
+  }
+
+
+}
+

@@ -1,67 +1,58 @@
 package es.weso.rdf.operations
 
 import es.weso.rdf.nodes._
-import org.scalatest._
-import funspec.AnyFunSpec
-import matchers.should.Matchers
+import munit._
 
 import cats.implicits._
 
-class ComparisonsTest extends AnyFunSpec with Matchers with TryValues {
+class ComparisonsTest extends FunSuite {
 
-  describe("Comparison less than") {
 
-    shouldBeLessThan(DoubleLiteral(2.3), DoubleLiteral(2.4), true)
-    shouldBeLessThan(DoubleLiteral(2.3), IntegerLiteral(2,"2"), false)
-    shouldBeLessThan(DoubleLiteral(2.3), IntegerLiteral(3,"3"), true)
-    shouldBeLessThan(DoubleLiteral(2.3), DecimalLiteral(2.3,"2.3"), false)
-    shouldBeLessThan(DoubleLiteral(2.3), DecimalLiteral(2.34,"2.34"), true)
+  shouldBeLessThan(DoubleLiteral(2.3), DoubleLiteral(2.4), true)
+  shouldBeLessThan(DoubleLiteral(2.3), IntegerLiteral(2,"2"), false)
+  shouldBeLessThan(DoubleLiteral(2.3), IntegerLiteral(3,"3"), true)
+  shouldBeLessThan(DoubleLiteral(2.3), DecimalLiteral(2.3,"2.3"), false)
+  shouldBeLessThan(DoubleLiteral(2.3), DecimalLiteral(2.34,"2.34"), true)
 
-    def shouldBeLessThan(node1: RDFNode, node2: RDFNode, expected: Boolean): Unit = {
-      it(s"lessThan(${node1.show}, ${node2.show}) should be $expected") {
+  def shouldBeLessThan(node1: RDFNode, node2: RDFNode, expected: Boolean): Unit = {
+      test(s"lessThan(${node1.show}, ${node2.show}) should be $expected") {
         val r = node1 lessThan node2
         r.fold(e => fail(s"Error: $e"),
-          v => v should be(expected)
+          v => assertEquals(v, expected)
         )
       }
-    }
   }
 
-  describe("Comparison less than or equals") {
+  
+  shouldBeLessThanOrEquals(DoubleLiteral(2.3), DoubleLiteral(2.4), true)
+  shouldBeLessThanOrEquals(DoubleLiteral(2.3), IntegerLiteral(2,"2"), false)
+  shouldBeLessThanOrEquals(DoubleLiteral(2.3), IntegerLiteral(3,"3"), true)
+  shouldBeLessThanOrEquals(DoubleLiteral(2.3), DecimalLiteral(2.3,"2.3"), true)
+  shouldBeLessThanOrEquals(DoubleLiteral(2.3), DecimalLiteral(2.34,"2.34"), true)
 
-    shouldBeLessThan(DoubleLiteral(2.3), DoubleLiteral(2.4), true)
-    shouldBeLessThan(DoubleLiteral(2.3), IntegerLiteral(2,"2"), false)
-    shouldBeLessThan(DoubleLiteral(2.3), IntegerLiteral(3,"3"), true)
-    shouldBeLessThan(DoubleLiteral(2.3), DecimalLiteral(2.3,"2.3"), true)
-    shouldBeLessThan(DoubleLiteral(2.3), DecimalLiteral(2.34,"2.34"), true)
-
-    def shouldBeLessThan(node1: RDFNode, node2: RDFNode, expected: Boolean): Unit = {
-      it(s"lessThan(${node1.show}, ${node2.show}) should be $expected") {
+  def shouldBeLessThanOrEquals(node1: RDFNode, node2: RDFNode, expected: Boolean): Unit = {
+      test(s"lessThan(${node1.show}, ${node2.show}) should be $expected") {
         val r = node1 lessThanOrEquals node2
         r.fold(e => fail(s"Error: $e"),
-          v => v should be(expected)
+          v => assertEquals(v, expected)
         )
       }
     }
-  }
 
-  describe("Comparison belongs") {
-
+  
     shouldContain(List(DoubleLiteral(2.0),IntegerLiteral(2,"2")), IntegerLiteral(2,"2"), true)
     shouldContain(List(DoubleLiteral(2.0),IntegerLiteral(2,"2")), IntegerLiteral(3,"3"), false)
 
     def shouldContain(ns: List[RDFNode], node: RDFNode, expected: Boolean): Unit = {
-      it(s"contain(${ns.show}, ${node.show}) should be $expected") {
+      test(s"contain(${ns.show}, ${node.show}) should be $expected") {
         val r = Comparisons.contains(ns, node)
         r.fold(e => fail(s"Error: $e"),
-          v => v should be(expected)
+          v => assertEquals(v, expected)
         )
       }
     }
-  }
 
-  describe("Comparison not contained") {
-
+ 
     shouldCheckNotContained(List(DoubleLiteral(3.0),IntegerLiteral(2,"2")), List(IntegerLiteral(2,"2")), List(DoubleLiteral(3.0)))
     shouldCheckNotContained(List(DoubleLiteral(2.0),IntegerLiteral(2,"2")), List(IntegerLiteral(2,"2")), List())
     shouldCheckNotContained(List(IntegerLiteral(2)), List(DoubleLiteral(3.0),IntegerLiteral(2)), List())
@@ -70,17 +61,14 @@ class ComparisonsTest extends AnyFunSpec with Matchers with TryValues {
     shouldCheckNotContained(List(), List(StringLiteral("hi")), List())
 
     def shouldCheckNotContained(ns: List[RDFNode], ts: List[RDFNode], expected: List[RDFNode]): Unit = {
-      it(s"notContained(${ns.show}, ${ts.show}) should be ${expected.show}") {
+      test(s"notContained(${ns.show}, ${ts.show}) should be ${expected.show}") {
         val r = Comparisons.notContained(ns, ts)
         r.fold(e => fail(s"Error: $e"),
-          vs => vs should contain theSameElementsAs(expected)
+          vs => assertEquals(vs, expected)
         )
       }
     }
-  }
 
-
-  describe("different") {
 
     shouldCheckDifferent(List(DoubleLiteral(3.0),IntegerLiteral(2)), List(IntegerLiteral(2)), List(DoubleLiteral(3.0)))
     shouldCheckDifferent(List(DoubleLiteral(2.0),IntegerLiteral(2)), List(IntegerLiteral(2)), List())
@@ -90,12 +78,11 @@ class ComparisonsTest extends AnyFunSpec with Matchers with TryValues {
     shouldCheckDifferent(List(), List(StringLiteral("hi")), List(StringLiteral("hi")))
 
     def shouldCheckDifferent(ns: List[RDFNode], ts: List[RDFNode], expected: List[RDFNode]): Unit = {
-      it(s"different(${ns.show}, ${ts.show}) should be ${expected.show}") {
+      test(s"different(${ns.show}, ${ts.show}) should be ${expected.show}") {
         val r = Comparisons.different(ns, ts)
         r.fold(e => fail(s"Error: $e"),
-          vs => vs should contain theSameElementsAs(expected)
+          vs => assertEquals(vs, expected)
         )
       }
     }
-  }
 }
