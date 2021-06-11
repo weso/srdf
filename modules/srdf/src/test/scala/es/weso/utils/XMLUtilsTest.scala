@@ -1,13 +1,10 @@
 package es.weso.utils
 
 import es.weso.utils.XMLUtils._
-import org.scalatest._
-import matchers.should._
-import org.scalatest.funspec.AnyFunSpec
+import munit._
 
-class XMLUtilsTest extends AnyFunSpec with Matchers {
+class XMLUtilsTest extends FunSuite {
 
-  describe("lessThanXMLDateTime") {
     shouldLessThanXMLDatetyme("2012", "2013", Right(true))
     shouldLessThanXMLDatetyme("2013", "2012", Right(false))
     shouldLessThanXMLDatetyme("2013-10-10", "2013-10-11", Right(true))
@@ -26,18 +23,17 @@ class XMLUtilsTest extends AnyFunSpec with Matchers {
 
 
     def shouldLessThanXMLDatetyme(s1: String, s2: String, expected: Either[String, Boolean]): Unit = {
-      it(s"Should calculate lessThanXSDDateTime($s1,$s2) and return $expected") {
+      test(s"Should calculate lessThanXSDDateTime($s1,$s2) and return $expected") {
         lessThanXSDDateTimes(s1, s2).fold(e =>
           expected.fold(
-            es => info(s"Failed with message $e as expected"),
+            es => (),
             eb => fail(s"Failed with message $e but should have returned $expected")
           ), v =>
           expected.fold(
             es => fail(s"Returned $v but should have failed with $es"),
-            eb => v should be(eb)
+            eb => assertEquals(v, eb)
           )
         )
       }
     }
-  }
 }

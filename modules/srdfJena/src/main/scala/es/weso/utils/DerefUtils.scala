@@ -6,7 +6,6 @@ import org.http4s.client.middleware._
 // import org.http4s.implicits._
 import cats.effect._
 import org.http4s.headers._
-import scala.concurrent.ExecutionContext.global
 import es.weso.rdf._
 import es.weso.rdf.nodes._
 import es.weso.rdf.jena._
@@ -15,17 +14,17 @@ import java.net.http._
 import java.net.http.HttpResponse.BodyHandlers
 import java.time.Duration
 import java.net.http.HttpClient.Redirect
+import cats.effect._
 
 object DerefUtils {
 
-  implicit val cs: ContextShift[IO] = IO.contextShift(global)
 
   def withRedirect[F[_]:Concurrent](c: Client[F]): Client[F] = FollowRedirect(10, _ => true)(c)
 
-  def derefIRI[F[_]:ConcurrentEffect:ContextShift](iri: Uri, client: Client[F]): F[String] = {
+  def derefIRI(iri: Uri, client: Client[IO]): IO[String] = {
     lazy val `text/turtle` = new MediaType("text", "turtle")
     val redirectClient = withRedirect(client)
-    val req: Request[F] = Request(method = Method.GET, uri = iri).withHeaders(`Accept`(`text/turtle`))
+    val req: Request[IO] = Request(method = Method.GET, uri = iri).withHeaders(`Accept`(`text/turtle`))
     // val v: F[String] = redirectClient.expect[String](req)
     redirectClient.expect[String](req)
   }

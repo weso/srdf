@@ -107,16 +107,22 @@ object Comparisons {
   def greaterThanOrEquals(node1:RDFNode, node2: RDFNode): Either[String,Boolean] = lessThanOrEquals(node2,node1)
   def greaterThan(node1:RDFNode, node2: RDFNode): Either[String,Boolean] = lessThan(node2,node1)
 
+  type E[A] = Either[String,A]
 
+  
   def contains[F[_]: Foldable](ns: F[RDFNode], node: RDFNode): Either[String,Boolean] = {
-    Foldable[F].existsM(ns)(n => node.isEqualTo(n))
+    existsM(ns, n => node.isEqualTo(n))
   }
+
+  def existsM[F[_]: Foldable, A](ns: F[A], p: A => Either[String, Boolean]): Either[String,Boolean] = 
+    Foldable[F].existsM[E,A](ns)(n => p(n))
 
   def notContained(ns: List[RDFNode], targets: List[RDFNode]): Either[String,List[RDFNode]] = {
     val zero: List[RDFNode] = List()
     def cmb(rest: List[RDFNode], a: RDFNode): Either[String,List[RDFNode]] =
       contains(targets,a).map(b => if (b) rest else (a :: rest))
-    Foldable[List].foldM(ns,zero)(cmb)
+    // Foldable[List].foldM(ns,zero)(cmb)
+    Foldable[List].foldM[E,RDFNode,List[RDFNode]](ns,zero)(cmb)
   }
 
   def different(ns1: List[RDFNode], ns2: List[RDFNode]): Either[String,List[RDFNode]] = for {

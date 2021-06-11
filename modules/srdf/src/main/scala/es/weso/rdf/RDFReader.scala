@@ -8,10 +8,11 @@ import cats.implicits._
 import cats.effect._
 import fs2.Stream
 import es.weso.utils.internal.CollectionCompat._
-
+import es.weso.rdf.locations._
 
 /**
  * RDFReader can read RDF data from several sources like an in-memory model or a SPARQL endpoint
+ * 
  */
 
 trait RDFReader {
@@ -19,8 +20,12 @@ trait RDFReader {
   type Rdf <: RDFReader
   type RDFRead[A] = IO[A]
   type RDFStream[A] = Stream[IO,A]
-
+  
   val id: String
+
+  val nodeLocations: Map[RDFNode,Set[Location]] = Map()
+  val tripleLocations: Map[RDFTriple,Set[Location]] = Map()
+  
 
   /**
     * @return List of available formats that this RDFReader supports
@@ -58,14 +63,14 @@ trait RDFReader {
    * Returns the set of subjects that are IRIs in a graph
    */
   def subjects(): RDFStream[RDFNode] = {
-    rdfTriples.map(_.subj)
+    rdfTriples().map(_.subj)
   }
 
   /**
    * Returns the set of predicates
    */
   def predicates(): RDFStream[IRI] = {
-    rdfTriples.map(_.pred)
+    rdfTriples().map(_.pred)
   }
 
   /**
@@ -73,7 +78,7 @@ trait RDFReader {
    */
   // TODO: Extend this to return all iriObjects: Seq[RDFNode]
   def iriObjects(): RDFStream[IRI] = {
-    rdfTriples.map(_.obj).collect { case i: IRI => i }
+    rdfTriples().map(_.obj).collect { case i: IRI => i }
   }
 
   /**
@@ -81,7 +86,7 @@ trait RDFReader {
    */
   def iris(): RDFStream[IRI] = {
     def f(t: RDFTriple): Stream[IO,IRI] = Stream.emits(t.iris.toSeq)
-    rdfTriples.map(f).flatten
+    rdfTriples().map(f).flatten
   }
 
   /**
@@ -145,8 +150,10 @@ trait RDFReader {
 
   def hasPredicateWithSubject(n: RDFNode, p: IRI): RDFRead[Boolean] 
 
-  def mkSeq[A,B,F[_]:Effect](vs: List[A], f: A => Stream[F,B]): Stream[F,B] = {
-    vs.traverse(f).map(Stream.emits(_)).flatten
+  type S[A] = Stream[IO,A]
+
+  def mkStream[A,B](vs: List[A], f: A => Stream[IO,B]): Stream[IO,B] = {
+    vs.traverse[S,B](f).map(Stream.emits(_)).flatten
   }
   /*for {
     bs <- vs.map(f).sequence
@@ -158,7 +165,7 @@ trait RDFReader {
     * @param ps list of predicates
     */
   def triplesWithPredicatesObject(ps: LazyList[IRI], o: RDFNode): RDFStream[RDFTriple] = {
-    mkSeq(ps.toList, (p: IRI) => triplesWithPredicateObject(p,o))
+    mkStream(ps.toList, (p: IRI) => triplesWithPredicateObject(p,o))
   }
 
   /**
@@ -167,7 +174,7 @@ trait RDFReader {
     * @param ps list of predicates
     */
   def triplesWithSubjectPredicates(n: RDFNode, ps: LazyList[IRI]): RDFStream[RDFTriple] = {
-    mkSeq(ps.toList, (p: IRI) => triplesWithSubjectPredicate(n,p))
+    mkStream(ps.toList, (p: IRI) => triplesWithSubjectPredicate(n,p))
   }
 
   /**

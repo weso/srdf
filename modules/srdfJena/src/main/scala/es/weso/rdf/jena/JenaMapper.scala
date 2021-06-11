@@ -8,7 +8,6 @@ import org.apache.jena.datatypes.xsd.XSDDatatype
 import es.weso.rdf.triples.RDFTriple
 
 import es.weso.utils.internal.CollectionCompat.CollectionConverters._
-import com.typesafe.scalalogging._
 import es.weso.rdf.path._
 import es.weso.utils.EitherUtils
 import org.apache.jena.sparql.path._
@@ -17,10 +16,14 @@ import org.apache.jena.query._
 import cats.effect._
 import es.weso.utils.IOUtils._
 import cats.implicits._
+import org.apache.jena.graph.Node
+// import es.weso.rdf.RDFException
+import es.weso.rdf.MsgRDFException
+
 
 object JenaMapper {
 
-  val logger = Logger("JenaMapper")
+//   val logger = Logger("JenaMapper")
 
   lazy val emptyModel = ModelFactory.createDefaultModel()
 
@@ -50,6 +53,38 @@ object JenaMapper {
   } yield
     RDFTriple(subj, pred, obj)
 
+  def jenaTriple2Triple(subj: Node, pred: Node, obj: Node): IO[RDFTriple] = for {
+    subj <- node2RDFNode(subj)
+    pred <- node2IRI(pred)
+    obj <- node2RDFNode(obj)
+  } yield
+    RDFTriple(subj, pred, obj)
+
+  def unsafeJenaTriple2Triple(subj: Node, pred: Node, obj: Node): RDFTriple = {
+    val s = unsafeNode2RDFNode(subj)
+    val p = unsafeNode2IRI(pred)
+    val o = unsafeNode2RDFNode(obj)
+    RDFTriple(s, p, o)  
+  }
+
+  def node2RDFNode(node: Node): IO[RDFNode] = IO(unsafeNode2RDFNode(node)
+  ) 
+
+  def unsafeNode2RDFNode(node: Node): RDFNode = node match {
+    case _ if node.isURI() => IRI(node.getURI())
+    case _ if node.isLiteral() => DatatypeLiteral(node.getLiteralLexicalForm(), IRI(node.getLiteralDatatypeURI()))
+    case _ if node.isBlank() => BNode(node.getBlankNodeLabel())
+    case _ => throw new MsgRDFException(s"node2RDFNode: Unknown value: ${node}")
+  }
+
+  def node2IRI(node: Node): IO[IRI] = IO(unsafeNode2IRI(node))
+
+  def unsafeNode2IRI(node: Node): IRI = node match {
+    case _ if node.isURI() => IRI(node.getURI())
+    case _ => throw new MsgRDFException(s"node2IRI: Unknown value: ${node}")
+  }
+
+
   private def resolve(iri: IRI, base: Option[IRI]): String = base match {
     case None => iri.str
     case Some(baseIri) => baseIri.resolve(iri).str
@@ -70,9 +105,9 @@ object JenaMapper {
                        base: Option[IRI]): IO[JenaResource] = {
     n match {
       case i: IRI => ok(m.getResource(resolve(i,base)))
-      case BNode(id) => {
+      case b: BNode => {
         // Creates the BNode if it doesn't exist
-        ok(m.createResource(new AnonId(id)))
+        ok(m.createResource(new AnonId(b.id)))
       }
       case _ => err(s"rdfNode2Resource: $n is not a resource")
     }
@@ -163,7 +198,7 @@ object JenaMapper {
 
   def createResource(m: JenaModel, node: RDFNode, base: Option[IRI]): JenaResource = {
     node match {
-      case BNode(id) => m.createResource(new AnonId(id.toString))
+      case b: BNode => m.createResource(new AnonId(b.id.toString))
       case i: IRI => m.createResource(resolve(i,base))
       case _ => throw new Exception("Cannot create a resource from " + node)
     }
@@ -179,8 +214,8 @@ object JenaMapper {
     val xsdboolean = xsd + "boolean"
 
     node match {
-      case BNode(id) =>
-        m.createResource(new AnonId(id.toString))
+      case b: BNode =>
+        m.createResource(new AnonId(b.id.toString))
       case i: IRI =>
         m.createResource(resolve(i,base))
       case StringLiteral(str) =>
