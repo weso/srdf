@@ -20,7 +20,7 @@ lazy val fs2Version            = "3.0.4"
 lazy val http4sVersion         = "1.0.0-M23"
 lazy val jenaVersion           = "3.16.0"
 lazy val munitVersion          = "0.7.26"
-lazy val munitEffectVersion    = "1.0.3"
+lazy val munitEffectVersion    = "1.0.5"
 
 lazy val rdf4jVersion          = "3.4.2"
 lazy val scalacheckVersion     = "1.14.0"
