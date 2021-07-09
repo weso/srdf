@@ -29,7 +29,7 @@ lazy val scalacheckVersion     = "1.14.0"
 // Compiler plugin dependency versions
 lazy val simulacrumVersion       = "1.0.0"
 lazy val scalaMacrosVersion      = "2.1.1"
-lazy val scalaCollCompatVersion  = "2.4.4"
+lazy val scalaCollCompatVersion  = "2.5.0"
 
 // Dependency modules
 
