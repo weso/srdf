@@ -1,5 +1,5 @@
 addSbtPlugin("com.codecommit"    % "sbt-github-actions"  % "0.10.1")
-addSbtPlugin("org.scalameta"     % "sbt-mdoc"            % "2.2.20")
+addSbtPlugin("org.scalameta"     % "sbt-mdoc"            % "2.2.22")
 addSbtPlugin("com.eed3si9n"      % "sbt-unidoc"          % "0.4.3")
 // addSbtPlugin("com.typesafe.sbt"  % "sbt-site"            % "1.4.1")
 addSbtPlugin("org.scoverage"     % "sbt-scoverage"       % "1.8.2")
