@@ -54,7 +54,7 @@ lazy val scalacheck        = "org.scalacheck"             %% "scalacheck"       
 lazy val scalaCollCompat   = "org.scala-lang.modules"     %% "scala-collection-compat" % scalaCollCompatVersion
 // lazy val typesafeConfig    = "com.typesafe"               % "config"               % typesafeConfigVersion
 
-addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.0" cross CrossVersion.full)
+addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.1" cross CrossVersion.full)
 
 ThisBuild / githubWorkflowJavaVersions := Seq(Java11)
 
