@@ -64,27 +64,22 @@ case class RDFFromWeb(
   }
 
   override def triplesWithSubject(node: RDFNode): RDFStream[RDFTriple] =
-   node match {
+    errStream(s"""|triplesWithSubject: not implemented deref yet
+                  |Node: $node 
+                  |""".stripMargin)
+ /*   node match {
      case subj: IRI => maybeClient match {
        case None => {
          for {
-         rdf <- Stream.eval(derefRDFJava(subj))
+         rdf <- Stream.eval(derefRDFJava(subj.uri))
          ts <- rdf.triplesWithSubject(subj)
        } yield ts
        }
-       case Some(client) => ??? /*{
-       val vs: Stream[IO,RDFReader] = Stream.eval(derefRDF(subj,client))
-       vs.flatMap(rdf => rdf.triplesWithSubject(subj)) 
-       } */
+       case Some(client) => 
+        errStream("triplesWithSubject: not implemented yet deref from client")
      } 
-/*  val derefModel = ModelFactory.createDefaultModel
-      RDFDataMgr.read(derefModel, subj.str)
-      val model = QueryExecutionFactory.create(queryTriplesWithSubject(subj), derefModel).execConstruct()
-      val triples = model2triples(model)
-      log.debug("triples with subject " + subj + " =\n" + triples)
-      streamFromIOs(triples) */
     case _ => errStream("triplesWithSubject: node " + node + " must be a IRI")
-  }
+  } */
 
   override def triplesWithPredicate(p: IRI): RDFStream[RDFTriple] = 
    errStream(s"Cannot obtain triplesWithPredicate from dereferentiation")
