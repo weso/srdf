@@ -8,6 +8,7 @@ lazy val supportedScalaVersions = List(
 )
 
 val Java11 = "adopt@1.11"
+val Java8 = "adopt@1.8"
 
 lazy val utilsVersion         = "0.1.98"
 
@@ -56,7 +57,7 @@ lazy val scalaCollCompat   = "org.scala-lang.modules"     %% "scala-collection-c
 
 addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.0" cross CrossVersion.full)
 
-ThisBuild / githubWorkflowJavaVersions := Seq(Java11)
+ThisBuild / githubWorkflowJavaVersions := Seq(Java8)
 
 def priorTo2_13(scalaVersion: String): Boolean =
   CrossVersion.partialVersion(scalaVersion) match {
