@@ -37,7 +37,7 @@ object DerefUtils {
 
   def derefRDFJava(uri: URI): IO[String] = IO {
     // Untested code...
-    val url: URL = uri.toURL;
+    val url: URL = uri.toURL
     val connection: HttpURLConnection = url.openConnection().asInstanceOf[HttpURLConnection];
     connection.connect()
     val is: InputStream = connection.getInputStream
