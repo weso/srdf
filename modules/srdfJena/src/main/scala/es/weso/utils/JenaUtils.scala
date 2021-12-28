@@ -5,7 +5,8 @@ import cats.implicits._
 import es.weso.utils.IOUtils._
 import org.apache.jena.rdf.model.{Literal, Model, ModelFactory, Property, RDFNode, Resource, SimpleSelector}
 import org.apache.jena.sparql.syntax.ElementPathBlock
-import org.apache.jena.riot.system.IRIResolver
+// import org.apache.jena.riot.system.IRIResolver
+import org.apache.jena.irix._
 import java.io.ByteArrayInputStream
 
 import org.apache.jena.query.{Query, QueryExecutionFactory, QueryFactory, ResultSet}
@@ -34,6 +35,7 @@ object JenaUtils {
   lazy val Turtle     = FileJenaUtils.langTurtle
   lazy val TTL        = "TTL"
   lazy val N3         = "N3"
+  lazy val irixResolver = IRIxResolver.create("http://internal/").build()
 
   // In Jena selectors, null represents any node
   lazy val any: Resource = null
@@ -467,7 +469,8 @@ object JenaUtils {
   }
 
   def relativizeStr(str: String, base: Option[URI]): String = {
-    val baseURI = base.getOrElse(IRIResolver.chooseBaseURI.toURI)
+    // val baseURI = base.getOrElse(IRIResolver.chooseBaseURI().toURI)
+    val baseURI = base.getOrElse(new URI(irixResolver.getBase().str()))
     baseURI.relativize(new URI(str)).toString
   }
 

@@ -6,16 +6,16 @@ import org.http4s.client.middleware._
 // import org.http4s.implicits._
 import cats.effect._
 import org.http4s.headers._
-import es.weso.rdf._
+// import es.weso.rdf._
 import es.weso.rdf.nodes._
-import es.weso.rdf.jena._
+// import es.weso.rdf.jena._
 import cats.effect._
 import java.net.URI
 import java.net.URL
 import java.net.HttpURLConnection
 import java.io.InputStream
-import java.io.BufferedReader
-import java.io.InputStreamReader
+// import java.io.BufferedReader
+// import java.io.InputStreamReader
 
 object DerefUtils {
 

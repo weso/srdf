@@ -7,19 +7,19 @@ lazy val supportedScalaVersions = List(
   scala3
 )
 
-val Java11 = "adopt@1.11"
-val Java8 = "adopt@1.8"
+val Java11 = JavaSpec.temurin("11") // "adopt@1.11"
+val Java8 = JavaSpec.temurin("8") // "adopt@1.8"
 
 lazy val utilsVersion         = "0.2.2"
 
 // Dependency versions
 lazy val catsVersion           = "2.7.0"
-lazy val catsEffectVersion     = "3.3.0"
+lazy val catsEffectVersion     = "3.3.1"
 lazy val circeVersion          = "0.14.1"
-lazy val declineVersion        = "2.0.0"
-lazy val fs2Version            = "3.2.3"
+lazy val declineVersion        = "2.2.0"
+lazy val fs2Version            = "3.2.4"
 lazy val http4sVersion         = "1.0.0-M30"
-lazy val jenaVersion           = "3.16.0"
+lazy val jenaVersion           = "4.3.2"
 lazy val munitVersion          = "0.7.29"
 lazy val munitEffectVersion    = "1.0.7"
 
@@ -30,7 +30,7 @@ lazy val scalacheckVersion     = "1.14.0"
 // Compiler plugin dependency versions
 lazy val simulacrumVersion       = "1.0.0"
 lazy val scalaMacrosVersion      = "2.1.1"
-lazy val scalaCollCompatVersion  = "2.4.4"
+lazy val scalaCollCompatVersion  = "2.6.0"
 
 // Dependency modules
 
@@ -55,7 +55,7 @@ lazy val scalacheck        = "org.scalacheck"             %% "scalacheck"       
 lazy val scalaCollCompat   = "org.scala-lang.modules"     %% "scala-collection-compat" % scalaCollCompatVersion
 // lazy val typesafeConfig    = "com.typesafe"               % "config"               % typesafeConfigVersion
 
-addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.0" cross CrossVersion.full)
+addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full)
 
 ThisBuild / githubWorkflowJavaVersions := Seq(Java8)
 
