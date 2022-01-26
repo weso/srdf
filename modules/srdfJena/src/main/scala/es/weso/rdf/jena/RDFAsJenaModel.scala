@@ -1,53 +1,56 @@
 package es.weso.rdf.jena
-import es.weso.rdf.nodes._
-import es.weso.rdf.nodes.RDFNode
-import org.apache.jena.graph.Node
-import es.weso.rdf.triples.RDFTriple
-import es.weso.utils.internal.CollectionCompat.CollectionConverters._
-import org.apache.jena.graph.Triple
-import scala.util.Try
+import cats.effect._
+import cats.implicits._
 import es.weso.rdf._
-import org.apache.jena.rdf.model.{Model, Statement, RDFNode => JenaRDFNode, Resource => JenaResource}
-import org.slf4j._
-import org.apache.jena.riot._
-import org.apache.jena.rdf.model.ModelFactory
-import org.apache.jena.riot.lang._
-import scala.util._
-import java.io._
-// import cats.effect.concurrent.Ref
-import org.apache.jena.riot.RDFLanguages._
 import es.weso.rdf.jena.JenaMapper._
-import es.weso.rdf.jena.SRDFJenaException.{FromFileException, FromStringException, FromUriException, UnsupportedFormat}
+import es.weso.rdf.jena.SRDFJenaException.UnsupportedFormat
+import es.weso.rdf.locations._
+import es.weso.rdf.nodes.RDFNode
+import es.weso.rdf.nodes._
 import es.weso.rdf.path.SHACLPath
+import es.weso.rdf.triples.RDFTriple
+import es.weso.utils.IOUtils._
+import es.weso.utils.StreamUtils._
 import es.weso.utils._
+import es.weso.utils.internal.CollectionCompat.CollectionConverters._
+import es.weso.utils.internal.CollectionCompat._
+import fs2.Stream
 import io.circe.Json
 import io.circe.parser.parse
-import org.apache.jena.query.{Query, QueryExecutionFactory, QuerySolutionMap, ResultSetFormatter}
-//import cats.implicits._
 import org.apache.jena.graph.Graph
-import org.apache.jena.riot.system.{StreamRDF, StreamRDFLib}
-import org.apache.jena.sparql.util.Context
-import cats.effect._
-import es.weso.utils.IOUtils._
-import cats.implicits._
-import fs2.Stream
-import es.weso.utils.StreamUtils._
-import org.apache.jena.riot.system.SyntaxLabels
-import org.apache.jena.riot.system.ParserProfileStd
-import org.apache.jena.riot.system.ParserProfile
-import org.apache.jena.riot.system.RiotLib
+import org.apache.jena.graph.Node
+import org.apache.jena.graph.Triple
+import org.apache.jena.irix.IRIxResolver
+import org.apache.jena.query._
+import org.apache.jena.rdf.model.Model
+import org.apache.jena.rdf.model.ModelFactory
+import org.apache.jena.rdf.model.Statement
+import org.apache.jena.rdf.model.{RDFNode => JenaRDFNode}
+import org.apache.jena.rdf.model.{Resource => JenaResource}
+import org.apache.jena.riot.RDFLanguages._
+import org.apache.jena.riot._
+import org.apache.jena.riot.lang._
 import org.apache.jena.riot.system.ErrorHandlerFactory
-import org.apache.jena.riot.system.IRIResolver
+import org.apache.jena.riot.system.ParserProfile
+import org.apache.jena.riot.system.ParserProfileStd
 import org.apache.jena.riot.system.PrefixMapFactory
+import org.apache.jena.riot.system.RiotLib
+import org.apache.jena.riot.system.StreamRDF
+import org.apache.jena.riot.system.StreamRDFLib
+import org.apache.jena.riot.system.SyntaxLabels
 import org.apache.jena.riot.tokens.Token
-import es.weso.rdf.locations._
-import es.weso.utils.internal.CollectionCompat._
+import org.apache.jena.sparql.util.Context
+import org.slf4j._
+
+import java.io._
 import java.net.URL
-import org.apache.jena.riot.system.MapWithScope.ScopePolicy
-import org.apache.jena.riot.system.MapWithScope.Allocator
-import java.util.concurrent.atomic.AtomicLong
-import org.apache.jena.graph.NodeFactory
-import org.apache.jena.riot.out.NodeFmtLib
+import scala.util.Try
+import scala.util._
+// import org.apache.jena.riot.system.MapWithScope.ScopePolicy
+// import org.apache.jena.riot.system.MapWithScope.Allocator
+// import java.util.concurrent.atomic.AtomicLong
+// import org.apache.jena.graph.NodeFactory
+// import org.apache.jena.riot.out.NodeFmtLib
 
 case class RDFAsJenaModel(modelRef: Ref[IO,Model],
                           base: Option[IRI],
@@ -313,8 +316,8 @@ case class RDFAsJenaModel(modelRef: Ref[IO,Model],
     model <- Stream.eval(getModel)
     stream <- Try {
       val qExec = QueryExecutionFactory.create(queryStr, model)
-      qExec.getQuery.getQueryType match {
-        case Query.QueryTypeSelect => {
+      qExec.getQuery.queryType match {
+        case QueryType.SELECT /* Query.QueryTypeSelect */ => {
           val result = qExec.execSelect()
           val ls: List[IO[Map[String, RDFNode]]] = result.asScala.toList.map(qs => {
             val qsm = new QuerySolutionMap()
@@ -579,7 +582,7 @@ object RDFAsJenaModel {
   new ParserProfileStd(
     factory,
     ErrorHandlerFactory.errorHandlerStd,
-    IRIResolver.create(baseUri),
+    IRIxResolver.create(baseUri).build(),
     PrefixMapFactory.create(),
     RIOT.getContext(), 
     false, // checking
