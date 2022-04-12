@@ -1,51 +1,51 @@
 lazy val scala212 = "2.12.15"
 lazy val scala213 = "2.13.8"
-lazy val scala3   = "3.1.0"
+lazy val scala3   = "3.1.2"
 lazy val supportedScalaVersions = List(
   scala3,
   scala213,
-  scala212,
+  scala212
 )
 
 val Java11 = JavaSpec.temurin("11") // "adopt@1.11"
 // val Java8 = JavaSpec.temurin("8") // "adopt@1.8"
 
-lazy val utilsVersion         = "0.2.4"
+lazy val utilsVersion = "0.2.4"
 
 // Dependency versions
-lazy val catsVersion           = "2.7.0"
-lazy val catsEffectVersion     = "3.3.4"
-lazy val circeVersion          = "0.14.1"
-lazy val declineVersion        = "2.2.0"
-lazy val fs2Version            = "3.2.4"
-lazy val http4sVersion         = "1.0.0-M30"
-lazy val jenaVersion           = "4.3.2"
-lazy val munitVersion          = "0.7.29"
-lazy val munitEffectVersion    = "1.0.7"
+lazy val catsVersion        = "2.7.0"
+lazy val catsEffectVersion  = "3.3.4"
+lazy val circeVersion       = "0.14.1"
+lazy val declineVersion     = "2.2.0"
+lazy val fs2Version         = "3.2.4"
+lazy val http4sVersion      = "1.0.0-M30"
+lazy val jenaVersion        = "4.3.2"
+lazy val munitVersion       = "0.7.29"
+lazy val munitEffectVersion = "1.0.7"
 
-lazy val rdf4jVersion          = "3.4.2"
-lazy val scalaCollCompatVersion  = "2.6.0"
+lazy val rdf4jVersion           = "3.4.2"
+lazy val scalaCollCompatVersion = "2.6.0"
 
 // Dependency modules
 
-lazy val utils             = "es.weso"                    %% "utils"               % utilsVersion
+lazy val utils = "es.weso" %% "utils" % utilsVersion
 
-lazy val catsCore          = "org.typelevel"              %% "cats-core"           % catsVersion
-lazy val catsKernel        = "org.typelevel"              %% "cats-kernel"         % catsVersion
-lazy val catsEffect        = "org.typelevel"              %% "cats-effect"         % catsEffectVersion
-lazy val circeCore         = "io.circe"                   %% "circe-core"          % circeVersion
-lazy val circeGeneric      = "io.circe"                   %% "circe-generic"       % circeVersion
-lazy val circeParser       = "io.circe"                   %% "circe-parser"        % circeVersion
-lazy val decline           = "com.monovore"               %% "decline"             % declineVersion
-lazy val declineEffect     = "com.monovore"               %% "decline-effect"      % declineVersion
-lazy val fs2Core           = "co.fs2"                     %% "fs2-core"            % fs2Version
-lazy val http4sEmberClient = "org.http4s"                 %% "http4s-ember-client" % http4sVersion
-lazy val jenaArq           = "org.apache.jena"            % "jena-arq"             % jenaVersion
-lazy val jenaFuseki        = "org.apache.jena"            % "jena-fuseki-main"     % jenaVersion
-lazy val munit             = "org.scalameta"              %% "munit"               % munitVersion
-lazy val munitEffects      = "org.typelevel"              %% "munit-cats-effect-3" % munitEffectVersion
-lazy val rdf4j_runtime     = "org.eclipse.rdf4j"          % "rdf4j-runtime"        % rdf4jVersion pomOnly()
-lazy val scalaCollCompat   = "org.scala-lang.modules"     %% "scala-collection-compat" % scalaCollCompatVersion
+lazy val catsCore          = "org.typelevel"          %% "cats-core"               % catsVersion
+lazy val catsKernel        = "org.typelevel"          %% "cats-kernel"             % catsVersion
+lazy val catsEffect        = "org.typelevel"          %% "cats-effect"             % catsEffectVersion
+lazy val circeCore         = "io.circe"               %% "circe-core"              % circeVersion
+lazy val circeGeneric      = "io.circe"               %% "circe-generic"           % circeVersion
+lazy val circeParser       = "io.circe"               %% "circe-parser"            % circeVersion
+lazy val decline           = "com.monovore"           %% "decline"                 % declineVersion
+lazy val declineEffect     = "com.monovore"           %% "decline-effect"          % declineVersion
+lazy val fs2Core           = "co.fs2"                 %% "fs2-core"                % fs2Version
+lazy val http4sEmberClient = "org.http4s"             %% "http4s-ember-client"     % http4sVersion
+lazy val jenaArq           = "org.apache.jena"         % "jena-arq"                % jenaVersion
+lazy val jenaFuseki        = "org.apache.jena"         % "jena-fuseki-main"        % jenaVersion
+lazy val munit             = "org.scalameta"          %% "munit"                   % munitVersion
+lazy val munitEffects      = "org.typelevel"          %% "munit-cats-effect-3"     % munitEffectVersion
+lazy val rdf4j_runtime     = "org.eclipse.rdf4j"       % "rdf4j-runtime"           % rdf4jVersion pomOnly ()
+lazy val scalaCollCompat   = "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollCompatVersion
 
 addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full)
 
@@ -66,7 +66,8 @@ lazy val srdfMain = project
   .dependsOn(srdf, srdfJena)
   .settings(
     libraryDependencies ++= Seq(
-      decline, declineEffect
+      decline,
+      declineEffect
     ),
     publish / skip := true,
     ThisBuild / turbo := true
@@ -86,13 +87,13 @@ lazy val srdf = project
       circeGeneric,
       circeParser,
       fs2Core,
-      utils,
+      utils
 //      scalaLogging,
 //      scalaCollCompat,
     )
-    )
+  )
 
-  lazy val srdfJena = project
+lazy val srdfJena = project
   .in(file("modules/srdfJena"))
   .dependsOn(srdf)
   .settings(commonSettings)
@@ -110,7 +111,7 @@ lazy val srdf = project
       catsEffect,
       fs2Core,
       http4sEmberClient
-    ),
+    )
   )
 
 lazy val srdf4j = project
@@ -136,12 +137,12 @@ lazy val docs = project
     noPublishSettings,
     mdocSettings,
     ScalaUnidoc / unidoc / unidocProjectFilter := inAnyProject -- inProjects(noDocProjects: _*)
-   )
+  )
   .dependsOn(
     srdf,
-    srdfJena,
+    srdfJena
 //    srdf4j
-    )
+  )
   .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
 
 lazy val mdocSettings = Seq(
@@ -159,10 +160,14 @@ lazy val mdocSettings = Seq(
       .dependsOn(Compile / unidoc)
       .value,
   ScalaUnidoc / unidoc / scalacOptions ++= Seq(
-    "-doc-source-url", s"https://github.com/weso/srdf/tree/v${(ThisBuild / version).value}€{FILE_PATH}.scala",
-    "-sourcepath", (LocalRootProject / baseDirectory).value.getAbsolutePath,
-    "-doc-title", "SRDF",
-    "-doc-version", s"v${(ThisBuild / version).value}"
+    "-doc-source-url",
+    s"https://github.com/weso/srdf/tree/v${(ThisBuild / version).value}€{FILE_PATH}.scala",
+    "-sourcepath",
+    (LocalRootProject / baseDirectory).value.getAbsolutePath,
+    "-doc-title",
+    "SRDF",
+    "-doc-version",
+    s"v${(ThisBuild / version).value}"
   )
 )
 
@@ -177,7 +182,7 @@ lazy val noDocProjects = Seq[ProjectReference](
 
 lazy val sharedDependencies = Seq(
   libraryDependencies ++= Seq(
-    munit % Test,
+    munit        % Test,
     munitEffects % Test
   ),
   testFrameworks += new TestFramework("munit.Framework")
@@ -226,18 +231,19 @@ lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
   coverageHighlighting := priorTo2_13(scalaVersion.value),
   organization := "es.weso",
   sonatypeProfileName := ("es.weso"),
-  homepage            := Some(url("https://github.com/weso/srdf")),
-  licenses            := Seq("MIT" -> url("http://opensource.org/licenses/MIT")),
-  scmInfo             := Some(ScmInfo(url("https://github.com/weso/srdf"), "scm:git:git@github.com:weso/srdf.git")),
-  autoAPIMappings     := true,
-  apiURL              := Some(url("http://weso.github.io/utils/latest/api/")),
-  autoAPIMappings     := true,
+  homepage := Some(url("https://github.com/weso/srdf")),
+  licenses := Seq("MIT" -> url("http://opensource.org/licenses/MIT")),
+  scmInfo := Some(ScmInfo(url("https://github.com/weso/srdf"), "scm:git:git@github.com:weso/srdf.git")),
+  autoAPIMappings := true,
+  apiURL := Some(url("http://weso.github.io/utils/latest/api/")),
+  autoAPIMappings := true,
   developers := List(
     Developer(
-      id="labra",
-      name="Jose Emilio Labra Gayo",
-      email="jelabra@gmail.com",
-      url=url("https://weso.labra.es")
-    )),
-  resolvers += Resolver.sonatypeRepo("public")  
+      id = "labra",
+      name = "Jose Emilio Labra Gayo",
+      email = "jelabra@gmail.com",
+      url = url("https://weso.labra.es")
+    )
+  ),
+  resolvers += Resolver.sonatypeRepo("public")
 )
