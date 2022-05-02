@@ -57,7 +57,7 @@ jobs:
         run: sbt ++${{ matrix.scala }} test
 
       - name: Compress target directories
-        run: tar cf targets.tar target srdf-docs/target modules/srdf/target modules/srdfJena/target modules/srdf4j/target project/target
+        run: tar cf targets.tar target srdf-docs/target modules/srdf/target/js-2.12 modules/srdf/target/js-2.13 modules/srdfJena/target/jvm-2.12 modules/srdf/target/jvm-2.13 modules/srdfJena/target/jvm-2.13 modules/srdfJena/target/jvm-3 modules/srdf/target/js-3 modules/srdf4j/target/jvm-2.12 modules/srdf4j/target/jvm-2.13 modules/srdf/target/jvm-2.12 modules/srdf4j/target/jvm-3 modules/srdf/target/jvm-3 project/target
 
       - name: Upload target directories
         uses: actions/upload-artifact@v2

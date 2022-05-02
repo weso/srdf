@@ -182,6 +182,9 @@ trait RDFReader {
    */
   def getPrefixMap: RDFRead[PrefixMap]
 
+  // This method would be nice to have, but I am not sure how to implement it in Jena
+  // def getBase: RDFRead[Option[IRI]]
+
   /**
    * `true` if `node rdf:type/rdfs:subClassOf* cls`
    */
