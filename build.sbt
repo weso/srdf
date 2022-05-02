@@ -24,7 +24,7 @@ lazy val jenaVersion = "4.4.0"
 lazy val munitVersion = "0.7.29"
 lazy val munitEffectVersion = "1.0.7"
 
-lazy val rdf4jVersion = "3.4.2"
+lazy val rdf4jVersion = "3.4.4"
 lazy val scalaCollCompatVersion = "2.7.0"
 
 // Dependency modules
