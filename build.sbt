@@ -74,7 +74,7 @@ lazy val srdfMain = project
     crossScalaVersions := Nil,
     publish / skip := true,
     ThisBuild / turbo := true,
-    ThisBuild / scalaVersion := supportedScalaVersions.head,
+    // ThisBuild / scalaVersion := supportedScalaVersions.head,
     fork := true,
     console / initialCommands :=
       """
