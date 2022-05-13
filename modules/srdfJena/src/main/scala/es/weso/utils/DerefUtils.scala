@@ -19,21 +19,22 @@ import java.io.InputStream
 
 object DerefUtils {
 
-
-  def withRedirect[F[_]:Concurrent](c: Client[F]): Client[F] = FollowRedirect(10, _ => true)(c)
+  def withRedirect[F[_]: Concurrent](c: Client[F]): Client[F] = FollowRedirect(10, _ => true)(c)
 
   def derefIRI(iri: Uri, client: Client[IO]): IO[String] = {
     lazy val `text/turtle` = new MediaType("text", "turtle")
     val redirectClient = withRedirect(client)
-    val req: Request[IO] = Request(method = Method.GET, uri = iri).withHeaders(`Accept`(`text/turtle`))
+    val req: Request[IO] =
+      Request(method = Method.GET, uri = iri).withHeaders(`Accept`(`text/turtle`))
     // val v: F[String] = redirectClient.expect[String](req)
     redirectClient.expect[String](req)
   }
 
-  def iri2uri(iri: IRI): IO[Uri] = Uri.fromString(iri.str).fold(e => 
-    IO.raiseError(new RuntimeException(s"Error converting $iri to Uri: $e")),
-    IO.pure(_)
-  )
+  def iri2uri(iri: IRI): IO[Uri] = Uri
+    .fromString(iri.str)
+    .fold(
+      e => IO.raiseError(new RuntimeException(s"Error converting $iri to Uri: $e")),
+      IO.pure(_))
 
   def derefRDFJava(uri: URI): IO[String] = IO {
     // Untested code...
@@ -41,8 +42,7 @@ object DerefUtils {
     val connection: HttpURLConnection = url.openConnection().asInstanceOf[HttpURLConnection];
     connection.connect()
     val is: InputStream = connection.getInputStream
-    is.toString()   
+    is.toString()
   }
-
 
 }

@@ -11,7 +11,6 @@ import es.weso.rdf.PREFIXES._
 import cats.effect.IO
 import scala.collection.mutable.ListBuffer
 
-
 object RDF4jUtils {
 
   def subjectsWithPath(obj: RDFNode, path: SHACLPath, model: Model): IO[Seq[RDFNode]] = IO {
@@ -36,7 +35,6 @@ object RDF4jUtils {
     }
     rs.toList
   }
-
 
   def objectsWithPath(subj: RDFNode, path: SHACLPath, model: Model): IO[Seq[RDFNode]] = IO {
     // Build the following query:
@@ -68,7 +66,8 @@ object RDF4jUtils {
     // repo.initialize
     val con = repo.getConnection
     con.add(model)
-    val path: SHACLPath = SequencePath(Seq(PredicatePath(`rdf:type`), ZeroOrMorePath(PredicatePath(`rdfs:subClassOf`))))
+    val path: SHACLPath = SequencePath(
+      Seq(PredicatePath(`rdf:type`), ZeroOrMorePath(PredicatePath(`rdfs:subClassOf`))))
     val queryStr =
       s"""|SELECT ?x {
           |?x ${path.show} ${cls.show}

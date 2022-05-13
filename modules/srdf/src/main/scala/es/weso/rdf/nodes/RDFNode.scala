@@ -3,21 +3,21 @@ package es.weso.rdf.nodes
 import cats.Show
 
 abstract class RDFNode {
-  def isIRI : Boolean
-  def isBNode : Boolean
-  def isLiteral : Boolean
+  def isIRI: Boolean
+  def isBNode: Boolean
+  def isLiteral: Boolean
   def isNonLiteral = this.isIRI || this.isBNode
 
-  def toIRI: Either[String,IRI] = this match {
+  def toIRI: Either[String, IRI] = this match {
     case i: IRI => Right(i)
     case _ => Left(s"Cannot convert node $this to IRI")
   }
 
   def getLexicalForm: String
 
-  def isEqualTo(other: RDFNode): Either[String,Boolean]
+  def isEqualTo(other: RDFNode): Either[String, Boolean]
 
-  def lessThan(other: RDFNode): Either[String,Boolean]
+  def lessThan(other: RDFNode): Either[String, Boolean]
 
   // TODO: Could be optimized to short-circuit
   def lessThanOrEquals(other: RDFNode) = for {
@@ -58,29 +58,27 @@ object RDFNode {
   }
 
   /**
-    * The order assumes that:
-    *  IRIs > BNode > Literal
-    * TODO: Review if there is already some convention about the ordering
-    */
+   * The order assumes that: IRIs > BNode > Literal TODO: Review if there is already some
+   * convention about the ordering
+   */
   implicit val orderingRDFNode: Ordering[RDFNode] = (x: RDFNode, y: RDFNode) => {
     val Bigger = 1
     val Lower = -1
-    (x,y) match {
-    case (iri1: IRI, iri2: IRI) => Ordering[IRI].compare(iri1,iri2)
-    case (iri: IRI, _) => Bigger
-    case (bnode: BNode, iri: IRI) => Lower
-    case (bnode1: BNode, bnode2: BNode) => 
-     Ordering[String].compare(bnode1.getLexicalForm,bnode2.getLexicalForm)
-    case (bnode: BNode, lit: Literal) => Bigger
-    case (lit: Literal, _) => Lower
-    case (lit1: Literal, lit2: Literal) => 
-     if (lit1.dataType == lit2.dataType)
-      Ordering[String].compare(lit1.getLexicalForm, lit2.getLexicalForm) 
-     else 
-      Ordering[IRI].compare(lit1.dataType,lit2.dataType)
+    (x, y) match {
+      case (iri1: IRI, iri2: IRI) => Ordering[IRI].compare(iri1, iri2)
+      case (iri: IRI, _) => Bigger
+      case (bnode: BNode, iri: IRI) => Lower
+      case (bnode1: BNode, bnode2: BNode) =>
+        Ordering[String].compare(bnode1.getLexicalForm, bnode2.getLexicalForm)
+      case (bnode: BNode, lit: Literal) => Bigger
+      case (lit: Literal, _) => Lower
+      case (lit1: Literal, lit2: Literal) =>
+        if (lit1.dataType == lit2.dataType)
+          Ordering[String].compare(lit1.getLexicalForm, lit2.getLexicalForm)
+        else
+          Ordering[IRI].compare(lit1.dataType, lit2.dataType)
     }
   }
-   
 
   def fromString(s: String): Either[String, RDFNode] = {
     val iriRegex = raw"<(.*)>".r
@@ -92,15 +90,16 @@ object RDFNode {
       case bNodeRegex(bnodeId) => Right(BNode(bnodeId))
       case literalRegex(str) => Right(StringLiteral(str))
       case integerRegex(s) => {
-        try Right(IntegerLiteral(s.toInt,s))
+        try Right(IntegerLiteral(s.toInt, s))
         catch {
           case e: NumberFormatException =>
             Left(s"Error parsing as integer: $e")
         }
       }
-      case other => IRI.fromString(other,None).fold(
-        e => Left(s"Error parsing String $other as RDFNode: $e"),
-        iri => Right(iri))
+      case other =>
+        IRI
+          .fromString(other, None)
+          .fold(e => Left(s"Error parsing String $other as RDFNode: $e"), iri => Right(iri))
     }
   }
 

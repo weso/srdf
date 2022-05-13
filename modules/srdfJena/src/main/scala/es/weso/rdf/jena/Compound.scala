@@ -12,10 +12,7 @@ import cats.implicits._
 // import fs2.Stream
 import es.weso.utils.IOUtils._
 
-
-case class Compound(members: List[RDFReader])
-  extends RDFReader
-     with RDFReasoner {
+case class Compound(members: List[RDFReader]) extends RDFReader with RDFReasoner {
 
   type Rdf = Compound
 
@@ -31,7 +28,7 @@ case class Compound(members: List[RDFReader])
 
   val log = LoggerFactory.getLogger("Endpoint")
 
-/*  override def fromString(cs: CharSequence,
+  /*  override def fromString(cs: CharSequence,
                           format: String,
                           base: Option[IRI]): RDFRead[Compound] = {
     err("Cannot parse into a compound")
@@ -42,57 +39,55 @@ case class Compound(members: List[RDFReader])
   }
 
   override def iris(): RDFStream[IRI] =
-    mkStream(members, (e:RDFReader) => e.iris())
+    mkStream(members, (e: RDFReader) => e.iris())
 
   override def subjects(): RDFStream[RDFNode] =
-    mkStream(members, (e:RDFReader) => e.subjects())
+    mkStream(members, (e: RDFReader) => e.subjects())
 
   override def predicates(): RDFStream[IRI] =
-    mkStream(members, (e:RDFReader) => e.predicates())
+    mkStream(members, (e: RDFReader) => e.predicates())
 
   override def iriObjects(): RDFStream[IRI] =
-    mkStream(members, (e:RDFReader) => e.iriObjects())
+    mkStream(members, (e: RDFReader) => e.iriObjects())
 
   override def getSHACLInstances(c: RDFNode): RDFStream[RDFNode] =
-    mkStream(members,
-      (e:RDFReader) => e.getSHACLInstances(c))
+    mkStream(members, (e: RDFReader) => e.getSHACLInstances(c))
 
   private def someTrue(xs: Set[Boolean]): Boolean = xs.exists(_ == true)
 
   override def hasSHACLClass(n: RDFNode, c: RDFNode): RDFRead[Boolean] = {
-    val vs = members.map(_.hasSHACLClass(n,c))
+    val vs = members.map(_.hasSHACLClass(n, c))
     vs.sequence.map(_.toSet).map(someTrue(_))
   }
 
   override def nodesWithPath(path: SHACLPath): RDFStream[(RDFNode, RDFNode)] =
-    mkStream(members, (e:RDFReader) => e.nodesWithPath(path))
-
+    mkStream(members, (e: RDFReader) => e.nodesWithPath(path))
 
   override def subjectsWithPath(path: SHACLPath, obj: RDFNode): RDFStream[RDFNode] =
-    mkStream(members, (e:RDFReader) => e.subjectsWithPath(path,obj))
+    mkStream(members, (e: RDFReader) => e.subjectsWithPath(path, obj))
 
   override def objectsWithPath(subj: RDFNode, path: SHACLPath): RDFStream[RDFNode] =
-    mkStream(members, (e:RDFReader) => e.objectsWithPath(subj,path))
+    mkStream(members, (e: RDFReader) => e.objectsWithPath(subj, path))
 
   override def checkDatatype(node: RDFNode, datatype: IRI): RDFRead[Boolean] =
     JenaMapper.wellTypedDatatype(node, datatype)
 
   override def rdfTriples(): RDFStream[RDFTriple] =
-    mkStream(members, (e:RDFReader) => e.rdfTriples())
+    mkStream(members, (e: RDFReader) => e.rdfTriples())
 
   def triplesWithSubject(node: RDFNode): RDFStream[RDFTriple] =
-    mkStream(members, (e:RDFReader) => e.triplesWithSubject(node))
+    mkStream(members, (e: RDFReader) => e.triplesWithSubject(node))
 
   def triplesWithPredicate(p: IRI): RDFStream[RDFTriple] = {
-    mkStream(members, (e:RDFReader) => e.triplesWithPredicate(p))
+    mkStream(members, (e: RDFReader) => e.triplesWithPredicate(p))
   }
 
   def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] = {
-    mkStream(members, (e:RDFReader) => e.triplesWithObject(node))
+    mkStream(members, (e: RDFReader) => e.triplesWithObject(node))
   }
 
   def triplesWithPredicateObject(p: IRI, o: RDFNode): RDFStream[RDFTriple] = {
-    mkStream(members, (e:RDFReader) => e.triplesWithPredicateObject(p,o))
+    mkStream(members, (e: RDFReader) => e.triplesWithPredicateObject(p, o))
   }
 
   override def applyInference(inference: InferenceEngine): RDFRead[Rdf] = {
@@ -104,12 +99,14 @@ case class Compound(members: List[RDFReader])
 
   override def availableInferenceEngines: List[InferenceEngine] = List(NONE)
 
-  override def querySelect(queryStr: String): RDFStream[Map[String,RDFNode]] = 
-     Stream.raiseError[IO](new RuntimeException("Not implemented querySelect for Compound"))
+  override def querySelect(queryStr: String): RDFStream[Map[String, RDFNode]] =
+    Stream.raiseError[IO](new RuntimeException("Not implemented querySelect for Compound"))
 
-  override def queryAsJson(queryStr: String): RDFRead[Json] = err(s"Nor implemented queryAsJson for compound")
+  override def queryAsJson(queryStr: String): RDFRead[Json] = err(
+    s"Nor implemented queryAsJson for compound")
 
-  override def getNumberOfStatements(): RDFRead[Int] = err(s"Not implemented getNumberOfStatements of compound")
+  override def getNumberOfStatements(): RDFRead[Int] = err(
+    s"Not implemented getNumberOfStatements of compound")
 
   override def isIsomorphicWith(other: RDFReader): RDFRead[Boolean] =
     err(s"Unimplemented isIsomorphicWith between endpoints")
@@ -121,6 +118,7 @@ case class Compound(members: List[RDFReader])
 
   override def sourceIRI: Option[IRI] = None
 
-  override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] = err(s"Not implemented hasPredicateWithSubject")
-  
+  override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] = err(
+    s"Not implemented hasPredicateWithSubject")
+
 }

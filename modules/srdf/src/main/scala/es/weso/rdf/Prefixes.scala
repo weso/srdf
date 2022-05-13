@@ -34,8 +34,8 @@ object PREFIXES {
   lazy val `xsd:anyUri`: IRI = xsd + "anyUri"
   lazy val `xsd:boolean`: IRI = xsd + "boolean"
 
-  lazy val `rdf:type`: IRI = rdf+ "type"
-  lazy val `rdf:nil`: IRI = rdf + "nil" 
+  lazy val `rdf:type`: IRI = rdf + "type"
+  lazy val `rdf:nil`: IRI = rdf + "nil"
   lazy val `rdf:first`: IRI = rdf + "first"
   lazy val `rdf:rest`: IRI = rdf + "rest"
   lazy val `rdf:langString`: IRI = rdf + "langString"

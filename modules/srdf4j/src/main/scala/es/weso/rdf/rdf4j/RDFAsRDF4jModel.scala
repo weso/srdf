@@ -28,7 +28,10 @@ import cats.implicits._
 import fs2.Stream
 import es.weso.utils.IOUtils._
 
-case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Option[IRI] = None)
+case class RDFAsRDF4jModel(
+    model: Model,
+    base: Option[IRI] = None,
+    sourceIRI: Option[IRI] = None)
     extends RDFReader
     with RDFBuilder
     with RDFReasoner {
@@ -37,10 +40,10 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
 
   type Rdf = RDFAsRDF4jModel
 
-  override def availableParseFormats: List[String]     = RDFAsRDF4jModel.availableFormats
+  override def availableParseFormats: List[String] = RDFAsRDF4jModel.availableFormats
   override def availableSerializeFormats: List[String] = RDFAsRDF4jModel.availableFormats
 
-/*  override def fromString(cs: CharSequence, format: String, base: Option[IRI] = None): IO[Rdf] =
+  /*  override def fromString(cs: CharSequence, format: String, base: Option[IRI] = None): IO[Rdf] =
   fromES {
     val baseURI = base.map(_.str).getOrElse("")
     for {
@@ -52,16 +55,14 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
     } yield RDFAsRDF4jModel(model)
   } */
 
-
-  override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] = 
-   triplesWithSubjectPredicate(n,p).compile.toList.map(!_.isEmpty)
-
+  override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] =
+    triplesWithSubjectPredicate(n, p).compile.toList.map(!_.isEmpty)
 
   override def serialize(formatName: String, base: Option[IRI]): IO[String] =
     fromES(for {
       format <- RDFAsRDF4jModel.getRDFFormat(formatName)
       str <- Try {
-        val out: StringWriter = new StringWriter()
+        val out: StringWriter = new StringWriter
         // TODO: relitivize model according to base
         Rio.write(model, out, format)
         out.toString
@@ -78,7 +79,11 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
   // TODO: this implementation only returns subjects
   override def iris(): RDFStream[IRI] = {
     val resources: Set[RDF4jResource] = model.subjects().asScala.toSet
-    val ls = resources.filter(_.isInstanceOf[IRI_RDF4j]).map(_.asInstanceOf[IRI_RDF4j].toString).map(IRI(_)).toList
+    val ls = resources
+      .filter(_.isInstanceOf[IRI_RDF4j])
+      .map(_.asInstanceOf[IRI_RDF4j].toString)
+      .map(IRI(_))
+      .toList
     Stream.emits(ls)
   }
 
@@ -93,24 +98,24 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
 
   override def triplesWithSubject(node: RDFNode): RDFStream[RDFTriple] = node match {
     case n if n.isLiteral => Stream.empty
-    case _ => streamFromIOs(for {
-      resource <- rdfNode2Resource(node)
-      statements <- triplesSubject(resource, model)
-      triples <- statements2RDFTriples(statements)
-    } yield triples
-    )
+    case _ =>
+      streamFromIOs(for {
+        resource <- rdfNode2Resource(node)
+        statements <- triplesSubject(resource, model)
+        triples <- statements2RDFTriples(statements)
+      } yield triples)
   }
 
   /**
-    * return the SHACL instances of a node `cls`
-    * A node `node` is a shacl instance of `cls` if `node rdf:type/rdfs:subClassOf* cls`
-    */
+   * return the SHACL instances of a node `cls` A node `node` is a shacl instance of `cls` if
+   * `node rdf:type/rdfs:subClassOf* cls`
+   */
   override def getSHACLInstances(c: RDFNode): RDFStream[RDFNode] = {
     streamFromIOs(RDF4jUtils.getSHACLInstances(c, model).map(_.toList))
   }
 
   override def hasSHACLClass(n: RDFNode, c: RDFNode): RDFRead[Boolean] = {
-    RDF4jUtils.getSHACLInstances(c, model).map(_ contains (n))
+    RDF4jUtils.getSHACLInstances(c, model).map(_ contains n)
   }
 
   override def nodesWithPath(path: SHACLPath): RDFStream[(RDFNode, RDFNode)] = {
@@ -139,33 +144,36 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
   }
 
   override def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] = streamFromIOs(
-   for {
-    either <- MonadError[IO,Throwable].attempt(rdfNode2Resource(node))
-    ts <- either.fold(_ => emptyTriples, 
-     resource => for { 
-       triples <- triplesObject(resource,model)
-       statements <- statements2RDFTriples(triples)
-      } yield statements
-    )
-   } yield ts
+    for {
+      either <- MonadError[IO, Throwable].attempt(rdfNode2Resource(node))
+      ts <- either.fold(
+        _ => emptyTriples,
+        resource =>
+          for {
+            triples <- triplesObject(resource, model)
+            statements <- statements2RDFTriples(triples)
+          } yield statements)
+    } yield ts
   )
 
   private lazy val emptyTriples: IO[List[RDFTriple]] = IO(List())
 
-  override def triplesWithPredicateObject(p: IRI, o: RDFNode): RDFStream[RDFTriple] = streamFromIOs( 
-   for {
-    either <- MonadError[IO,Throwable].attempt(rdfNode2Resource(o))
-    ts <- either.fold(_ => emptyTriples, 
-     resource => { 
-     val v: IO[List[RDFTriple]] = for {
-      triples <- triplesPredicateObject(iri2Property(p), resource, model)
-      statements <- statements2RDFTriples(triples)
-     } yield statements 
-     v
-    }
+  override def triplesWithPredicateObject(p: IRI, o: RDFNode): RDFStream[RDFTriple] =
+    streamFromIOs(
+      for {
+        either <- MonadError[IO, Throwable].attempt(rdfNode2Resource(o))
+        ts <- either.fold(
+          _ => emptyTriples,
+          resource => {
+            val v: IO[List[RDFTriple]] = for {
+              triples <- triplesPredicateObject(iri2Property(p), resource, model)
+              statements <- statements2RDFTriples(triples)
+            } yield statements
+            v
+          }
+        )
+      } yield ts
     )
-   } yield ts
-   )
 
   override def getPrefixMap: IO[PrefixMap] = {
     IO(PrefixMap {
@@ -176,12 +184,10 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
 
   override def addBase(iri: IRI): IO[Rdf] = {
     IO.pure(this.copy(base = Some(iri)))
-  } 
+  }
 
   override def addPrefixMap(pm: PrefixMap): IO[Rdf] = IO {
-    pm.pm.foreach {
-      case (Prefix(prefix), value) => model.setNamespace(prefix, value.str)
-    }
+    pm.pm.foreach { case (Prefix(prefix), value) => model.setNamespace(prefix, value.str) }
     this
   }
 
@@ -210,7 +216,7 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
     this
   }
 
-  override def empty: IO[Resource[IO,Rdf]] = {
+  override def empty: IO[Resource[IO, Rdf]] = {
     // TODO: Refactor to avoid unsafeRunSync
     IO(RDFAsRDF4jModel.empty)
   }
@@ -233,7 +239,7 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
   override def availableInferenceEngines: List[InferenceEngine] = List(NONE)
 
   override def querySelect(queryStr: String): RDFStream[Map[String, RDFNode]] =
-        Stream.raiseError[IO](new RuntimeException(s"Not implemented querySelect for RDf4j yet"))
+    Stream.raiseError[IO](new RuntimeException(s"Not implemented querySelect for RDf4j yet"))
 
   override def queryAsJson(queryStr: String): IO[Json] =
     err(s"Not implemented queryAsJson for RDf4j")
@@ -243,7 +249,9 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
 
   def isIsomorphicWith(other: RDFReader): IO[Boolean] = other match {
     case o: RDFAsRDF4jModel => ok(Models.isomorphic(model, o.model))
-    case _                  => err(s"Cannot compare RDFAsJenaModel with reader of different type: ${other.getClass.toString}")
+    case _ =>
+      err(
+        s"Cannot compare RDFAsJenaModel with reader of different type: ${other.getClass.toString}")
   }
 
   override def merge(other: RDFReader): IO[Rdf] = other match {
@@ -258,7 +266,7 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
         } yield rdf2
 
       for {
-        ts  <- other.rdfTriples().compile.toList
+        ts <- other.rdfTriples().compile.toList
         rdf <- ts.foldLeft(zero)(cmb)
       } yield rdf
     }
@@ -267,7 +275,7 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
   override def extendImports: IO[Rdf] =
     for {
       imports <- getImports
-      newRdf  <- extendImports(this, imports, List(IRI("")))
+      newRdf <- extendImports(this, imports, List(IRI("")))
     } yield newRdf
 
   private lazy val owlImports = IRI("http://www.w3.org/2002/07/owl#imports")
@@ -279,8 +287,8 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
     } yield is
 
   def objects2iris(ts: List[RDFTriple]): Either[String, List[IRI]] = {
-    type E[A] = Either[String,A]
-    ts.map(_.obj).map(_.toIRI).sequence[E,IRI]
+    type E[A] = Either[String, A]
+    ts.map(_.obj).map(_.toIRI).sequence[E, IRI]
   }
 
   private def extendImports(rdf: Rdf, imports: List[IRI], visited: List[IRI]): IO[Rdf] = {
@@ -291,8 +299,8 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
           extendImports(rdf, rest, visited)
         else
           for {
-            newRdf  <- RDFAsRDF4jModel.fromIRI(iri)
-            merged  <- merge(newRdf)
+            newRdf <- RDFAsRDF4jModel.fromIRI(iri)
+            merged <- merge(newRdf)
             restRdf <- extendImports(merged, rest, iri :: visited)
           } yield restRdf
     }
@@ -307,8 +315,11 @@ case class RDFAsRDF4jModel(model: Model, base: Option[IRI] = None, sourceIRI: Op
   override def normalizeBNodes: IO[RDFBuilder] =
     IO(this)
 
-  override def fromString(str: String, format: String, base: Option[IRI]): IO[Resource[IO, Rdf]] =
-    IO(RDFAsRDF4jModel.fromChars(str,format,base))
+  override def fromString(
+      str: String,
+      format: String,
+      base: Option[IRI]): IO[Resource[IO, Rdf]] =
+    IO(RDFAsRDF4jModel.fromChars(str, format, base))
 }
 
 object RDFAsRDF4jModel {
@@ -317,19 +328,22 @@ object RDFAsRDF4jModel {
     // It seems there is no close() method in RDF4j
   }
 
-  def apply(): Resource[IO,RDFAsRDF4jModel] = {
+  def apply(): Resource[IO, RDFAsRDF4jModel] = {
     empty
   }
 
-  lazy val empty: Resource[IO,RDFAsRDF4jModel] = {
+  lazy val empty: Resource[IO, RDFAsRDF4jModel] = {
     val acquire: IO[RDFAsRDF4jModel] = IO {
-      val builder = new ModelBuilder()
+      val builder = new ModelBuilder
       RDFAsRDF4jModel(builder.build)
     }
     Resource.make(acquire)(closeRDFjModel)
   }
 
-  def fromChars(cs: CharSequence, format: String, base: Option[IRI] = None): Resource[IO,RDFAsRDF4jModel] = {
+  def fromChars(
+      cs: CharSequence,
+      format: String,
+      base: Option[IRI] = None): Resource[IO, RDFAsRDF4jModel] = {
     val acquire: IO[RDFAsRDF4jModel] =
       fromES {
         val baseURI = base.map(_.str).getOrElse("")
@@ -339,7 +353,9 @@ object RDFAsRDF4jModel {
             val is: InputStream = new CharSequenceInputStream(cs, "UTF-8")
             Rio.parse(is, baseURI, format)
           }.fold(
-            e => Left(s"Exception obtaining RDF: ${e.getMessage}\nBase:$base, format: $format\n$cs"),
+            e =>
+              Left(
+                s"Exception obtaining RDF: ${e.getMessage}\nBase:$base, format: $format\n$cs"),
             Right(_)
           )
         } yield RDFAsRDF4jModel(model)
@@ -361,9 +377,8 @@ object RDFAsRDF4jModel {
       case "TURTLE" => Right(TURTLE)
       case "JSONLD" => Right(JSONLD)
       case "RDFXML" => Right(RDFXML)
-      case x        => Left(s"Unsupported syntax $x")
+      case x => Left(s"Unsupported syntax $x")
     }
   }
-
 
 }

@@ -20,9 +20,8 @@ case class PrefixMap(pm: Map[Prefix, IRI]) {
   }
 
   /**
-   * Qualify a string
-   * If prefix map contains "ex" -> "http://example.org"
-   * qname("ex:age") -> "http://example.org/age"
+   * Qualify a string If prefix map contains "ex" -> "http://example.org" qname("ex:age") ->
+   * "http://example.org/age"
    */
   def qname(str: String): Option[IRI] = {
     str.indexOf(":") match {
@@ -43,28 +42,25 @@ case class PrefixMap(pm: Map[Prefix, IRI]) {
   }
 
   def addPrefixMap(other: PrefixMap): PrefixMap = {
-    def cmb(current: PrefixMap, pair: (Prefix,IRI)): PrefixMap = {
-      val (prefix,iri) = pair
-      current.addPrefix(prefix,iri)
+    def cmb(current: PrefixMap, pair: (Prefix, IRI)): PrefixMap = {
+      val (prefix, iri) = pair
+      current.addPrefix(prefix, iri)
     }
     other.pm.foldLeft(this)(cmb)
   }
-
 
   def addPrefix(prefix: Prefix, iri: IRI): PrefixMap = {
     PrefixMap(pm + (prefix -> iri))
   }
 
   override def toString: String = {
-    pm.map {
-      case (prefix,iri) => "prefix " + prefix.str + ": " + iri.toString
-    } .mkString("\n")
+    pm.map { case (prefix, iri) => "prefix " + prefix.str + ": " + iri.toString }.mkString("\n")
   }
 
   def qualifyIRI(iri: IRI): String = {
     getPrefixLocalName(iri) match {
       case Left(_) => iri.toString
-      case Right((prefix,_,localName)) => prefix.str + ":" + localName
+      case Right(prefix, _, localName) => prefix.str + ":" + localName
     }
   }
 
@@ -75,34 +71,32 @@ case class PrefixMap(pm: Map[Prefix, IRI]) {
     }
 
   /**
-  * Get prefix declaration and local name of an IRI
-    * @param iri
-    * @return If there is a prefix declaration a: -> http://example.org/
-    *     Then, getPrefixLocalName(IRI(http://example.org/foo") returns Right("a", "foo")
-    */
-  def getPrefixLocalName(iri: IRI): Either[String,(Prefix, IRI, String)] = {
+   * Get prefix declaration and local name of an IRI
+   * @param iri
+   * @return
+   *   If there is a prefix declaration a: -> http://example.org/ Then,
+   *   getPrefixLocalName(IRI(http://example.org/foo") returns Right("a", "foo")
+   */
+  def getPrefixLocalName(iri: IRI): Either[String, (Prefix, IRI, String)] = {
     val str = iri.str
-    val cs = pm.collect{
-       case p if startsWithPredicate(str)(p) => {
-         val (prefix, i) = p
-         (prefix, i, str.stripPrefix(i.str))
-       }
-     }.toSeq
-    cs.sortBy {
-        case (_, _, str) => str.length
-      }.
-      headOption.
-      toRight(s"Not found IRI starting by $iri in prefix map\n$this")
+    val cs = pm.collect {
+      case p if startsWithPredicate(str)(p) => {
+        val (prefix, i) = p
+        (prefix, i, str.stripPrefix(i.str))
+      }
+    }.toSeq
+    cs.sortBy { case (_, _, str) => str.length }
+      .headOption
+      .toRight(s"Not found IRI starting by $iri in prefix map\n$this")
   }
 
-  private def startsWithPredicate(str:String)(p: (Prefix, IRI)): Boolean = {
+  private def startsWithPredicate(str: String)(p: (Prefix, IRI)): Boolean = {
     str.startsWith(p._2.str)
   }
 
   /**
-   * If prefixMap contains a: -> http://example.org/
-   * then qualifyString("http://example.org/x") = "a:x"
-   * else <http://example.org/x>
+   * If prefixMap contains a: -> http://example.org/ then qualifyString("http://example.org/x")
+   * \= "a:x" else <http://example.org/x>
    */
   /* def qualifyString(str: String): String = {
     // TODO: Refactor this method to have IRI as parameter and reuse getPrefixLocalName
@@ -125,9 +119,9 @@ case class PrefixMap(pm: Map[Prefix, IRI]) {
 
   def merge(other: PrefixMap): PrefixMap = {
     val zero = this.pm
-    def cmb(next: Map[Prefix,IRI], current: (Prefix,IRI)): Map[Prefix,IRI] = {
-      val (prefix,iri) = current
-      next.updated(prefix,iri)
+    def cmb(next: Map[Prefix, IRI], current: (Prefix, IRI)): Map[Prefix, IRI] = {
+      val (prefix, iri) = current
+      next.updated(prefix, iri)
     }
     PrefixMap(other.pm.foldLeft(zero)(cmb))
   }
@@ -146,10 +140,9 @@ object PrefixMap {
   def qualify(node: RDFNode, pm: PrefixMap): String =
     pm.qualify(node)
 
-  def fromMap(pm: Map[String,IRI]): PrefixMap = {
-    def cmb(pm: PrefixMap, current: (String,IRI)): PrefixMap =
-      addPrefix(current._1,current._2)(pm)
+  def fromMap(pm: Map[String, IRI]): PrefixMap = {
+    def cmb(pm: PrefixMap, current: (String, IRI)): PrefixMap =
+      addPrefix(current._1, current._2)(pm)
     pm.foldLeft(empty)(cmb)
   }
 }
-

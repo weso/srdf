@@ -2,11 +2,10 @@ package es.weso.rdf.nodes
 
 case class BooleanLiteral(bool: Boolean) extends Literal {
 
-
   val dataType = RDFNode.BooleanDatatypeIRI
   val lexicalForm = if (bool) "true" else "false"
 
-  override def isLiteral = true 
+  override def isLiteral = true
   override def isBNode: Boolean = false
   override def isIRI: Boolean = false
   override def isLangLiteral = false
@@ -18,12 +17,12 @@ case class BooleanLiteral(bool: Boolean) extends Literal {
 
   override def getLexicalForm = lexicalForm
 
-  def isEqualTo(other: RDFNode): Either[String,Boolean] = other match {
+  def isEqualTo(other: RDFNode): Either[String, Boolean] = other match {
     case BooleanLiteral(b) => Right(bool == b)
     case _ => Left(s"Type error comparing $this to non boolean literal $other")
   }
 
-  def lessThan(other: RDFNode): Either[String,Boolean] = other match {
+  def lessThan(other: RDFNode): Either[String, Boolean] = other match {
     case BooleanLiteral(b) => Right(bool < b)
     case _ => Left(s"Type error comparing $this < $other when other is not boolean")
   }
