@@ -4,8 +4,8 @@ lazy val scala3 = "3.1.3"
 
 lazy val supportedScalaVersions = List(
   scala3,
-  scala213
-//  scala212
+  scala213,
+  scala212
 )
 
 val Java11 = JavaSpec.temurin("11") // "adopt@1.11"
@@ -19,7 +19,7 @@ lazy val catsEffectVersion = "3.3.12"
 lazy val circeVersion = "0.14.2"
 lazy val declineVersion = "2.2.0"
 lazy val fs2Version = "3.2.7"
-lazy val http4sVersion = "1.0.0-M33"
+lazy val http4sVersion = "0.23.12"
 lazy val jenaVersion = "4.5.0"
 lazy val munitVersion = "0.7.29"
 lazy val munitEffectVersion = "1.0.7"
