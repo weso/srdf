@@ -4,8 +4,8 @@ lazy val scala3 = "3.1.3"
 
 lazy val supportedScalaVersions = List(
   scala3,
-  scala213,
-  scala212
+  scala213
+//  scala212
 )
 
 val Java11 = JavaSpec.temurin("11") // "adopt@1.11"
