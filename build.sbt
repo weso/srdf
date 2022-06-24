@@ -74,7 +74,7 @@ lazy val srdfMain = project
     crossScalaVersions := Nil,
     publish / skip := true,
     ThisBuild / turbo := true,
-    // ThisBuild / scalaVersion := supportedScalaVersions.head,
+    ThisBuild / scalaVersion := supportedScalaVersions.head,
     fork := true,
     console / initialCommands :=
       """
@@ -91,7 +91,7 @@ lazy val srdf = projectMatrix
   .in(file("modules/srdf"))
   .settings(commonSettings)
   .settings(
-    // crossScalaVersions := supportedScalaVersions,
+    crossScalaVersions := supportedScalaVersions,
     libraryDependencies ++= Seq(
       catsCore,
       catsKernel,
@@ -114,7 +114,7 @@ lazy val srdfJena = projectMatrix
   .dependsOn(srdf)
   .settings(commonSettings)
   .settings(
-//    crossScalaVersions := supportedScalaVersions,
+    crossScalaVersions := supportedScalaVersions,
     libraryDependencies ++= Seq(
 //      logbackClassic % Test,
 //      scalaLogging,
@@ -136,7 +136,7 @@ lazy val srdf4j = projectMatrix
   .dependsOn(srdf)
   .settings(commonSettings)
   .settings(
-//    crossScalaVersions := supportedScalaVersions,
+    crossScalaVersions := supportedScalaVersions,
     libraryDependencies ++= Seq(
       utils,
       rdf4j_runtime,
