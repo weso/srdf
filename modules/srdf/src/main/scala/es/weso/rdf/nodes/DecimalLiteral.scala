@@ -13,14 +13,15 @@ case class DecimalLiteral(decimal: BigDecimal, repr: String) extends Literal {
 
   override def getLexicalForm = lexicalForm
 
-  def isEqualTo(other: RDFNode): Either[String,Boolean] = other match {
+  def isEqualTo(other: RDFNode): Either[String, Boolean] = other match {
     case IntegerLiteral(n, _) => Right(n == decimal)
-    case DoubleLiteral(d, r)  => Right(if (r != null && repr != null) r == repr else d == decimal)
+    case DoubleLiteral(d, r) =>
+      Right(if (r != null && repr != null) r == repr else d == decimal)
     case DecimalLiteral(d, _) => Right(d == decimal)
     case _ => Left(s"Type error comparing $this with $other")
   }
 
-  def lessThan(other: RDFNode): Either[String,Boolean] = other match {
+  def lessThan(other: RDFNode): Either[String, Boolean] = other match {
     case IntegerLiteral(n, _) => Right(decimal < n)
     case DecimalLiteral(d, _) => Right(decimal < d)
     case DoubleLiteral(d, _) => Right(decimal < d)
@@ -29,5 +30,5 @@ case class DecimalLiteral(decimal: BigDecimal, repr: String) extends Literal {
 }
 
 object DecimalLiteral {
-  def apply(decimal: BigDecimal): DecimalLiteral = DecimalLiteral(decimal,decimal.toString)
+  def apply(decimal: BigDecimal): DecimalLiteral = DecimalLiteral(decimal, decimal.toString)
 }

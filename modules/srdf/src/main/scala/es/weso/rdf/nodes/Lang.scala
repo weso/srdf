@@ -17,11 +17,12 @@ case class Lang(lang: String) {
   def matchLanguage(other: Lang) =
     this.lang.toLowerCase == other.lang.toLowerCase
 
-  /** Match main language. If this="en" and other="en-ca" it returns true */
+  /**
+   * Match main language. If this="en" and other="en-ca" it returns true
+   */
   def matchMainLanguage(other: Lang) = {
     other.lang.toLowerCase.startsWith(this.lang.toLowerCase)
   }
-
 
   override def toString = lang match {
     case "" => ""

@@ -28,22 +28,22 @@ object Comparisons {
 
   private def str2NumericDecimal(str: String): Either[String, NumericDecimal] = try {
     val n: BigDecimal = BigDecimal(str)
-    Right(NumericDecimal(n,str))
+    Right(NumericDecimal(n, str))
   } catch {
     case _: NumberFormatException => Left(s"Cannot obtain numeric value from node $str")
   }
 
   private def str2NumericDouble(str: String): Either[String, NumericDouble] = try {
     val n: Double = str.toDouble
-    Right(NumericDouble(n,str))
+    Right(NumericDouble(n, str))
   } catch {
     case _: NumberFormatException => Left(s"Cannot obtain numeric value from node $str")
   }
 
   def numericValue(node: RDFNode): Either[String, NumericLiteral] = node match {
-    case IntegerLiteral(i, repr) => Right(NumericInt(i,repr))
-    case DoubleLiteral(d, repr) => Right(NumericDouble(d,repr))
-    case DecimalLiteral(d, repr) => Right(NumericDecimal(d,repr))
+    case IntegerLiteral(i, repr) => Right(NumericInt(i, repr))
+    case DoubleLiteral(d, repr) => Right(NumericDouble(d, repr))
+    case DecimalLiteral(d, repr) => Right(NumericDecimal(d, repr))
     case DatatypeLiteral(str, `xsd:byte`) => str2NumericInt(str)
     case DatatypeLiteral(str, `xsd:decimal`) => str2NumericDecimal(str)
     case DatatypeLiteral(str, `xsd:double`) => str2NumericDouble(str)
@@ -60,74 +60,79 @@ object Comparisons {
     case DatatypeLiteral(str, `xsd:unsignedShort`) => str2NumericInt(str)
     case DatatypeLiteral(str, `xsd:unsignedByte`) => str2NumericInt(str)
     case DatatypeLiteral(str, `xsd:float`) => str2NumericDouble(str)
-    case DatatypeLiteral(str, other) => Left(s"Cannot convert to numeric value datatype literal $str^^$other")
+    case DatatypeLiteral(str, other) =>
+      Left(s"Cannot convert to numeric value datatype literal $str^^$other")
     case _ => Left(s"Cannot convert $node to numeric literal for comparison")
   }
 
-  def lessThanOrEquals(nl1: NumericLiteral, nl2: NumericLiteral): Boolean = (nl1,nl2) match {
-    case (NumericInt(n1,_), NumericInt(n2,_)) => n1 <= n2
-    case (NumericInt(n1,_), NumericDouble(n2,_)) => n1 <= n2
-    case (NumericInt(n1,_), NumericDecimal(n2,_)) => n1 <= n2
-    case (NumericDouble(n1,_), NumericInt(n2,_)) => n1 <= n2
-    case (NumericDouble(n1,_), NumericDouble(n2,_)) => n1 <= n2
-    case (NumericDouble(n1,_), NumericDecimal(n2,_)) => n1 <= n2
-    case (NumericDecimal(n1,_), NumericInt(n2,_)) => n1 <= n2
-    case (NumericDecimal(n1,_), NumericDouble(n2,_)) => n1 <= n2
-    case (NumericDecimal(n1,_), NumericDecimal(n2,_)) => n1 <= n2
+  def lessThanOrEquals(nl1: NumericLiteral, nl2: NumericLiteral): Boolean = (nl1, nl2) match {
+    case (NumericInt(n1, _), NumericInt(n2, _)) => n1 <= n2
+    case (NumericInt(n1, _), NumericDouble(n2, _)) => n1 <= n2
+    case (NumericInt(n1, _), NumericDecimal(n2, _)) => n1 <= n2
+    case (NumericDouble(n1, _), NumericInt(n2, _)) => n1 <= n2
+    case (NumericDouble(n1, _), NumericDouble(n2, _)) => n1 <= n2
+    case (NumericDouble(n1, _), NumericDecimal(n2, _)) => n1 <= n2
+    case (NumericDecimal(n1, _), NumericInt(n2, _)) => n1 <= n2
+    case (NumericDecimal(n1, _), NumericDouble(n2, _)) => n1 <= n2
+    case (NumericDecimal(n1, _), NumericDecimal(n2, _)) => n1 <= n2
   }
 
-  def lessThan(nl1: NumericLiteral, nl2: NumericLiteral): Boolean = (nl1,nl2) match {
-    case (NumericInt(n1,_), NumericInt(n2,_)) => n1 < n2
-    case (NumericInt(n1,_), NumericDouble(n2,_)) => n1 < n2
-    case (NumericInt(n1,_), NumericDecimal(n2,_)) => n1 < n2
-    case (NumericDouble(n1,_), NumericInt(n2,_)) => n1 < n2
-    case (NumericDouble(n1,_), NumericDouble(n2,_)) => n1 < n2
-    case (NumericDouble(n1,_), NumericDecimal(n2,_)) => n1 < n2
-    case (NumericDecimal(n1,_), NumericInt(n2,_)) => n1 < n2
-    case (NumericDecimal(n1,_), NumericDouble(n2,_)) => n1 < n2
-    case (NumericDecimal(n1,_), NumericDecimal(n2,_)) => n1 < n2
+  def lessThan(nl1: NumericLiteral, nl2: NumericLiteral): Boolean = (nl1, nl2) match {
+    case (NumericInt(n1, _), NumericInt(n2, _)) => n1 < n2
+    case (NumericInt(n1, _), NumericDouble(n2, _)) => n1 < n2
+    case (NumericInt(n1, _), NumericDecimal(n2, _)) => n1 < n2
+    case (NumericDouble(n1, _), NumericInt(n2, _)) => n1 < n2
+    case (NumericDouble(n1, _), NumericDouble(n2, _)) => n1 < n2
+    case (NumericDouble(n1, _), NumericDecimal(n2, _)) => n1 < n2
+    case (NumericDecimal(n1, _), NumericInt(n2, _)) => n1 < n2
+    case (NumericDecimal(n1, _), NumericDouble(n2, _)) => n1 < n2
+    case (NumericDecimal(n1, _), NumericDecimal(n2, _)) => n1 < n2
   }
 
-  def greaterThan(nl1: NumericLiteral, nl2: NumericLiteral): Boolean = lessThan(nl2,nl1)
-  def greaterThanOrEquals(nl1:NumericLiteral,nl2: NumericLiteral): Boolean = lessThanOrEquals(nl2,nl1)
+  def greaterThan(nl1: NumericLiteral, nl2: NumericLiteral): Boolean = lessThan(nl2, nl1)
+  def greaterThanOrEquals(nl1: NumericLiteral, nl2: NumericLiteral): Boolean =
+    lessThanOrEquals(nl2, nl1)
 
-
-  def lessThanOrEquals(node1: RDFNode, node2: RDFNode): Either[String,Boolean] = node1 lessThanOrEquals(node2)
+  def lessThanOrEquals(node1: RDFNode, node2: RDFNode): Either[String, Boolean] =
+    node1 lessThanOrEquals node2
   /*for {
     nl1 <- numericValue(node1)
     nl2 <- numericValue(node2)
   } yield lessThanOrEquals(nl1,nl2) */
 
-  def lessThan(node1: RDFNode, node2: RDFNode): Either[String,Boolean] = node1 lessThan(node2)
+  def lessThan(node1: RDFNode, node2: RDFNode): Either[String, Boolean] = node1 lessThan node2
   /*for {
     nl1 <- numericValue(node1)
     nl2 <- numericValue(node2)
   } yield lessThan(nl1,nl2)*/
 
-  def greaterThanOrEquals(node1:RDFNode, node2: RDFNode): Either[String,Boolean] = lessThanOrEquals(node2,node1)
-  def greaterThan(node1:RDFNode, node2: RDFNode): Either[String,Boolean] = lessThan(node2,node1)
+  def greaterThanOrEquals(node1: RDFNode, node2: RDFNode): Either[String, Boolean] =
+    lessThanOrEquals(node2, node1)
+  def greaterThan(node1: RDFNode, node2: RDFNode): Either[String, Boolean] =
+    lessThan(node2, node1)
 
-  type E[A] = Either[String,A]
+  type E[A] = Either[String, A]
 
-  
-  def contains[F[_]: Foldable](ns: F[RDFNode], node: RDFNode): Either[String,Boolean] = {
+  def contains[F[_]: Foldable](ns: F[RDFNode], node: RDFNode): Either[String, Boolean] = {
     existsM(ns, n => node.isEqualTo(n))
   }
 
-  def existsM[F[_]: Foldable, A](ns: F[A], p: A => Either[String, Boolean]): Either[String,Boolean] = 
-    Foldable[F].existsM[E,A](ns)(n => p(n))
+  def existsM[F[_]: Foldable, A](
+      ns: F[A],
+      p: A => Either[String, Boolean]): Either[String, Boolean] =
+    Foldable[F].existsM[E, A](ns)(n => p(n))
 
-  def notContained(ns: List[RDFNode], targets: List[RDFNode]): Either[String,List[RDFNode]] = {
+  def notContained(ns: List[RDFNode], targets: List[RDFNode]): Either[String, List[RDFNode]] = {
     val zero: List[RDFNode] = List()
-    def cmb(rest: List[RDFNode], a: RDFNode): Either[String,List[RDFNode]] =
-      contains(targets,a).map(b => if (b) rest else (a :: rest))
+    def cmb(rest: List[RDFNode], a: RDFNode): Either[String, List[RDFNode]] =
+      contains(targets, a).map(b => if (b) rest else a :: rest)
     // Foldable[List].foldM(ns,zero)(cmb)
-    Foldable[List].foldM[E,RDFNode,List[RDFNode]](ns,zero)(cmb)
+    Foldable[List].foldM[E, RDFNode, List[RDFNode]](ns, zero)(cmb)
   }
 
-  def different(ns1: List[RDFNode], ns2: List[RDFNode]): Either[String,List[RDFNode]] = for {
-    d1 <- notContained(ns1,ns2)
-    d2 <- notContained(ns2,ns1)
+  def different(ns1: List[RDFNode], ns2: List[RDFNode]): Either[String, List[RDFNode]] = for {
+    d1 <- notContained(ns1, ns2)
+    d2 <- notContained(ns2, ns1)
   } yield d1 union d2
 
 }

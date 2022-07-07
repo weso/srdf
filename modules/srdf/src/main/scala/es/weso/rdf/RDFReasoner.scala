@@ -10,4 +10,3 @@ trait RDFReasoner extends RDFReader {
   def availableInferenceEngines: List[InferenceEngine]
 
 }
-

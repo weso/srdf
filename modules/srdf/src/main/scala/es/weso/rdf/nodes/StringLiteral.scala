@@ -13,12 +13,12 @@ case class StringLiteral(lexicalForm: String) extends Literal {
 
   override def getLexicalForm = lexicalForm
 
-  override def isEqualTo(other: RDFNode): Either[String,Boolean] = other match {
+  override def isEqualTo(other: RDFNode): Either[String, Boolean] = other match {
     case StringLiteral(s) => Right(s == lexicalForm)
     case _ => Right(false)
   }
 
-  def lessThan(other: RDFNode): Either[String,Boolean] = other match {
+  def lessThan(other: RDFNode): Either[String, Boolean] = other match {
     case StringLiteral(str) => Right(lexicalForm < str)
     case _ => Left(s"Cannot compare string literal $this < $other which is not a string")
   }

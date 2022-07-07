@@ -28,17 +28,17 @@ import es.weso.utils.IOUtils._
 import scala.concurrent.ExecutionContext.global
 
 /**
-  * Obtains triples by redirect
-  * @param prefixMap 
-  * @param maybeClient if specified, the requests will use http4s client, otherwise Java's httpClient
-  */
+ * Obtains triples by redirect
+ * @param prefixMap
+ * @param maybeClient
+ *   if specified, the requests will use http4s client, otherwise Java's httpClient
+ */
 case class RDFFromWeb(
-  prefixMap: Option[PrefixMap] = None,
-  maybeClient: Option[Client[IO]] = None 
-  ) extends RDFReader {
+    prefixMap: Option[PrefixMap] = None,
+    maybeClient: Option[Client[IO]] = None
+) extends RDFReader {
 
   type Rdf = RDFFromWeb
-  
 
   val id = "RDFFromWeb"
   val log = LoggerFactory.getLogger("RDFFromWeb")
@@ -50,12 +50,11 @@ case class RDFFromWeb(
     IO(prefixMap.getOrElse(PrefixMap.empty))
   }
 
-/*  override def fromString(cs: CharSequence, format: String, base: Option[IRI]): RDFRead[Rdf] = {
+  /*  override def fromString(cs: CharSequence, format: String, base: Option[IRI]): RDFRead[Rdf] = {
     err("Cannot parse RDFFromWeb ")
   } */
 
-  override def serialize(format: String,
-                         base: Option[IRI]): RDFRead[String] = {
+  override def serialize(format: String, base: Option[IRI]): RDFRead[String] = {
     err(s"Cannot serialize RDFFromWeb")
   }
 
@@ -67,7 +66,7 @@ case class RDFFromWeb(
     errStream(s"""|triplesWithSubject: not implemented deref yet
                   |Node: $node 
                   |""".stripMargin)
- /*   node match {
+  /*   node match {
      case subj: IRI => maybeClient match {
        case None => {
          for {
@@ -75,14 +74,14 @@ case class RDFFromWeb(
          ts <- rdf.triplesWithSubject(subj)
        } yield ts
        }
-       case Some(client) => 
+       case Some(client) =>
         errStream("triplesWithSubject: not implemented yet deref from client")
-     } 
+     }
     case _ => errStream("triplesWithSubject: node " + node + " must be a IRI")
   } */
 
-  override def triplesWithPredicate(p: IRI): RDFStream[RDFTriple] = 
-   errStream(s"Cannot obtain triplesWithPredicate from dereferentiation")
+  override def triplesWithPredicate(p: IRI): RDFStream[RDFTriple] =
+    errStream(s"Cannot obtain triplesWithPredicate from dereferentiation")
   /*{
     val derefModel = ModelFactory.createDefaultModel
     RDFDataMgr.read(derefModel, p.str)
@@ -90,9 +89,9 @@ case class RDFFromWeb(
     streamFromIOs(model2triples(model))
   }*/
 
-  override def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] = 
-   errStream(s"Cannot obtain triples with Object by dereferentiation")
-/*   node match {
+  override def triplesWithObject(node: RDFNode): RDFStream[RDFTriple] =
+    errStream(s"Cannot obtain triples with Object by dereferentiation")
+  /*   node match {
     case obj: IRI => {
       val derefModel = ModelFactory.createDefaultModel
       RDFDataMgr.read(derefModel, obj.str)
@@ -104,8 +103,8 @@ case class RDFFromWeb(
   } */
 
   override def triplesWithPredicateObject(p: IRI, node: RDFNode): RDFStream[RDFTriple] =
-   errStream(s"Cannot obtain triplesWithPredicateObject by dereferentiation") 
-/*   node match {
+    errStream(s"Cannot obtain triplesWithPredicateObject by dereferentiation")
+  /*   node match {
      case obj: IRI => {
       val derefModel = ModelFactory.createDefaultModel
       RDFDataMgr.read(derefModel, obj.str)
@@ -123,8 +122,8 @@ case class RDFFromWeb(
     err(s"hasSHACLClass: Not implemented at RDFFromWeb. Node: $n Class: $c")
   }
 
-  override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] = 
-   err(s"Not implemented hasPredicateWithSubject($n,$p)")
+  override def hasPredicateWithSubject(n: RDFNode, p: IRI): IO[Boolean] =
+    err(s"Not implemented hasPredicateWithSubject($n,$p)")
 
   override def nodesWithPath(p: SHACLPath): RDFStream[(RDFNode, RDFNode)] = {
     errStream(s"nodesWithPath: Undefined at RDFFromWeb. Path: $p")
@@ -141,14 +140,17 @@ case class RDFFromWeb(
   override def checkDatatype(node: RDFNode, datatype: IRI): RDFRead[Boolean] =
     JenaMapper.wellTypedDatatype(node, datatype)
 
-  override def querySelect(queryStr: String): RDFStream[Map[String,RDFNode]] = 
+  override def querySelect(queryStr: String): RDFStream[Map[String, RDFNode]] =
     Stream.raiseError[IO](new RuntimeException(s"Unimplemented query on RDFFromWeb"))
 
-  override def queryAsJson(queryStr: String): RDFRead[Json] = err(s"Unimplemented query on RDFFromWeb")
+  override def queryAsJson(queryStr: String): RDFRead[Json] = err(
+    s"Unimplemented query on RDFFromWeb")
 
-  override def getNumberOfStatements(): RDFRead[Int] = err(s"Unimplemented number of statements of endpoint")
+  override def getNumberOfStatements(): RDFRead[Int] = err(
+    s"Unimplemented number of statements of endpoint")
 
-  override def isIsomorphicWith(other: RDFReader) = err(s"Unimplemented isomorphic test in RDFFromWeb")
+  override def isIsomorphicWith(other: RDFReader) = err(
+    s"Unimplemented isomorphic test in RDFFromWeb")
 
   override def sourceIRI = None
 

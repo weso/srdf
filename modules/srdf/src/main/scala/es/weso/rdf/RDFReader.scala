@@ -12,39 +12,42 @@ import es.weso.rdf.locations._
 
 /**
  * RDFReader can read RDF data from several sources like an in-memory model or a SPARQL endpoint
- * 
  */
 
 trait RDFReader {
 
   type Rdf <: RDFReader
   type RDFRead[A] = IO[A]
-  type RDFStream[A] = Stream[IO,A]
-  
+  type RDFStream[A] = Stream[IO, A]
+
   val id: String
 
-  val nodeLocations: Map[RDFNode,Set[Location]] = Map()
-  val tripleLocations: Map[RDFTriple,Set[Location]] = Map()
-  
+  val nodeLocations: Map[RDFNode, Set[Location]] = Map()
+  val tripleLocations: Map[RDFTriple, Set[Location]] = Map()
 
   /**
-    * @return List of available formats that this RDFReader supports
-    */
+   * @return
+   *   List of available formats that this RDFReader supports
+   */
   def availableParseFormats: List[String]
 
   /**
-    * 
-    * @return List of formats in which this RDFReader can be serialized 
-    */
+   * @return
+   *   List of formats in which this RDFReader can be serialized
+   */
   def availableSerializeFormats: List[String]
 
   /**
-    * Parse a char sequence to obtain an RDFReader
-    * @param cs char sequence to parse
-    * @param format format (TURTLE by default)
-    * @param base base IRI (None by default)
-    * @return Right RDF or Left error message
-    */
+   * Parse a char sequence to obtain an RDFReader
+   * @param cs
+   *   char sequence to parse
+   * @param format
+   *   format (TURTLE by default)
+   * @param base
+   *   base IRI (None by default)
+   * @return
+   *   Right RDF or Left error message
+   */
   /*def fromString(cs: CharSequence,
                  format: String = "TURTLE",
                  base: Option[IRI] = None): Resource[RDFRead,Rdf] */
@@ -85,34 +88,39 @@ trait RDFReader {
    * The set of all iri's available
    */
   def iris(): RDFStream[IRI] = {
-    def f(t: RDFTriple): Stream[IO,IRI] = Stream.emits(t.iris.toSeq)
+    def f(t: RDFTriple): Stream[IO, IRI] = Stream.emits(t.iris.toSeq)
     rdfTriples().map(f).flatten
   }
 
   /**
    * Set of RDFTriples that contain a node as subject
-   * @param n node
-   * @return A set of triples or a String with an error message
+   * @param n
+   *   node
+   * @return
+   *   A set of triples or a String with an error message
    */
   def triplesWithSubject(n: RDFNode): RDFStream[RDFTriple]
 
   /**
    * Set of RDFTriples that relate two nodes by a predicate
-   * @param p predicate
+   * @param p
+   *   predicate
    */
   def triplesWithPredicate(p: IRI): RDFStream[RDFTriple]
 
   /**
    * Set of RDFTriples that contain a node as object
-   * @param n node
+   * @param n
+   *   node
    */
   def triplesWithObject(n: RDFNode): RDFStream[RDFTriple]
 
-
   /**
    * Set of RDFTriples that contain a node as predicate with some object
-   * @param p predicate
-   * @param o object
+   * @param p
+   *   predicate
+   * @param o
+   *   object
    */
   def triplesWithPredicateObject(p: IRI, o: RDFNode): RDFStream[RDFTriple]
 
@@ -120,20 +128,23 @@ trait RDFReader {
 
   /**
    * Set of RDFTriples that relate two nodes by a SHACL path
-   * @param p path
+   * @param p
+   *   path
    */
   def nodesWithPath(p: SHACLPath): RDFStream[(RDFNode, RDFNode)]
 
   /**
    * Set of RDFTriples that relate a node with some object by a path
-   * @param p path
-   * @param o object
+   * @param p
+   *   path
+   * @param o
+   *   object
    */
   def subjectsWithPath(p: SHACLPath, o: RDFNode): RDFStream[RDFNode]
 
   /**
-   * return the values associated with a node by a path
-   * The path is defined as in SHACL paths which are a simplified version of SPARQL paths
+   * return the values associated with a node by a path The path is defined as in SHACL paths
+   * which are a simplified version of SPARQL paths
    */
   def objectsWithPath(subj: RDFNode, path: SHACLPath): RDFStream[RDFNode]
 
@@ -145,36 +156,40 @@ trait RDFReader {
    * Set of RDFTriples that contain a node as subject and a given Predicate
    * @param s
    */
-  def triplesWithSubjectPredicate(s: RDFNode, p: IRI): RDFStream[RDFTriple] = 
+  def triplesWithSubjectPredicate(s: RDFNode, p: IRI): RDFStream[RDFTriple] =
     triplesWithSubject(s).filter(_.hasPredicate(p))
 
-  def hasPredicateWithSubject(n: RDFNode, p: IRI): RDFRead[Boolean] 
+  def hasPredicateWithSubject(n: RDFNode, p: IRI): RDFRead[Boolean]
 
-  type S[A] = Stream[IO,A]
+  type S[A] = Stream[IO, A]
 
-  def mkStream[A,B](vs: List[A], f: A => Stream[IO,B]): Stream[IO,B] = {
-    vs.traverse[S,B](f).map(Stream.emits(_)).flatten
+  def mkStream[A, B](vs: List[A], f: A => Stream[IO, B]): Stream[IO, B] = {
+    vs.traverse[S, B](f).map(Stream.emits(_)).flatten
   }
   /*for {
     bs <- vs.map(f).sequence
   } yield bs */
 
   /**
-    * Set of RDFTriples that contain a node as object with some of the predicates in a list
-    * @param o object
-    * @param ps list of predicates
-    */
+   * Set of RDFTriples that contain a node as object with some of the predicates in a list
+   * @param o
+   *   object
+   * @param ps
+   *   list of predicates
+   */
   def triplesWithPredicatesObject(ps: LazyList[IRI], o: RDFNode): RDFStream[RDFTriple] = {
-    mkStream(ps.toList, (p: IRI) => triplesWithPredicateObject(p,o))
+    mkStream(ps.toList, (p: IRI) => triplesWithPredicateObject(p, o))
   }
 
   /**
-    * Set of RDFTriples that contain a node as subject with some of the predicates in a list
-    * @param n node
-    * @param ps list of predicates
-    */
+   * Set of RDFTriples that contain a node as subject with some of the predicates in a list
+   * @param n
+   *   node
+   * @param ps
+   *   list of predicates
+   */
   def triplesWithSubjectPredicates(n: RDFNode, ps: LazyList[IRI]): RDFStream[RDFTriple] = {
-    mkStream(ps.toList, (p: IRI) => triplesWithSubjectPredicate(n,p))
+    mkStream(ps.toList, (p: IRI) => triplesWithSubjectPredicate(n, p))
   }
 
   /**
@@ -191,8 +206,8 @@ trait RDFReader {
   def hasSHACLClass(node: RDFNode, cls: RDFNode): RDFRead[Boolean]
 
   /**
-   * return the SHACL instances of a node `cls`
-   * A node `node` is a shacl instance of `cls` if `node rdf:type/rdfs:subClassOf* cls`
+   * return the SHACL instances of a node `cls` A node `node` is a shacl instance of `cls` if
+   * `node rdf:type/rdfs:subClassOf* cls`
    */
   def getSHACLInstances(cls: RDFNode): RDFStream[RDFNode]
 
@@ -201,39 +216,48 @@ trait RDFReader {
   }
 
   /**
-    * Checks if a node has a given datatype
-    * @param node RDF node to check
-    * @param datatype Datatype IRI to check
-    * @return In case of a bad formed literal, a Left with a message, otherwise the check
-    */
+   * Checks if a node has a given datatype
+   * @param node
+   *   RDF node to check
+   * @param datatype
+   *   Datatype IRI to check
+   * @return
+   *   In case of a bad formed literal, a Left with a message, otherwise the check
+   */
   def checkDatatype(node: RDFNode, datatype: IRI): RDFRead[Boolean]
 
   /**
-    * Run a SPARQL query which returns a JSON representation of the result
-    * @param str string representing the SPARQL query
-    * @return JSON representation of the result
-    */
+   * Run a SPARQL query which returns a JSON representation of the result
+   * @param str
+   *   string representing the SPARQL query
+   * @return
+   *   JSON representation of the result
+   */
   def queryAsJson(str: String): RDFRead[Json]
 
   /**
-    * Run a SPARQL select query which returns a result map
-    * @param queryStr string representing the SPARQL query
-    * @return Either a List of mappings or an error message
-    */
-  def querySelect(queryStr: String): RDFStream[Map[String,RDFNode]]
+   * Run a SPARQL select query which returns a result map
+   * @param queryStr
+   *   string representing the SPARQL query
+   * @return
+   *   Either a List of mappings or an error message
+   */
+  def querySelect(queryStr: String): RDFStream[Map[String, RDFNode]]
 
   def getNumberOfStatements(): RDFRead[Int]
 
   /**
-  *
-    * @param other RDF reader
-    * @return true if this RDF graph is isomorphic with other
-    */
+   * @param other
+   *   RDF reader
+   * @return
+   *   true if this RDF graph is isomorphic with other
+   */
   def isIsomorphicWith(other: RDFReader): RDFRead[Boolean]
 
   /**
-    * @return Source IRI of this RDF graph if exists
-    */
+   * @return
+   *   Source IRI of this RDF graph if exists
+   */
   def sourceIRI: Option[IRI]
 
   def asRDFBuilder: RDFRead[RDFBuilder]
@@ -249,4 +273,3 @@ trait RDFReader {
   }
 
 }
-

@@ -72,26 +72,33 @@ object SHACLPath {
   }
 
   implicit val decodePath: Decoder[SHACLPath] = Decoder.instance { c =>
-    c.as[String].flatMap(_ match {
-      case s => RDFNode.fromString(s).fold(
-        s => Left(DecodingFailure(s, Nil)),
-        node => node match {
-          case iri: IRI => Right(PredicatePath(iri))
-          case _ => Left(DecodingFailure(s"Unsupported path decoding of node $node", Nil))
-        })
-    })
+    c.as[String]
+      .flatMap(_ match {
+        case s =>
+          RDFNode
+            .fromString(s)
+            .fold(
+              s => Left(DecodingFailure(s, Nil)),
+              node =>
+                node match {
+                  case iri: IRI => Right(PredicatePath(iri))
+                  case _ =>
+                    Left(DecodingFailure(s"Unsupported path decoding of node $node", Nil))
+                }
+            )
+      })
   }
 
   implicit val shaclPathShow: Show[SHACLPath] = new Show[SHACLPath] {
     def show(path: SHACLPath): String = {
       path match {
         case PredicatePath(pred) => pred.show
-        case InversePath(p)      => "^ " + p.show
-        case SequencePath(ps)    => ps.map(_.show).mkString(" / ")
+        case InversePath(p) => "^ " + p.show
+        case SequencePath(ps) => ps.map(_.show).mkString(" / ")
         case AlternativePath(ps) => ps.map(_.show).mkString(" | ")
-        case ZeroOrMorePath(p)   => p.show + "* "
-        case OneOrMorePath(p)    => p.show + "+ "
-        case ZeroOrOnePath(p)    => p.show + "? "
+        case ZeroOrMorePath(p) => p.show + "* "
+        case OneOrMorePath(p) => p.show + "+ "
+        case ZeroOrOnePath(p) => p.show + "? "
       }
     }
   }

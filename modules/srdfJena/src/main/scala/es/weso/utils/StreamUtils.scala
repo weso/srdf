@@ -5,9 +5,9 @@ import fs2.Stream
 
 object StreamUtils {
 
-  def fromIOLs[A](ioLs: IO[List[A]]): Stream[IO,A] =  for {
-      ls <- Stream.eval(ioLs)
-      r <- Stream.emits(ls)
-  } yield r 
+  def fromIOLs[A](ioLs: IO[List[A]]): Stream[IO, A] = for {
+    ls <- Stream.eval(ioLs)
+    r <- Stream.emits(ls)
+  } yield r
 
 }
