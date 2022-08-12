@@ -10,7 +10,7 @@ trait RDFBuilder extends RDFReader {
   type RDFBuild[A] = IO[A]
 
   def addBase(iri: IRI): RDFBuild[Rdf]
-  
+
   def addPrefixMap(pm: PrefixMap): RDFBuild[Rdf]
 
   def addPrefix(alias: String, iri: IRI): RDFBuild[Rdf]
@@ -31,7 +31,7 @@ trait RDFBuilder extends RDFReader {
 
   def rmTriple(triple: RDFTriple): RDFBuild[Rdf]
 
-  def empty: RDFBuild[Resource[RDFBuild,Rdf]]
+  def empty: RDFBuild[Resource[RDFBuild, Rdf]]
 
   def merge(other: RDFReader): RDFBuild[Rdf]
 
@@ -42,4 +42,3 @@ trait RDFBuilder extends RDFReader {
   def fromString(str: String, format: String, base: Option[IRI]): IO[Resource[IO, RDFBuilder]]
 
 }
-

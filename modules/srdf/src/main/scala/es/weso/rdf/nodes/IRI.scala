@@ -21,9 +21,9 @@ case class IRI(uri: URI) extends RDFNode {
   }
 
   /**
-    * Represents an IRI as <...>
-    * @return
-    */
+   * Represents an IRI as <...>
+   * @return
+   */
   override def toString = {
     "<" + uri.parseServerAuthority.toString + ">"
   }
@@ -33,17 +33,18 @@ case class IRI(uri: URI) extends RDFNode {
   }
 
   /**
-    * String representation of IRI without < and >
-    * @return string representation
-    */
+   * String representation of IRI without < and >
+   * @return
+   *   string representation
+   */
   def str: String = {
     uri.toString
   }
 
   /**
-   * Resolve an IRI against this IRI (which is taken as the base)
-   * Currently, we employ java.net.URI algorithm to resolve
-   * It seems that the algorithm is wrong with file:// removing the two slashes
+   * Resolve an IRI against this IRI (which is taken as the base) Currently, we employ
+   * java.net.URI algorithm to resolve It seems that the algorithm is wrong with file://
+   * removing the two slashes
    */
   def resolve(iri: IRI): IRI = {
     IRI(uri.resolve(iri.uri))
@@ -55,12 +56,12 @@ case class IRI(uri: URI) extends RDFNode {
 
   def isEmpty: Boolean = this == IRI("")
 
-  def isEqualTo(other: RDFNode): Either[String,Boolean] = other match {
+  def isEqualTo(other: RDFNode): Either[String, Boolean] = other match {
     case i: IRI => Right(i.uri == uri)
     case _ => Left(s"Type error comaring $this with $other")
   }
 
-  def lessThan(other: RDFNode): Either[String,Boolean] = {
+  def lessThan(other: RDFNode): Either[String, Boolean] = {
     other match {
       case otherIri: IRI => Right(uri.toString < otherIri.uri.toString)
       case _ => Left(s"Type error comaring $this with $other which is not an IRI")
@@ -68,18 +69,20 @@ case class IRI(uri: URI) extends RDFNode {
   }
 
   /**
-  * Make a relative IRI from a given base
-    *  Example `IRI("http://example.com/foo").relativize(IRI("http://example.com/")) = IRI("foo")``
-    * @param base base IRI
-    * @return the relativized IRI
-    */
+   * Make a relative IRI from a given base Example
+   * `IRI("http://example.com/foo").relativize(IRI("http://example.com/")) = IRI("foo")``
+   * @param base
+   *   base IRI
+   * @return
+   *   the relativized IRI
+   */
   def relativizeIRI(base: IRI): IRI =
     IRI(base.uri.relativize(uri))
 }
 
 object IRI {
 
-/*  def apply(uri: URI): IRI =
+  /*  def apply(uri: URI): IRI =
     IRI(uri) */
 
   /**
@@ -91,8 +94,8 @@ object IRI {
     IRI(new URI(str))
   }
 
-  def fromString(str: String, base: Option[IRI] = None): Either[String,IRI] = {
-    Try{
+  def fromString(str: String, base: Option[IRI] = None): Either[String, IRI] = {
+    Try {
       val uri = new URI(str)
       IRI(base.fold(uri)(_.uri.resolve(uri)))
     }.toEither.leftMap(_.getMessage)
@@ -118,6 +121,7 @@ object IRI {
 
   implicit val iriShow: Show[IRI] = Show.show[IRI] { _.toString }
 
-  implicit val iriOrdering: Ordering[IRI] = (iri1: IRI, iri2: IRI) => iri1.uri.compareTo(iri2.uri)
+  implicit val iriOrdering: Ordering[IRI] = (iri1: IRI, iri2: IRI) =>
+    iri1.uri.compareTo(iri2.uri)
 
 }

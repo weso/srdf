@@ -3,20 +3,17 @@ package es.weso.shextest.manifest
 import es.weso.rdf.nodes._
 
 case class ShExManifest(
-  label: Option[String],
-  comment: Option[String],
-  entries: List[Entry],
-  includes: List[(RDFNode, Option[ShExManifest])])
+    label: Option[String],
+    comment: Option[String],
+    entries: List[Entry],
+    includes: List[(RDFNode, Option[ShExManifest])])
 
 object ShExManifest {
-  def empty: ShExManifest = 
+  def empty: ShExManifest =
     ShExManifest(
-      None, 
-      None, 
-      List(), 
+      None,
+      None,
+      List(),
       List()
     )
 }
-
-
-

@@ -4,10 +4,10 @@ import scala.collection.Set
 import es.weso.rdf.nodes._
 
 case class RDFTriple(
-  subj: RDFNode, 
-  pred: IRI, 
-  obj: RDFNode
- ) {
+    subj: RDFNode,
+    pred: IRI,
+    obj: RDFNode
+) {
 
   def hasSubject(node: RDFNode): Boolean = subj == node
   def hasObject(node: RDFNode): Boolean = obj == node
@@ -15,7 +15,7 @@ case class RDFTriple(
 
   def extractBNode(node: RDFNode): Set[BNode] = {
     node match {
-      case b : BNode => Set(b)
+      case b: BNode => Set(b)
       case _ => Set()
     }
   }
@@ -46,22 +46,15 @@ case class RDFTriple(
 object RDFTriple {
 
   /**
-   *  Constructor of RDFTriples from triples
+   * Constructor of RDFTriples from triples
    */
-  def apply(triple: (RDFNode, IRI, RDFNode)
-           ) = new RDFTriple(triple._1, triple._2, triple._3)
+  def apply(triple: (RDFNode, IRI, RDFNode)) = new RDFTriple(triple._1, triple._2, triple._3)
 
-  def apply(triple: (RDFNode, IRI, RDFNode),
-            base: IRI
-           ) = new RDFTriple(
-    resolve(triple._1, base),
-    base.resolve(triple._2),
-    resolve(triple._3, base))
+  def apply(triple: (RDFNode, IRI, RDFNode), base: IRI) =
+    new RDFTriple(resolve(triple._1, base), base.resolve(triple._2), resolve(triple._3, base))
 
-  def apply(subj: RDFNode,
-            pred: IRI,
-            obj: RDFNode): RDFTriple =
-    RDFTriple((subj,pred,obj))
+  def apply(subj: RDFNode, pred: IRI, obj: RDFNode): RDFTriple =
+    RDFTriple((subj, pred, obj))
 
   def resolve(node: RDFNode, base: IRI): RDFNode = {
     node match {
@@ -74,13 +67,11 @@ object RDFTriple {
    * collects BNodes in a set of triples
    */
   def collectBNodes(triples: Set[RDFTriple]): Set[BNode] = {
-    triples.foldLeft(Set[BNode]())((set, triple) =>
-      set ++ triple.bNodes)
+    triples.foldLeft(Set[BNode]())((set, triple) => set ++ triple.bNodes)
   }
 
   /**
-   * Shows a set of triples
-   * TODO: Consider removing this method
+   * Shows a set of triples TODO: Consider removing this method
    */
   def showTriples(triples: Set[RDFTriple]): String = {
     val str = new StringBuilder
@@ -90,18 +81,17 @@ object RDFTriple {
     str.toString()
   }
 
-  implicit val orderingRDFTriple: Ordering[RDFTriple] = 
-   (x: RDFTriple, y: RDFTriple) => {
+  implicit val orderingRDFTriple: Ordering[RDFTriple] =
+    (x: RDFTriple, y: RDFTriple) => {
       Ordering[RDFNode].compare(x.subj, y.subj) <||>
-      Ordering[IRI].compare(x.pred, y.pred) <||>
-      Ordering[RDFNode].compare(x.obj, y.obj)
+        Ordering[IRI].compare(x.pred, y.pred) <||>
+        Ordering[RDFNode].compare(x.obj, y.obj)
     }
 
   // Inspired by: https://alexn.org/blog/2020/11/17/best-practice-for-ordering-comparable.html
   private implicit class IntExtensions(val num: Int) extends AnyVal {
-    def `<||>`(other: => Int): Int = 
+    def `<||>`(other: => Int): Int =
       if (num == 0) other else num
   }
 
 }
-

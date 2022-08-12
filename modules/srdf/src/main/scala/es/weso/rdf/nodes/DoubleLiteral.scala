@@ -13,14 +13,14 @@ case class DoubleLiteral(double: Double, repr: String) extends Literal {
 
   override def getLexicalForm = lexicalForm
 
-  def isEqualTo(other: RDFNode): Either[String,Boolean] = other match {
+  def isEqualTo(other: RDFNode): Either[String, Boolean] = other match {
     case IntegerLiteral(n, _) => Right(n == double)
-    case DoubleLiteral(d, r) => Right(if (r!=null && repr != null) r == repr else d == double)
+    case DoubleLiteral(d, r) => Right(if (r != null && repr != null) r == repr else d == double)
     case DecimalLiteral(d, _) => Right(d == double)
     case _ => Left(s"Type error comparing $this with $other")
   }
 
-  def lessThan(other: RDFNode): Either[String,Boolean] = other match {
+  def lessThan(other: RDFNode): Either[String, Boolean] = other match {
     case IntegerLiteral(n, _) => Right(double < n)
     case DecimalLiteral(d, _) => Right(double < d)
     case DoubleLiteral(d, _) => Right(double < d)

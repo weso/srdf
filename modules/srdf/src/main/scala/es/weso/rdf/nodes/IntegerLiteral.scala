@@ -15,13 +15,13 @@ case class IntegerLiteral(int: Int, repr: String) extends Literal {
   }
   override def getLexicalForm = lexicalForm
 
-  def isEqualTo(other: RDFNode): Either[String,Boolean] = other match {
+  def isEqualTo(other: RDFNode): Either[String, Boolean] = other match {
     case IntegerLiteral(d, r) =>
-      Right (if (r != null && repr != null) r == repr else d == int)
+      Right(if (r != null && repr != null) r == repr else d == int)
     case _ => Right(false)
   }
 
-  def lessThan(other: RDFNode): Either[String,Boolean] = other match {
+  def lessThan(other: RDFNode): Either[String, Boolean] = other match {
     case IntegerLiteral(m, _) => Right(int < m)
     case DecimalLiteral(d, _) => Right(int < d)
     case DoubleLiteral(d, _) => Right(int < d)
@@ -30,5 +30,5 @@ case class IntegerLiteral(int: Int, repr: String) extends Literal {
 }
 
 object IntegerLiteral {
-  def apply(n: Int): IntegerLiteral = IntegerLiteral(n,n.toString)
+  def apply(n: Int): IntegerLiteral = IntegerLiteral(n, n.toString)
 }
