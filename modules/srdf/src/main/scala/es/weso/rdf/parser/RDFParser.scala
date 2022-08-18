@@ -123,6 +123,7 @@ trait RDFParser {
 
   def checkString(obj: RDFNode, p:IRI): RDFParser[String] = obj match {
     case StringLiteral(str) => parseOk(str)
+    case RDFhtmlStringLiteral(str) => parseOk(str) // RH20220819
     case _ => parseFail("Value of predicate " + p + " must be a string literal but it is: " + obj)
   }
 
@@ -553,6 +554,7 @@ trait RDFParser {
   } yield v
 
   def checkString(n: RDFNode): RDFParser[String] = n match {
+    case s: RDFhtmlStringLiteral => parseOk(s.getLexicalForm) // RH20220819
     case s: StringLiteral => parseOk(s.getLexicalForm)
     case _ => parseFail(s"Expected string literal for node $n")
   }
