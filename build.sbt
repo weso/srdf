@@ -1,4 +1,4 @@
-lazy val scala212 = "2.12.15"
+lazy val scala212 = "2.12.16"
 lazy val scala213 = "2.13.8"
 lazy val scala3 = "3.1.3"
 
@@ -11,11 +11,11 @@ lazy val supportedScalaVersions = List(
 val Java11 = JavaSpec.temurin("11") // "adopt@1.11"
 // val Java8 = JavaSpec.temurin("8") // "adopt@1.8"
 
-lazy val utilsVersion = "0.2.24"
+lazy val utilsVersion = "0.2.25"
 
 // Dependency versions
-lazy val catsVersion = "2.7.0"
-lazy val catsEffectVersion = "3.3.12"
+lazy val catsVersion = "2.8.0"
+lazy val catsEffectVersion = "3.3.14"
 lazy val circeVersion = "0.14.2"
 lazy val declineVersion = "2.2.0"
 lazy val fs2Version = "3.2.7"
