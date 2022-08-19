@@ -36,7 +36,8 @@ object RDFNode {
   val xsd = "http://www.w3.org/2001/XMLSchema#"
   val rdfSyntax = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
   val StringDatatypeIRI = IRI(xsd + "string")
-  val RDFhtmlStringDatatypeIRI = IRI(rdfSyntax + "HTML") // RH20220819
+  val RDFHTMLDatatypeIRI = IRI(rdfSyntax + "HTML") // RH20220819
+  val RDFXMLDatatypeIRI = IRI(rdfSyntax + "XML") // RH20220819
   val LangStringDatatypeIRI = IRI(rdfSyntax + "langString")
   val BooleanDatatypeIRI = IRI(xsd + "boolean")
   val IntegerDatatypeIRI = IRI(xsd + "integer")
