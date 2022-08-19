@@ -100,18 +100,18 @@ class GraphTest extends CatsEffectSuite {
   )
 
   shouldTraverse(
-    iri("x"),
+    iri("x2"),
     """|prefix : <http://example.org/>
        |prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-       |:x :p _:1, _:2 ;
-       |   :q  "<p>HTML String</p>"^^rdf:HTML .
-       |_:1 :p :y, :z .
-       |:r :q :x .
+       |:x2 :p _:1, _:2 ;
+       |   :q  "<p>HTML String 2</p>"^^rdf:HTML .
+       |_:1 :p :y2, :z2 .
+       |:r :q :x2 .
       """.stripMargin,
     LazyList(
-      iri("x"), iri("y"), iri("z"),
+      iri("x2"), iri("y2"), iri("z2"),
       bnode("1"), bnode("2"),
-      rdfHTML("<p>HTML String</p>")
+      rdfHTML("<p>HTML String 2</p>")
     ),
     true
   )
