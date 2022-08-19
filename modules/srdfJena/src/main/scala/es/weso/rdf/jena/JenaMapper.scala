@@ -158,6 +158,8 @@ object JenaMapper {
     }
     case lit: JenaLiteral => {
       extendNS(lit.getDatatype.getURI) match {
+        case  Some(RDFNode.`RDFhtmlStringDatatypeIRI`) => // RH20220819
+          ok(RDFhtmlStringLiteral(lit.getLexicalForm))
         case None | Some(RDFNode.`StringDatatypeIRI`) =>
           ok(StringLiteral(lit.getLexicalForm))
         case Some(RDFNode.`IntegerDatatypeIRI`) => {

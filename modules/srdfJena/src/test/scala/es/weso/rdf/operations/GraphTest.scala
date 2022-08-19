@@ -19,7 +19,11 @@ class GraphTest extends CatsEffectSuite {
 
   def bnode(s: String): BNode = BNode(s)
 
-  def int(n: Int): IntegerLiteral = IntegerLiteral(n, n.toString)
+  def int(n: Int) : IntegerLiteral = IntegerLiteral(n, n.toString)
+
+  def string(s: String): StringLiteral  = StringLiteral(s)
+
+  def rdfHTML(s: String): RDFhtmlStringLiteral  = RDFhtmlStringLiteral(s)
 
   shouldTraverse(
       iri("x"),
@@ -79,6 +83,39 @@ class GraphTest extends CatsEffectSuite {
       true
     )
 
+  shouldTraverse(
+    iri("x"),
+    """|prefix : <http://example.org/>
+       |:x :p _:1, _:2 ;
+       |   :q  "Plain String" .
+       |_:1 :p :y, :z .
+       |:r :q :x .
+      """.stripMargin,
+    LazyList(
+      iri("x"), iri("y"), iri("z"),
+      bnode("1"), bnode("2"),
+      string("Plain String")
+    ),
+    true
+  )
+
+  shouldTraverse(
+    iri("x2"),
+    """|prefix : <http://example.org/>
+       |prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+       |:x2 :p _:1, _:2 ;
+       |   :q  "<p>HTML String 2</p>"^^rdf:HTML .
+       |_:1 :p :y2, :z2 .
+       |:r :q :x2 .
+      """.stripMargin,
+    LazyList(
+      iri("x2"), iri("y2"), iri("z2"),
+      bnode("1"), bnode("2"),
+      rdfHTML("<p>HTML String 2</p>")
+    ),
+    true
+  )
+
     def shouldTraverse(node: RDFNode,
                        str: String,
                        expected: LazyList[RDFNode],
@@ -94,8 +131,6 @@ class GraphTest extends CatsEffectSuite {
         r.map(ls => assertEquals(ls.sorted, expected.sorted))
       }
     }
-
-
 
     shouldTraverseWithArcs(
       iri("x"),
