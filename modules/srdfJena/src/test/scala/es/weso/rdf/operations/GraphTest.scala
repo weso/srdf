@@ -102,6 +102,7 @@ class GraphTest extends CatsEffectSuite {
   shouldTraverse(
     iri("x"),
     """|prefix : <http://example.org/>
+       |prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
        |:x :p _:1, _:2 ;
        |   :q  "<p>HTML String</p>"^^rdf:HTML .
        |_:1 :p :y, :z .
