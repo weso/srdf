@@ -221,6 +221,8 @@ object JenaMapper {
         m.createResource(resolve(i, base))
       case StringLiteral(str) =>
         m.createLiteral(str, false)
+      case RDFHTMLLiteral(str) =>    // RH20220820
+        m.createLiteral(str, false)  // RH20220820
       case DatatypeLiteral(str, i: IRI) =>
         i.str match {
           case `xsdinteger` => m.createTypedLiteral(str, XSDDatatype.XSDinteger)
