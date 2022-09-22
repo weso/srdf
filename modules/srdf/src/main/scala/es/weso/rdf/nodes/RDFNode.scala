@@ -74,12 +74,12 @@ object RDFNode {
     case (bnode1: BNode, bnode2: BNode) => 
      Ordering[String].compare(bnode1.getLexicalForm,bnode2.getLexicalForm)
     case (bnode: BNode, lit: Literal) => Bigger
-    case (lit: Literal, _) => Lower
     case (lit1: Literal, lit2: Literal) => 
      if (lit1.dataType == lit2.dataType)
       Ordering[String].compare(lit1.getLexicalForm, lit2.getLexicalForm) 
      else 
       Ordering[IRI].compare(lit1.dataType,lit2.dataType)
+    case (lit: Literal, _) => Lower
     }
   }
    

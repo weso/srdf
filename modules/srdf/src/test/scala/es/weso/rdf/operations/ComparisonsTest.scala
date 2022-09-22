@@ -1,12 +1,12 @@
 package es.weso.rdf.operations
 
 import es.weso.rdf.nodes._
+import es.weso.rdf.PREFIXES._
 import munit._
 
 import cats.implicits._
 
 class ComparisonsTest extends FunSuite {
-
 
   shouldBeLessThan(DoubleLiteral(2.3), DoubleLiteral(2.4), true)
   shouldBeLessThan(DoubleLiteral(2.3), IntegerLiteral(2,"2"), false)
@@ -85,4 +85,30 @@ class ComparisonsTest extends FunSuite {
         )
       }
     }
+
+    shouldGetTotalDigits(IntegerLiteral(23,"23"), 2)
+    shouldGetTotalDigits(DatatypeLiteral("23.45",`xsd:decimal`), 4)
+
+    def shouldGetTotalDigits(n: RDFNode, expected: Int): Unit = {
+      test(s"totalDigits(${n.show}) should be ${expected.show}") {
+        val v = Comparisons.numericValue(n).map(_.totalDigits)
+        v.fold(e => fail(s"Error: $e"),
+          t => assertEquals(t, expected)
+        )
+      }
+    }    
+
+    shouldGetFractionDigits(IntegerLiteral(23,"23"), 0)
+    shouldGetFractionDigits(DatatypeLiteral("23.45",`xsd:decimal`), 2)
+    shouldGetFractionDigits(DatatypeLiteral("23.4567",`xsd:double`), 4)
+
+   def shouldGetFractionDigits(n: RDFNode, expected: Int): Unit = {
+      test(s"totalDigits(${n.show}) should be ${expected.show}") {
+        val v = Comparisons.numericValue(n).map(_.fractionDigits)
+        v.fold(e => fail(s"Error: $e"),
+          t => assertEquals(t, expected)
+        )
+      }
+    }    
+
 }

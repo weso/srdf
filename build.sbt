@@ -26,6 +26,7 @@ lazy val munitEffectVersion = "1.0.7"
 
 lazy val rdf4jVersion = "3.4.2"
 lazy val scalaCollCompatVersion = "2.7.0"
+lazy val xercesVersion = "2.12.2"
 
 // Dependency modules
 
@@ -46,6 +47,7 @@ lazy val jenaFuseki = "org.apache.jena" % "jena-fuseki-main" % jenaVersion
 lazy val munit = "org.scalameta" %% "munit" % munitVersion
 lazy val munitEffects = "org.typelevel" %% "munit-cats-effect-3" % munitEffectVersion
 lazy val rdf4j_runtime = "org.eclipse.rdf4j" % "rdf4j-runtime" % rdf4jVersion pomOnly ()
+lazy val xercesImpl = "xerces" % "xercesImpl" % xercesVersion
 lazy val scalaCollCompat =
   "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollCompatVersion
 
@@ -101,7 +103,8 @@ lazy val srdf = projectMatrix
       circeGeneric,
       circeParser,
       fs2Core,
-      utils
+      utils,
+      xercesImpl // required only for totalDigits/fractionDigits
 //      scalaLogging,
 //      scalaCollCompat,
     )
@@ -144,7 +147,7 @@ lazy val srdf4j = projectMatrix
       catsKernel,
       catsEffect,
       fs2Core,
-      scalaCollCompat
+      // scalaCollCompat
     )
   )
   .jvmPlatform(scalaVersions = supportedScalaVersions)
@@ -263,5 +266,4 @@ lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
       url = url("https://weso.labra.es")
     )
   ),
-  resolvers += Resolver.sonatypeRepo("public")
 )
