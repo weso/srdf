@@ -7,7 +7,7 @@ import cats.implicits._
 import es.weso.rdf.nodes._
 import es.weso.rdf.PREFIXES._
 import org.apache.xerces.impl.dv.{SchemaDVFactory, ValidatedInfo, XSSimpleType}
-import org.apache.xerces.impl.dv.xs.DecimalDV
+import org.apache.xerces.impl.dv.xs._
 import org.apache.xerces.impl.validation.ValidationState
 import cats.effect._
 import scala.util._
@@ -29,12 +29,12 @@ object Comparisons {
     override val fractionDigits = 0
   }
   case class NumericDouble(n: Double, repr: String) extends NumericLiteral {
-    override def totalDigits = getTotalDigits(repr).fold(e => throw e, identity)
-    override val fractionDigits = getFractionDigits(repr).fold(e => throw e, identity)
+    override def totalDigits = getTotalDigitsDouble(repr).fold(e => throw e, identity)
+    override val fractionDigits = getFractionDigitsDouble(repr).fold(e => throw e, identity)
   }
   case class NumericDecimal(n: BigDecimal, repr: String) extends NumericLiteral {
-    override val totalDigits = getTotalDigits(repr).fold(e => throw e, identity)
-    override val fractionDigits = getFractionDigits(repr).fold(e => throw e, identity)
+    override val totalDigits = getTotalDigitsDecimal(repr).fold(e => throw e, identity)
+    override val fractionDigits = getFractionDigitsDecimal(repr).fold(e => throw e, identity)
   }
 
   private def str2NumericInt(str: String): Either[String, NumericInt] = try {
@@ -139,7 +139,7 @@ object Comparisons {
   } yield d1.union(d2)
 
    // TODO Remove dependency on Xerces
-  def getTotalDigits(value: String): Either[ErrorTotalDigits, Int] = Try {
+  def getTotalDigitsDecimal(value: String): Either[ErrorTotalDigits, Int] = Try {
     val context = new ValidationState
     val decimalDV = new DecimalDV()
     val typeDeclaration: XSSimpleType = SchemaDVFactory.getInstance.getBuiltInType("decimal")
@@ -151,12 +151,25 @@ object Comparisons {
     n => n.asRight
   )
 
+  def getTotalDigitsDouble(value: String): Either[ErrorTotalDigits, Int] = Try {
+    val context = new ValidationState
+    val doubleDV = new DoubleDV()
+    val typeDeclaration: XSSimpleType = SchemaDVFactory.getInstance.getBuiltInType("decimal")
+    val resultInfo = new ValidatedInfo
+    typeDeclaration.validate(value, context, resultInfo)
+    doubleDV.getTotalDigits(resultInfo.actualValue)
+  }.fold(
+    e => ErrorTotalDigits(value, e).asLeft,
+    n => n.asRight
+  )
+
+
   case class ErrorTotalDigits(value: String, e: Throwable) extends RuntimeException(s"Error obtaining total digits of $value: ${e.getLocalizedMessage()}")
 
   // TODO replace this by a builtin implementation
   /* This implementation leverages Xerces internal implementation of XML Schema datatypes */
   /* This is probably going too far and could be simplified */
-  def getFractionDigits(value: String): Either[ErrorFractionDigits, Int] =
+  def getFractionDigitsDecimal(value: String): Either[ErrorFractionDigits, Int] =
     Try {
       val context = new ValidationState
       val decimalDV = new DecimalDV()
@@ -168,6 +181,20 @@ object Comparisons {
       e => ErrorFractionDigits(value, e).asLeft,
       n => n.asRight
     )
+
+  def getFractionDigitsDouble(value: String): Either[ErrorFractionDigits, Int] =
+    Try {
+      val context = new ValidationState
+      val doubleDV = new DoubleDV()
+      val typeDeclaration: XSSimpleType = SchemaDVFactory.getInstance.getBuiltInType("double")
+      val resultInfo = new ValidatedInfo
+      typeDeclaration.validate(value, context, resultInfo)
+      doubleDV.getFractionDigits(resultInfo.actualValue)
+    }.fold(
+      e => ErrorFractionDigits(value, e).asLeft,
+      n => n.asRight
+    )
+
 
   case class ErrorFractionDigits(value: String, e: Throwable) extends RuntimeException(s"Error obtaining fraction digits of $value: ${e.getLocalizedMessage()}")
 

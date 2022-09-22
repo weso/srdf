@@ -98,17 +98,21 @@ class ComparisonsTest extends FunSuite {
       }
     }    
 
-    shouldGetFractionDigits(IntegerLiteral(23,"23"), 0)
-    shouldGetFractionDigits(DatatypeLiteral("23.45",`xsd:decimal`), 2)
-    shouldGetFractionDigits(DatatypeLiteral("23.4567",`xsd:double`), 4)
+   shouldGetFractionDigits(IntegerLiteral(23,"23"), 0)
+   shouldGetFractionDigits(DatatypeLiteral("23.45",`xsd:decimal`), 2)
+   shouldGetFractionDigits(DatatypeLiteral("23.4567",`xsd:decimal`), 4)
+   shouldGetFractionDigits(DatatypeLiteral("55.0",`xsd:decimal`), 0)
+   shouldGetFractionDigits(DoubleLiteral(5.5E03,"5.123E0"), -1)
 
    def shouldGetFractionDigits(n: RDFNode, expected: Int): Unit = {
-      test(s"totalDigits(${n.show}) should be ${expected.show}") {
+      test(s"fractionDigits(${n.show}) should be ${expected.show}") {
         val v = Comparisons.numericValue(n).map(_.fractionDigits)
         v.fold(e => fail(s"Error: $e"),
           t => assertEquals(t, expected)
         )
       }
     }    
+
+
 
 }
