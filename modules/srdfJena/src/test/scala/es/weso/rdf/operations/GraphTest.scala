@@ -130,7 +130,7 @@ class GraphTest extends CatsEffectSuite {
       str: String,
       expected: LazyList[RDFNode],
       withLog: Boolean = false): Unit = {
-    test(s"shouldTraverse(${node.show} in graph\n${str}\n and return\n$expected") {
+    test(s"shouldTraverse(${node} in graph\n${str}\n and return\n$expected") {
       val r = RDFAsJenaModel
         .fromChars(str, "TURTLE", None)
         .flatMap(res =>
@@ -173,7 +173,7 @@ class GraphTest extends CatsEffectSuite {
   )
 
   def shouldTraverseWithArcs(node: RDFNode, str: String, expected: List[RDFTriple]): Unit = {
-    test(s"shouldTraverseWithArcs(${node.show} in graph ${str}) and return $expected") {
+    test(s"shouldTraverseWithArcs(${node} in graph ${str}) and return $expected") {
       val r = RDFAsJenaModel
         .fromChars(str, "TURTLE", None)
         .flatMap(_.use(rdf =>

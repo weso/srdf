@@ -147,7 +147,7 @@ lazy val srdf4j = projectMatrix
       catsKernel,
       catsEffect,
       fs2Core,
-      // scalaCollCompat
+      scalaCollCompat // required for toScala conversions...
     )
   )
   .jvmPlatform(scalaVersions = supportedScalaVersions)
