@@ -6,13 +6,8 @@ import cats._
 import cats.implicits._
 import es.weso.rdf.nodes._
 import es.weso.rdf.PREFIXES._
-// import org.apache.xerces.impl.dv.{SchemaDVFactory, ValidatedInfo, XSSimpleType}
-// import org.apache.xerces.impl.dv.xs._
-// import org.apache.xerces.impl.validation.ValidationState
 import cats.effect._
 import scala.util._
-
-// import scala.collection.compat._
 
 object Comparisons {
 
@@ -40,28 +35,28 @@ object Comparisons {
     override def fractionDigits() = getFractionDigitsDecimal(repr).fold(e => throw e, identity)
   }
 
-  private def str2NumericInt(str: String): Either[String, NumericInt] = try {
+  private def str2NumericInt(str: String): Either[RDFNodeNumericConversionError, NumericInt] = try {
     val n: Int = Integer.parseInt(str)
-    Right(NumericInt(n, str))
+    NumericInt(n, str).asRight
   } catch {
-    case _: NumberFormatException => Left(s"Cannot obtain numeric value from node $str")
+    case e: NumberFormatException => RDFNodeNumericConversionError(str, e.some).asLeft
   }
 
-  private def str2NumericDecimal(str: String): Either[String, NumericDecimal] = try {
+  private def str2NumericDecimal(str: String): Either[RDFNodeNumericConversionError, NumericDecimal] = try {
     val n: BigDecimal = BigDecimal(str)
-    Right(NumericDecimal(n,str))
+    NumericDecimal(n,str).asRight
   } catch {
-    case _: NumberFormatException => Left(s"Cannot obtain numeric value from node $str")
+    case e: NumberFormatException => RDFNodeNumericConversionError(str, e.some).asLeft
   }
 
-  private def str2NumericDouble(str: String): Either[String, NumericDouble] = try {
+  private def str2NumericDouble(str: String): Either[RDFNodeNumericConversionError, NumericDouble] = try {
     val n: Double = str.toDouble
-    Right(NumericDouble(n,str))
+    NumericDouble(n,str).asRight
   } catch {
-    case _: NumberFormatException => Left(s"Cannot obtain numeric value from node $str")
+    case e: NumberFormatException => RDFNodeNumericConversionError(str, e.some).asLeft
   }
 
-  def numericValue(node: RDFNode): Either[String, NumericLiteral] = node match {
+  def numericValue(node: RDFNode): Either[Throwable, NumericLiteral] = node match {
     case IntegerLiteral(i, repr) => NumericInt(i,repr).asRight
     case DoubleLiteral(d, repr) => NumericDouble(d,repr).asRight
     case DecimalLiteral(d, repr) => NumericDecimal(d,repr).asRight
@@ -81,8 +76,8 @@ object Comparisons {
     case DatatypeLiteral(str, `xsd:unsignedShort`) => str2NumericInt(str)
     case DatatypeLiteral(str, `xsd:unsignedByte`) => str2NumericInt(str)
     case DatatypeLiteral(str, `xsd:float`) => str2NumericDouble(str)
-    case DatatypeLiteral(str, other) => Left(s"Cannot convert to numeric value datatype literal $str^^$other")
-    case _ => Left(s"Cannot convert $node to numeric literal for comparison")
+    case DatatypeLiteral(str, other) => RDFNodeNumericConversionErrorUnknownDatatype(str, other).asLeft
+    case _ => RDFNodeNumericConversionError_NonNumericNode(node).asLeft
   }
 
   def lessThanOrEquals(nl1: NumericLiteral, nl2: NumericLiteral): Boolean = (nl1,nl2) match {
@@ -119,8 +114,7 @@ object Comparisons {
   def greaterThan(node1:RDFNode, node2: RDFNode): Either[String,Boolean] = node2.lessThan(node1)
 
   type E[A] = Either[String,A]
-
-  
+ 
   def contains[F[_]: Foldable](ns: F[RDFNode], node: RDFNode): Either[String,Boolean] = {
     existsM(ns, n => node.isEqualTo(n))
   }
@@ -132,7 +126,6 @@ object Comparisons {
     val zero: List[RDFNode] = List()
     def cmb(rest: List[RDFNode], a: RDFNode): Either[String,List[RDFNode]] =
       contains(targets,a).map(b => if (b) rest else (a :: rest))
-    // Foldable[List].foldM(ns,zero)(cmb)
     Foldable[List].foldM[E,RDFNode,List[RDFNode]](ns,zero)(cmb)
   }
 
@@ -140,19 +133,6 @@ object Comparisons {
     d1 <- notContained(ns1,ns2)
     d2 <- notContained(ns2,ns1)
   } yield List.concat(d1, d2)
-
-   // TODO Remove dependency on Xerces
-  /* def getTotalDigitsDecimal(value: String): Either[ErrorTotalDigits, Int] = Try {
-    val context = new ValidationState
-    val decimalDV = new DecimalDV()
-    val typeDeclaration: XSSimpleType = SchemaDVFactory.getInstance.getBuiltInType("decimal")
-    val resultInfo = new ValidatedInfo
-    typeDeclaration.validate(value, context, resultInfo)
-    decimalDV.getTotalDigits(resultInfo.actualValue)
-  }.fold(
-    e => ErrorTotalDigits(value, e.some).asLeft,
-    n => n.asRight
-  ) */
 
   // Based on this: https://stackoverflow.com/questions/58189457/how-to-count-digits-in-bigdecimal
   def getTotalDigitsDecimal(value: String): Either[ErrorTotalDigits, Int] = Try {
@@ -164,26 +144,18 @@ object Comparisons {
     e => ErrorTotalDigits(value, e.some).asLeft,
     _.asRight
   )
-  
 
+  case class RDFNodeNumericConversionError(str: String, e: Option[Throwable] = None) 
+   extends RuntimeException(s"Error converting RDF node ${str} to numeric value ${e.fold("")(e => s"Error: ${e.getLocalizedMessage()}")}")
+
+  case class RDFNodeNumericConversionErrorUnknownDatatype(str: String, datatype: IRI) 
+   extends RuntimeException(s"Error converting RDF node to numeric value for datatype $datatype")
+
+  case class RDFNodeNumericConversionError_NonNumericNode(node: RDFNode) 
+   extends RuntimeException(s"Error converting RDF node to numeric value. Non numeric node: $node")
+   
   case class ErrorTotalDigits(value: String, e: Option[Throwable] = None) 
    extends RuntimeException(s"Error obtaining total digits of $value ${e.fold("")(_.getLocalizedMessage())}")
-
-  // TODO replace this by a builtin implementation
-  /* This implementation leverages Xerces internal implementation of XML Schema datatypes */
-  /* This is probably going too far and could be simplified */
-  /* def getFractionDigitsDecimal(value: String): Either[ErrorFractionDigits, Int] =
-    Try {
-      val context = new ValidationState
-      val decimalDV = new DecimalDV()
-      val typeDeclaration: XSSimpleType = SchemaDVFactory.getInstance.getBuiltInType("decimal")
-      val resultInfo = new ValidatedInfo
-      typeDeclaration.validate(value, context, resultInfo)
-      decimalDV.getFractionDigits(resultInfo.actualValue)
-    }.fold(
-      e => ErrorFractionDigits(value, e.some).asLeft,
-      n => n.asRight
-    ) */
 
   def getFractionDigitsDecimal(value: String): Either[ErrorFractionDigits, Int] = Try {
     val bd = new java.math.BigDecimal(value)
