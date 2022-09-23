@@ -102,7 +102,7 @@ class ComparisonsTest extends FunSuite {
    shouldGetFractionDigits(DatatypeLiteral("23.45",`xsd:decimal`), 2)
    shouldGetFractionDigits(DatatypeLiteral("23.4567",`xsd:decimal`), 4)
    shouldGetFractionDigits(DatatypeLiteral("55.0",`xsd:decimal`), 0)
-   shouldGetFractionDigits(DoubleLiteral(5.5E03,"5.123E0"), -1)
+   shouldFailFractionDigits(DoubleLiteral(5.5E03,"5.123E0"))
 
    def shouldGetFractionDigits(n: RDFNode, expected: Int): Unit = {
       test(s"fractionDigits(${n.show}) should be ${expected.show}") {
@@ -113,6 +113,11 @@ class ComparisonsTest extends FunSuite {
       }
     }    
 
+  def shouldFailFractionDigits(n: RDFNode): Unit = {
+      test(s"fractionDigits(${n.show}) should fail") {
+        intercept[Comparisons.ErrorFractionDigits](Comparisons.numericValue(n).map(_.fractionDigits))
+      }
+    }    
 
 
 }
