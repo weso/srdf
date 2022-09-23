@@ -5,6 +5,6 @@ addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.5.10")
 addSbtPlugin("org.lyranthe.sbt" % "partial-unification" % "1.1.2")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.3.2")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.9.3")
-addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.8.0")
+// addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.8.0")
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.7.1")

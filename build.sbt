@@ -66,8 +66,8 @@ lazy val srdfMain = project
   .settings(
     commonSettings
   )
-  .aggregate(srdf.projectRefs.head, srdfJena.projectRefs.head, srdf4j.projectRefs.head, docs)
-  .dependsOn(srdf.projectRefs.head, srdfJena.projectRefs.head)
+  .aggregate(srdf, srdfJena, srdf4j, docs)
+  .dependsOn(srdf, srdfJena)
   .settings(
     libraryDependencies ++= Seq(
       decline,
@@ -89,7 +89,7 @@ lazy val srdfMain = project
     }
   )
 
-lazy val srdf = projectMatrix
+lazy val srdf = project
   .in(file("modules/srdf"))
   .settings(commonSettings)
   .settings(
@@ -109,10 +109,10 @@ lazy val srdf = projectMatrix
 //      scalaCollCompat,
     )
   )
-  .jvmPlatform(scalaVersions = supportedScalaVersions)
-  .jsPlatform(scalaVersions = supportedScalaVersions)
+//  .jvmPlatform(scalaVersions = supportedScalaVersions)
+//  .jsPlatform(scalaVersions = supportedScalaVersions)
 
-lazy val srdfJena = projectMatrix
+lazy val srdfJena = project
   .in(file("modules/srdfJena"))
   .dependsOn(srdf)
   .settings(commonSettings)
@@ -132,9 +132,9 @@ lazy val srdfJena = projectMatrix
       http4sEmberClient
     )
   )
-  .jvmPlatform(scalaVersions = supportedScalaVersions)
+//  .jvmPlatform(scalaVersions = supportedScalaVersions)
 
-lazy val srdf4j = projectMatrix
+lazy val srdf4j = project
   .in(file("modules/srdf4j"))
   .dependsOn(srdf)
   .settings(commonSettings)
@@ -150,7 +150,7 @@ lazy val srdf4j = projectMatrix
       scalaCollCompat // required for toScala conversions...
     )
   )
-  .jvmPlatform(scalaVersions = supportedScalaVersions)
+//  .jvmPlatform(scalaVersions = supportedScalaVersions)
 
 lazy val docs = project
   .in(file("srdf-docs"))
@@ -161,8 +161,8 @@ lazy val docs = project
     ScalaUnidoc / unidoc / unidocProjectFilter := inAnyProject -- inProjects(noDocProjects: _*)
   )
   .dependsOn(
-    srdf.projectRefs.head,
-    srdfJena.projectRefs.head
+    srdf,
+    srdfJena
 //    srdf4j
   )
   .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
@@ -172,9 +172,9 @@ lazy val mdocSettings = Seq(
     "VERSION" -> version.value
   ),
   ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(
-    srdf.projectRefs.head,
-    srdfJena.projectRefs.head,
-    srdf4j.projectRefs.head),
+    srdf,
+    srdfJena,
+    srdf4j),
   ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
   cleanFiles += (ScalaUnidoc / unidoc / target).value,
   docusaurusCreateSite := docusaurusCreateSite.dependsOn(Compile / unidoc).value,
