@@ -21,20 +21,23 @@ object Comparisons {
   case class Datetime(dt: Instant) extends PrimitiveLiteral
 
   sealed trait NumericLiteral {
-    def totalDigits: Int
-    def fractionDigits: Int
+    def totalDigits(): Int
+    def fractionDigits(): Int
   }
+
   case class NumericInt(n: Int, repr: String) extends NumericLiteral {
-    override val totalDigits = repr.length
-    override val fractionDigits = 0
+    override def totalDigits() = repr.length
+    override def fractionDigits() = 0
   }
+
   case class NumericDouble(n: Double, repr: String) extends NumericLiteral {
-    override def totalDigits = throw ErrorTotalDigits(repr)
-    override val fractionDigits = throw ErrorFractionDigits(repr)
+    override def totalDigits() = throw ErrorTotalDigits(repr)
+    override def fractionDigits() = throw ErrorFractionDigits(repr)
   }
+
   case class NumericDecimal(n: BigDecimal, repr: String) extends NumericLiteral {
-    override val totalDigits = getTotalDigitsDecimal(repr).fold(e => throw e, identity)
-    override val fractionDigits = getFractionDigitsDecimal(repr).fold(e => throw e, identity)
+    override def totalDigits() = getTotalDigitsDecimal(repr).fold(e => throw e, identity)
+    override def fractionDigits() = getFractionDigitsDecimal(repr).fold(e => throw e, identity)
   }
 
   private def str2NumericInt(str: String): Either[String, NumericInt] = try {

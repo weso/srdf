@@ -91,7 +91,7 @@ class ComparisonsTest extends FunSuite {
 
     def shouldGetTotalDigits(n: RDFNode, expected: Int): Unit = {
       test(s"totalDigits(${n.show}) should be ${expected.show}") {
-        val v = Comparisons.numericValue(n).map(_.totalDigits)
+        val v = Comparisons.numericValue(n).map(_.totalDigits())
         v.fold(e => fail(s"Error: $e"),
           t => assertEquals(t, expected)
         )
@@ -106,7 +106,7 @@ class ComparisonsTest extends FunSuite {
 
    def shouldGetFractionDigits(n: RDFNode, expected: Int): Unit = {
       test(s"fractionDigits(${n.show}) should be ${expected.show}") {
-        val v = Comparisons.numericValue(n).map(_.fractionDigits)
+        val v = Comparisons.numericValue(n).map(_.fractionDigits())
         v.fold(e => fail(s"Error: $e"),
           t => assertEquals(t, expected)
         )
@@ -115,7 +115,7 @@ class ComparisonsTest extends FunSuite {
 
   def shouldFailFractionDigits(n: RDFNode): Unit = {
       test(s"fractionDigits(${n.show}) should fail") {
-        intercept[Comparisons.ErrorFractionDigits](Comparisons.numericValue(n).map(_.fractionDigits))
+        intercept[Comparisons.ErrorFractionDigits](Comparisons.numericValue(n).map(_.fractionDigits()))
       }
     }    
 
