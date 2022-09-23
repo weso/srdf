@@ -87,6 +87,8 @@ class ComparisonsTest extends FunSuite {
     }
 
     shouldGetTotalDigits(IntegerLiteral(23,"23"), 2)
+    shouldGetTotalDigits(IntegerLiteral(123456,"0123456"), 6)
+    shouldGetTotalDigits(IntegerLiteral(12345,"012345"), 5)
     shouldGetTotalDigits(DatatypeLiteral("23.45",`xsd:decimal`), 4)
 
     def shouldGetTotalDigits(n: RDFNode, expected: Int): Unit = {

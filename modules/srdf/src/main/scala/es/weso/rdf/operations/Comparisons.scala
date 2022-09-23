@@ -21,7 +21,7 @@ object Comparisons {
   }
 
   case class NumericInt(n: Int, repr: String) extends NumericLiteral {
-    override def totalDigits() = repr.length
+    override def totalDigits() = n.toString.length
     override def fractionDigits() = 0
   }
 
@@ -139,7 +139,6 @@ object Comparisons {
     val bd = new java.math.BigDecimal(value)
     val n = bd.stripTrailingZeros()
     n.precision
-
   }.fold(
     e => ErrorTotalDigits(value, e.some).asLeft,
     _.asRight
@@ -153,7 +152,7 @@ object Comparisons {
 
   case class RDFNodeNumericConversionError_NonNumericNode(node: RDFNode) 
    extends RuntimeException(s"Error converting RDF node to numeric value. Non numeric node: $node")
-   
+
   case class ErrorTotalDigits(value: String, e: Option[Throwable] = None) 
    extends RuntimeException(s"Error obtaining total digits of $value ${e.fold("")(_.getLocalizedMessage())}")
 
