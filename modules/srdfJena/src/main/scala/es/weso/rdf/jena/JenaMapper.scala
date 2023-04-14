@@ -28,6 +28,8 @@ import es.weso.utils.IOUtils._
 import cats.implicits._
 import org.apache.jena.graph.Node
 import es.weso.rdf.MsgRDFException
+import org.apache.jena.vocabulary.RDF.dtRDFHTML
+import org.apache.jena.vocabulary.RDF.dtXMLLiteral
 
 object JenaMapper {
 
@@ -221,10 +223,10 @@ object JenaMapper {
         m.createResource(resolve(i, base))
       case StringLiteral(str) =>
         m.createLiteral(str, false)
-      case RDFHTMLLiteral(str) =>    // RH20220820
-        m.createLiteral(str, false)  // RH20220820
-      case RDFXMLLiteral(str) =>    
-        m.createLiteral(str, false)  
+      case RDFHTMLLiteral(str) =>
+        m.createTypedLiteral(str, dtRDFHTML)
+      case RDFXMLLiteral(str) =>
+        m.createTypedLiteral(str, dtXMLLiteral)
       case DatatypeLiteral(str, i: IRI) =>
         i.str match {
           case `xsdinteger` => m.createTypedLiteral(str, XSDDatatype.XSDinteger)

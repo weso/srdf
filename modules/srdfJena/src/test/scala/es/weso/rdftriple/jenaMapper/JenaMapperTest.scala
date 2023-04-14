@@ -143,7 +143,7 @@ class JenaMapperTest extends CatsEffectSuite with JenaBased {
   }
 
   // Test added at issue: https://github.com/weso/srdf/issues/292
-  test("Should compare one triple with a rdf:HTML literal".ignore) {
+  test("Should compare one triple with a rdf:HTML literal") {
     val ts = Set(
       RDFTriple(
         BNode("b" + 0),
@@ -159,4 +159,22 @@ class JenaMapperTest extends CatsEffectSuite with JenaBased {
     val model2 = str2model(s)
     assertEquals(checkIsomorphic(model1, model2), ().asRight)
   }
+
+  // Test added at issue: https://github.com/weso/srdf/issues/292
+  test("Should compare one triple with a rdf:HTML literal".only) {
+    val ts = Set(
+      RDFTriple(
+        IRI("http://example.org#a"),
+        IRI("http://example.org#p"),
+        RDFHTMLLiteral("<div>Test HTML markup</div>")))
+    val s =
+      """|@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+         |<http://example.org#a> <http://example.org#p> "<div>Test HTML markup</div>"^^rdf:HTML .""".stripMargin
+    println(s"ts: $ts")
+    val empty = ModelFactory.createDefaultModel
+    val model1 = RDFTriples2Model(ts, empty, None)
+    val model2 = str2model(s)
+    assertEquals(checkIsomorphic(model1, model2), ().asRight)
+  }
+
 }
