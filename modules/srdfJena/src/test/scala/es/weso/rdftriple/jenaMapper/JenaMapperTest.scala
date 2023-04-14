@@ -7,6 +7,8 @@ import es.weso.rdf.triples.RDFTriple
 import munit._
 import cats._
 import cats.implicits._
+import scala.jdk.CollectionConverters._
+import org.apache.jena.datatypes.RDFDatatype
 
 class JenaMapperTest extends CatsEffectSuite with JenaBased {
 
@@ -174,6 +176,18 @@ class JenaMapperTest extends CatsEffectSuite with JenaBased {
     val empty = ModelFactory.createDefaultModel
     val model1 = RDFTriples2Model(ts, empty, None)
     val model2 = str2model(s)
+    val s1 = model1.listSubjects().toList().asScala.head
+    val s2 = model2.listSubjects().toList().asScala.head
+    println(s"Subject1 = $s1, ${s1.getClass().getName()}")
+    println(s"Subject2 = $s2, ${s2.getClass().getName()}")
+    println(s"Are equal? ${s1.equals(s2)}")
+
+    val o1dt = model1.listObjects().toList().asScala.head.asLiteral().getDatatype()
+    val o2dt = model2.listObjects().toList().asScala.head.asLiteral().getDatatype()
+    println(s"Object1 = $o1dt, ${o1dt.getClass().getName()}")
+    println(s"Object2 = $o2dt, ${o2dt.getClass().getName()}")
+    println(s"Are equal? ${o1dt.equals(o2dt)}")
+
     assertEquals(checkIsomorphic(model1, model2), ().asRight)
   }
 

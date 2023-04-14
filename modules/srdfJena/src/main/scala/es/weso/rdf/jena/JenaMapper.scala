@@ -28,8 +28,6 @@ import es.weso.utils.IOUtils._
 import cats.implicits._
 import org.apache.jena.graph.Node
 import es.weso.rdf.MsgRDFException
-import org.apache.jena.vocabulary.RDF.dtRDFHTML
-import org.apache.jena.vocabulary.RDF.dtXMLLiteral
 
 object JenaMapper {
 
@@ -209,6 +207,13 @@ object JenaMapper {
     }
   }
 
+  // I used org.apache.jena.vocabulary.RDF.dtRDFHTML but it seems to fail
+  lazy val rdfHTML =
+    new BaseDatatype("http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML")
+
+  // I used org.apache.jena.vocabulary.RDF.dtRDFXMLLiteral but it seems to fail
+  lazy val rdfXML = new BaseDatatype("http://www.w3.org/1999/02/22-rdf-syntax-ns#XML")
+
   def createRDFNode(m: JenaModel, node: RDFNode, base: Option[IRI]): JenaRDFNode = {
     val xsd = "http://www.w3.org/2001/XMLSchema#"
     val xsdinteger = xsd + "integer"
@@ -224,9 +229,9 @@ object JenaMapper {
       case StringLiteral(str) =>
         m.createLiteral(str, false)
       case RDFHTMLLiteral(str) =>
-        m.createTypedLiteral(str, dtRDFHTML)
+        m.createTypedLiteral(str, rdfHTML)
       case RDFXMLLiteral(str) =>
-        m.createTypedLiteral(str, dtXMLLiteral)
+        m.createTypedLiteral(str, rdfXML)
       case DatatypeLiteral(str, i: IRI) =>
         i.str match {
           case `xsdinteger` => m.createTypedLiteral(str, XSDDatatype.XSDinteger)
