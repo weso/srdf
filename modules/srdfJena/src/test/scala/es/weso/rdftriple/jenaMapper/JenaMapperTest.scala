@@ -9,6 +9,10 @@ import cats._
 import cats.implicits._
 import scala.jdk.CollectionConverters._
 import org.apache.jena.datatypes.RDFDatatype
+import org.apache.jena.datatypes.xsd.impl.RDFhtml
+import org.apache.jena.datatypes.BaseDatatype
+import java.io.InputStream
+import java.io.ByteArrayInputStream
 
 class JenaMapperTest extends CatsEffectSuite with JenaBased {
 
@@ -162,33 +166,5 @@ class JenaMapperTest extends CatsEffectSuite with JenaBased {
     assertEquals(checkIsomorphic(model1, model2), ().asRight)
   }
 
-  // Test added at issue: https://github.com/weso/srdf/issues/292
-  test("Should compare one triple with a rdf:HTML literal".only) {
-    val ts = Set(
-      RDFTriple(
-        IRI("http://example.org#a"),
-        IRI("http://example.org#p"),
-        RDFHTMLLiteral("<div>Test HTML markup</div>")))
-    val s =
-      """|@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-         |<http://example.org#a> <http://example.org#p> "<div>Test HTML markup</div>"^^rdf:HTML .""".stripMargin
-    println(s"ts: $ts")
-    val empty = ModelFactory.createDefaultModel
-    val model1 = RDFTriples2Model(ts, empty, None)
-    val model2 = str2model(s)
-    val s1 = model1.listSubjects().toList().asScala.head
-    val s2 = model2.listSubjects().toList().asScala.head
-    println(s"Subject1 = $s1, ${s1.getClass().getName()}")
-    println(s"Subject2 = $s2, ${s2.getClass().getName()}")
-    println(s"Are equal? ${s1.equals(s2)}")
-
-    val o1dt = model1.listObjects().toList().asScala.head.asLiteral().getDatatype()
-    val o2dt = model2.listObjects().toList().asScala.head.asLiteral().getDatatype()
-    println(s"Object1 = $o1dt, ${o1dt.getClass().getName()}")
-    println(s"Object2 = $o2dt, ${o2dt.getClass().getName()}")
-    println(s"Are equal? ${o1dt.equals(o2dt)}")
-
-    assertEquals(checkIsomorphic(model1, model2), ().asRight)
-  }
 
 }

@@ -208,12 +208,12 @@ object JenaMapper {
   }
 
   // I used org.apache.jena.vocabulary.RDF.dtRDFHTML but it seems to fail
-  lazy val rdfHTML =
-    new BaseDatatype("http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML")
+  lazy val rdfHTML = "http://www.w3.org/1999/02/22-rdf-syntax-ns#HTML"
 
   // I used org.apache.jena.vocabulary.RDF.dtRDFXMLLiteral but it seems to fail
-  lazy val rdfXML = new BaseDatatype("http://www.w3.org/1999/02/22-rdf-syntax-ns#XML")
-
+  // lazy val rdfXML = new BaseDatatype("http://www.w3.org/1999/02/22-rdf-syntax-ns#XML")
+  lazy val rdfXML = "http://www.w3.org/1999/02/22-rdf-syntax-ns#XML"
+  
   def createRDFNode(m: JenaModel, node: RDFNode, base: Option[IRI]): JenaRDFNode = {
     val xsd = "http://www.w3.org/2001/XMLSchema#"
     val xsdinteger = xsd + "integer"
