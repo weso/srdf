@@ -1,5 +1,5 @@
 lazy val scala212 = "2.12.16"
-lazy val scala213 = "2.13.8"
+lazy val scala213 = "2.13.11"
 lazy val scala3 = "3.1.3"
 
 lazy val supportedScalaVersions = List(
@@ -103,7 +103,7 @@ lazy val srdf = project
       circeGeneric,
       circeParser,
       fs2Core,
-      utils,
+      utils
       // xercesImpl // required only for totalDigits/fractionDigits
 //      scalaLogging,
 //      scalaCollCompat,
@@ -171,10 +171,7 @@ lazy val mdocSettings = Seq(
   mdocVariables := Map(
     "VERSION" -> version.value
   ),
-  ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(
-    srdf,
-    srdfJena,
-    srdf4j),
+  ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(srdf, srdfJena, srdf4j),
   ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
   cleanFiles += (ScalaUnidoc / unidoc / target).value,
   docusaurusCreateSite := docusaurusCreateSite.dependsOn(Compile / unidoc).value,
@@ -265,5 +262,5 @@ lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
       email = "jelabra@gmail.com",
       url = url("https://weso.labra.es")
     )
-  ),
+  )
 )
