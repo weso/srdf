@@ -19,7 +19,7 @@ lazy val catsEffectVersion = "3.3.14"
 lazy val circeVersion = "0.14.2"
 lazy val declineVersion = "2.2.0"
 lazy val fs2Version = "3.2.7"
-lazy val http4sVersion = "0.23.12"
+lazy val http4sVersion = "0.23.25"
 lazy val jenaVersion = "4.5.0"
 lazy val munitVersion = "0.7.29"
 lazy val munitEffectVersion = "1.0.7"
@@ -103,7 +103,7 @@ lazy val srdf = project
       circeGeneric,
       circeParser,
       fs2Core,
-      utils,
+      utils
       // xercesImpl // required only for totalDigits/fractionDigits
 //      scalaLogging,
 //      scalaCollCompat,
@@ -171,10 +171,7 @@ lazy val mdocSettings = Seq(
   mdocVariables := Map(
     "VERSION" -> version.value
   ),
-  ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(
-    srdf,
-    srdfJena,
-    srdf4j),
+  ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(srdf, srdfJena, srdf4j),
   ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
   cleanFiles += (ScalaUnidoc / unidoc / target).value,
   docusaurusCreateSite := docusaurusCreateSite.dependsOn(Compile / unidoc).value,
@@ -265,5 +262,5 @@ lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
       email = "jelabra@gmail.com",
       url = url("https://weso.labra.es")
     )
-  ),
+  )
 )
