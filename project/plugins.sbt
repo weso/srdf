@@ -7,4 +7,4 @@ addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.3.2")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.9.3")
 // addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.8.0")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.7.1")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.15.0")
