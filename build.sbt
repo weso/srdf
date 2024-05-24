@@ -22,7 +22,7 @@ lazy val fs2Version = "3.4.0"
 lazy val http4sVersion = "1.0.0-M30"
 lazy val jenaVersion = "4.5.0"
 lazy val munitVersion = "0.7.29"
-lazy val munitEffectVersion = "1.0.7"
+lazy val munitEffectVersion = "2.0.0"
 
 lazy val rdf4jVersion = "3.4.2"
 lazy val scalaCollCompatVersion = "2.7.0"
@@ -45,7 +45,7 @@ lazy val http4sEmberClient = "org.http4s" %% "http4s-ember-client" % http4sVersi
 lazy val jenaArq = "org.apache.jena" % "jena-arq" % jenaVersion
 lazy val jenaFuseki = "org.apache.jena" % "jena-fuseki-main" % jenaVersion
 lazy val munit = "org.scalameta" %% "munit" % munitVersion
-lazy val munitEffects = "org.typelevel" %% "munit-cats-effect-3" % munitEffectVersion
+lazy val munitEffects = "org.typelevel" %% "munit-cats-effect" % munitEffectVersion
 lazy val rdf4j_runtime = "org.eclipse.rdf4j" % "rdf4j-runtime" % rdf4jVersion pomOnly ()
 // lazy val xercesImpl = "xerces" % "xercesImpl" % xercesVersion
 lazy val scalaCollCompat =
@@ -103,7 +103,7 @@ lazy val srdf = project
       circeGeneric,
       circeParser,
       fs2Core,
-      utils,
+      utils
       // xercesImpl // required only for totalDigits/fractionDigits
 //      scalaLogging,
 //      scalaCollCompat,
@@ -171,10 +171,7 @@ lazy val mdocSettings = Seq(
   mdocVariables := Map(
     "VERSION" -> version.value
   ),
-  ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(
-    srdf,
-    srdfJena,
-    srdf4j),
+  ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(srdf, srdfJena, srdf4j),
   ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
   cleanFiles += (ScalaUnidoc / unidoc / target).value,
   docusaurusCreateSite := docusaurusCreateSite.dependsOn(Compile / unidoc).value,
@@ -265,5 +262,5 @@ lazy val commonSettings = compilationSettings ++ sharedDependencies ++ Seq(
       email = "jelabra@gmail.com",
       url = url("https://weso.labra.es")
     )
-  ),
+  )
 )
